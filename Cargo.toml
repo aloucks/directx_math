@@ -1,0 +1,11 @@
+[package]
+name = "xm"
+version = "0.0.0"
+authors = ["Aaron Loucks <aloucks@cofront.net>"]
+edition = "2018"
+description = "reserved for future use"
+license = "MIT OR Apache-2.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
