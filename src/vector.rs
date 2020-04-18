@@ -53,7 +53,7 @@ macro_rules! XM3PACK4INTO3 {
 // --
 
 /// Return a vector with all elements equaling zero
-#[inline(always)]
+#[inline]
 pub fn XMVectorZero() -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -73,7 +73,7 @@ pub fn XMVectorZero() -> XMVECTOR {
 }
 
 /// Initialize a vector with four floating point values
-#[inline(always)]
+#[inline]
 pub fn XMVectorSet(
     x: f32,
     y: f32,
@@ -98,7 +98,7 @@ pub fn XMVectorSet(
 }
 
 /// Initialize a vector with four integer values
-#[inline(always)]
+#[inline]
 pub fn XMVectorSetInt(
     x: u32,
     y: u32,
@@ -124,7 +124,7 @@ pub fn XMVectorSetInt(
 }
 
 /// Initialize a vector with a replicated floating point value
-#[inline(always)]
+#[inline]
 pub fn XMVectorReplicate(Value: f32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -150,7 +150,7 @@ pub fn XMVectorReplicate(Value: f32) -> XMVECTOR {
 // TODO: XMVectorReplicatePtr
 
 /// Initialize a vector with a replicated integer value
-#[inline(always)]
+#[inline]
 pub fn XMVectorReplicateInt(Value: u32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -177,7 +177,7 @@ pub fn XMVectorReplicateInt(Value: u32) -> XMVECTOR {
 // TODO: XMVectorReplicateIntPtr
 
 /// Initialize a vector with all bits set (true mask)
-#[inline(always)]
+#[inline]
 pub fn XMVectorTrueInt() -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -198,7 +198,7 @@ pub fn XMVectorTrueInt() -> XMVECTOR {
 }
 
 /// Initialize a vector with all bits clear (false mask)
-#[inline(always)]
+#[inline]
 pub fn XMVectorFalseInt() -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -218,7 +218,7 @@ pub fn XMVectorFalseInt() -> XMVECTOR {
 }
 
 /// Replicate the x component of the vector
-#[inline(always)]
+#[inline]
 pub fn XMVectorSplatX(V: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -242,7 +242,7 @@ pub fn XMVectorSplatX(V: FXMVECTOR) -> XMVECTOR {
 }
 
 /// Replicate the y component of the vector
-#[inline(always)]
+#[inline]
 pub fn XMVectorSplatY(V: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -266,7 +266,7 @@ pub fn XMVectorSplatY(V: FXMVECTOR) -> XMVECTOR {
 }
 
 /// Replicate the z component of the vector
-#[inline(always)]
+#[inline]
 pub fn XMVectorSplatZ(V: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -290,7 +290,7 @@ pub fn XMVectorSplatZ(V: FXMVECTOR) -> XMVECTOR {
 }
 
 /// Replicate the w component of the vector
-#[inline(always)]
+#[inline]
 pub fn XMVectorSplatW(V: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -314,7 +314,7 @@ pub fn XMVectorSplatW(V: FXMVECTOR) -> XMVECTOR {
 }
 
 /// Return a vector of 1.0f,1.0f,1.0f,1.0f
-#[inline(always)]
+#[inline]
 pub fn XMVectorSplatOne() -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -338,7 +338,7 @@ pub fn XMVectorSplatOne() -> XMVECTOR {
 }
 
 /// Return a vector of INF,INF,INF,INF
-#[inline(always)]
+#[inline]
 pub fn XMVectorSplatInfinity() -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -362,7 +362,7 @@ pub fn XMVectorSplatInfinity() -> XMVECTOR {
 }
 
 /// Return a vector of Q_NAN,Q_NAN,Q_NAN,Q_NAN
-#[inline(always)]
+#[inline]
 pub fn XMVectorSplatQNaN() -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -386,7 +386,7 @@ pub fn XMVectorSplatQNaN() -> XMVECTOR {
 }
 
 /// Return a vector of 1.192092896e-7f,1.192092896e-7f,1.192092896e-7f,1.192092896e-7f
-#[inline(always)]
+#[inline]
 pub fn XMVectorSplatEpsilon() -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -411,7 +411,7 @@ pub fn XMVectorSplatEpsilon() -> XMVECTOR {
 
 /// Return a floating point value via an index. This is not a recommended
 /// function to use due to performance loss.
-#[inline(always)]
+#[inline]
 pub fn XMVectorGetByIndex(V: XMVECTOR, i: usize) -> f32 {
     // debug_assert!(i < 4);
 
@@ -434,7 +434,7 @@ pub fn XMVectorGetByIndex(V: XMVECTOR, i: usize) -> f32 {
 }
 
 /// Return the X component in an FPU register.
-#[inline(always)]
+#[inline]
 pub fn XMVectorGetX(V: XMVECTOR) -> f32 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -453,7 +453,7 @@ pub fn XMVectorGetX(V: XMVECTOR) -> f32 {
 }
 
 /// Return the X component in an FPU register.
-#[inline(always)]
+#[inline]
 pub fn XMVectorGetY(V: XMVECTOR) -> f32 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -473,7 +473,7 @@ pub fn XMVectorGetY(V: XMVECTOR) -> f32 {
 }
 
 /// Return the Z component in an FPU register.
-#[inline(always)]
+#[inline]
 pub fn XMVectorGetZ(V: XMVECTOR) -> f32 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -493,7 +493,7 @@ pub fn XMVectorGetZ(V: XMVECTOR) -> f32 {
 }
 
 /// Return the Z component in an FPU register.
-#[inline(always)]
+#[inline]
 pub fn XMVectorGetW(V: XMVECTOR) -> f32 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -520,7 +520,7 @@ pub fn XMVectorGetW(V: XMVECTOR) -> f32 {
 
 /// Return an integer value via an index. This is not a recommended
 /// function to use due to performance loss.
-#[inline(always)]
+#[inline]
 pub fn XMVectorGetIntByIndex(V: XMVECTOR, i: usize) -> u32 {
     // debug_assert!(i < 4);
 
@@ -543,7 +543,7 @@ pub fn XMVectorGetIntByIndex(V: XMVECTOR, i: usize) -> u32 {
 }
 
 /// Return the X component in an integer register.
-#[inline(always)]
+#[inline]
 pub fn XMVectorGetIntX(V: XMVECTOR) -> u32 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -562,7 +562,7 @@ pub fn XMVectorGetIntX(V: XMVECTOR) -> u32 {
 }
 
 /// Return the Y component in an integer register.
-#[inline(always)]
+#[inline]
 pub fn XMVectorGetIntY(V: XMVECTOR) -> u32 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -588,7 +588,7 @@ pub fn XMVectorGetIntY(V: XMVECTOR) -> u32 {
 }
 
 /// Return the Z component in an integer register.
-#[inline(always)]
+#[inline]
 pub fn XMVectorGetIntZ(V: XMVECTOR) -> u32 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -614,7 +614,7 @@ pub fn XMVectorGetIntZ(V: XMVECTOR) -> u32 {
 }
 
 /// Return the W component in an integer register.
-#[inline(always)]
+#[inline]
 pub fn XMVectorGetIntW(V: XMVECTOR) -> u32 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -646,7 +646,7 @@ pub fn XMVectorGetIntW(V: XMVECTOR) -> u32 {
 // TODO: XMVectorGetIntWPtr
 
 /// Set a single indexed floating point component
-#[inline(always)]
+#[inline]
 pub fn XMVectorSetByIndex(V: XMVECTOR, f: f32, i: usize) -> XMVECTOR {
     // debug_assert!(i < 4);
 
@@ -659,7 +659,7 @@ pub fn XMVectorSetByIndex(V: XMVECTOR, f: f32, i: usize) -> XMVECTOR {
 }
 
 /// Sets the X component of a vector to a passed floating point value
-#[inline(always)]
+#[inline]
 pub fn XMVectorSetX(V: XMVECTOR, x: f32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -688,7 +688,7 @@ pub fn XMVectorSetX(V: XMVECTOR, x: f32) -> XMVECTOR {
 }
 
 /// Sets the Y component of a vector to a passed floating point value
-#[inline(always)]
+#[inline]
 pub fn XMVectorSetY(V: XMVECTOR, y: f32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -730,7 +730,7 @@ pub fn XMVectorSetY(V: XMVECTOR, y: f32) -> XMVECTOR {
 }
 
 /// Sets the Z component of a vector to a passed floating point value
-#[inline(always)]
+#[inline]
 pub fn XMVectorSetZ(V: XMVECTOR, z: f32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -772,7 +772,7 @@ pub fn XMVectorSetZ(V: XMVECTOR, z: f32) -> XMVECTOR {
 }
 
 /// Sets the W component of a vector to a passed floating point value
-#[inline(always)]
+#[inline]
 pub fn XMVectorSetW(V: XMVECTOR, w: f32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -820,7 +820,7 @@ pub fn XMVectorSetW(V: XMVECTOR, w: f32) -> XMVECTOR {
 // TODO: XMVectorSetWPtr
 
 /// Sets a component of a vector to an integer passed by value
-#[inline(always)]
+#[inline]
 pub fn XMVectorSetIntByIndex(V: XMVECTOR, x: u32, i: usize) -> XMVECTOR {
     // debug_assert!(i < 4);
 
@@ -833,7 +833,7 @@ pub fn XMVectorSetIntByIndex(V: XMVECTOR, x: u32, i: usize) -> XMVECTOR {
 }
 
 /// Sets the X component of a vector to an integer passed by value
-#[inline(always)]
+#[inline]
 pub fn XMVectorSetIntX(V: XMVECTOR, x: u32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -862,7 +862,7 @@ pub fn XMVectorSetIntX(V: XMVECTOR, x: u32) -> XMVECTOR {
 }
 
 /// Sets the X component of a vector to an integer passed by value
-#[inline(always)]
+#[inline]
 pub fn XMVectorSetIntY(V: XMVECTOR, y: u32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -904,7 +904,7 @@ pub fn XMVectorSetIntY(V: XMVECTOR, y: u32) -> XMVECTOR {
 }
 
 /// Sets the Z component of a vector to an integer passed by value
-#[inline(always)]
+#[inline]
 pub fn XMVectorSetIntZ(V: XMVECTOR, z: u32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -946,7 +946,7 @@ pub fn XMVectorSetIntZ(V: XMVECTOR, z: u32) -> XMVECTOR {
 }
 
 /// Sets the W component of a vector to an integer passed by value
-#[inline(always)]
+#[inline]
 pub fn XMVectorSetIntW(V: XMVECTOR, w: u32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -996,7 +996,7 @@ pub fn XMVectorSetIntW(V: XMVECTOR, w: u32) -> XMVECTOR {
 /// Swizzles a vector.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSwizzle>
-#[inline(always)]
+#[inline]
 pub fn XMVectorSwizzle(
     V: FXMVECTOR,
     E0: u32,
@@ -1064,7 +1064,7 @@ fn test_XMVectorSwizzle() {
 /// Permutes the components of two vectors to create a new vector.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorPermute>
-#[inline(always)]
+#[inline]
 pub fn XMVectorPermute(
     V1: FXMVECTOR,
     V2: FXMVECTOR,
@@ -1154,7 +1154,7 @@ fn test_XMVectorPermute() {
 /// Defines a control vector for use in XMVectorSelect.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSelectControl>
-#[inline(always)]
+#[inline]
 pub fn XMVectorSelectControl(
     VectorIndex0: u32,
     VectorIndex1: u32,
@@ -1196,7 +1196,7 @@ pub fn XMVectorSelectControl(
 /// Performs a per-component selection between two input vectors and returns the resulting vector.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSelect>
-#[inline(always)]
+#[inline]
 pub fn XMVectorSelect(
     V1: FXMVECTOR,
     V2: FXMVECTOR,
@@ -1232,7 +1232,7 @@ pub fn XMVectorSelect(
 /// Creates a new vector by combining the x and y-components of two vectors.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorMergeXY>
-#[inline(always)]
+#[inline]
 pub fn XMVectorMergeXY(
     V1: FXMVECTOR,
     V2: FXMVECTOR,
@@ -1265,7 +1265,7 @@ pub fn XMVectorMergeXY(
 /// Creates a new vector by combining the z and w-components of two vectors.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorMergeZW>
-#[inline(always)]
+#[inline]
 pub fn XMVectorMergeZW(
     V1: FXMVECTOR,
     V2: FXMVECTOR,
@@ -1298,7 +1298,7 @@ pub fn XMVectorMergeZW(
 /// Shifts a vector left by a given number of 32-bit elements, filling the vacated elements with elements from a second vector.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorShiftLeft>
-#[inline(always)]
+#[inline]
 pub fn XMVectorShiftLeft(V1: FXMVECTOR, V2: FXMVECTOR, Elements: u32) -> XMVECTOR {
     // debug_assert!(Elements < 4);
     return XMVectorPermute(V1, V2, Elements, ((Elements)+1), ((Elements)+2), ((Elements)+3));
@@ -1307,7 +1307,7 @@ pub fn XMVectorShiftLeft(V1: FXMVECTOR, V2: FXMVECTOR, Elements: u32) -> XMVECTO
 /// Rotates the vector left by a given number of 32-bit elements.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorRotateLeft>
-#[inline(always)]
+#[inline]
 pub fn XMVectorRotateLeft(V: FXMVECTOR, Elements: u32) -> XMVECTOR {
     // debug_assert!(Elements < 4);
     return XMVectorSwizzle(V, Elements & 3, (Elements + 1) & 3, (Elements + 2) & 3, (Elements + 3) & 3);
@@ -1316,7 +1316,7 @@ pub fn XMVectorRotateLeft(V: FXMVECTOR, Elements: u32) -> XMVECTOR {
 /// Rotates the vector right by a given number of 32-bit elements.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorRotateRight>
-#[inline(always)]
+#[inline]
 pub fn XMVectorRotateRight(V: FXMVECTOR, Elements: u32) -> XMVECTOR {
     // debug_assert!(Elements < 4);
     return XMVectorSwizzle(V, (4 - (Elements)) & 3, (5 - (Elements)) & 3, (6 - (Elements)) & 3, (7 - (Elements)) & 3);
@@ -1325,7 +1325,7 @@ pub fn XMVectorRotateRight(V: FXMVECTOR, Elements: u32) -> XMVECTOR {
 /// Rotates a vector left by a given number of 32-bit components and insert selected elements of that result into another vector.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorInsert>
-#[inline(always)]
+#[inline]
 pub fn XMVectorInsert(
     VD: FXMVECTOR,
     VS: FXMVECTOR,
@@ -1342,7 +1342,7 @@ pub fn XMVectorInsert(
 /// Performs a per-component test for equality of two vectors.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorEqual>
-#[inline(always)]
+#[inline]
 pub fn XMVectorEqual(
     V1: FXMVECTOR,
     V2: FXMVECTOR,
@@ -1374,7 +1374,7 @@ pub fn XMVectorEqual(
 /// Performs a per-component test for equality of two vectors and sets a comparison value that can be examined using functions such as XMComparisonAllTrue.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorEqualR>
-#[inline(always)]
+#[inline]
 pub fn XMVectorEqualR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -1447,7 +1447,7 @@ fn test_XMVectorEqualR() {
 /// Performs a per-component test for the equality of two vectors, treating each component as an unsigned integer.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorEqualInt>
-#[inline(always)]
+#[inline]
 pub fn XMVectorEqualInt(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -1479,7 +1479,7 @@ pub fn XMVectorEqualInt(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
 /// comparison value that can be examined using functions such as XMComparisonAllTrue.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorEqualIntR>
-#[inline(always)]
+#[inline]
 pub fn XMVectorEqualIntR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     #[allow(unused_unsafe)]
@@ -1531,7 +1531,7 @@ pub fn XMVectorEqualIntR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTO
 /// Performs a per-component test for equality of two vectors within a given threshold.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorNearEqual>
-#[inline(always)]
+#[inline]
 pub fn XMVectorNearEqual(V1: FXMVECTOR, V2: FXMVECTOR, Epsilon: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -1577,7 +1577,7 @@ pub fn XMVectorNearEqual(V1: FXMVECTOR, V2: FXMVECTOR, Epsilon: FXMVECTOR) -> XM
 /// Performs a per-component test for the inequality of two vectors.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorNotEqual>
-#[inline(always)]
+#[inline]
 pub fn XMVectorNotEqual(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -1606,7 +1606,7 @@ pub fn XMVectorNotEqual(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
 /// Performs a per-component test for the inequality of two vectors, treating each component as an unsigned integer.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorNotEqualInt>
-#[inline(always)]
+#[inline]
 pub fn XMVectorNotEqualInt(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -1636,7 +1636,7 @@ pub fn XMVectorNotEqualInt(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
 /// Performs a per-component test for greater-than between two vectors.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGreater>
-#[inline(always)]
+#[inline]
 pub fn XMVectorGreater(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -1665,7 +1665,7 @@ pub fn XMVectorGreater(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
 /// Performs a per-component test for greater-than between two vectors and sets a comparison value that can be examined using functions such as XMComparisonAllTrue.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGreaterR>
-#[inline(always)]
+#[inline]
 pub fn XMVectorGreaterR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -1715,7 +1715,7 @@ pub fn XMVectorGreaterR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR
 /// Performs a per-component test for greater-than-or-equal between two vectors.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGreaterOrEqual>
-#[inline(always)]
+#[inline]
 pub fn XMVectorGreaterOrEqual(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -1744,7 +1744,7 @@ pub fn XMVectorGreaterOrEqual(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
 /// Performs a per-component test for greater-than-or-equal between two vectors and sets a comparison value that can be examined using functions such as XMComparisonAllTrue.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGreaterOrEqualR>
-#[inline(always)]
+#[inline]
 pub fn XMVectorGreaterOrEqualR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -1794,7 +1794,7 @@ pub fn XMVectorGreaterOrEqualR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> X
 /// Performs a per-component test for less-than between two vectors.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorLess>
-#[inline(always)]
+#[inline]
 pub fn XMVectorLess(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -1823,7 +1823,7 @@ pub fn XMVectorLess(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
 /// Performs a per-component test for less-than-or-equal between two vectors.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorLessOrEqual>
-#[inline(always)]
+#[inline]
 pub fn XMVectorLessOrEqual(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -1852,7 +1852,7 @@ pub fn XMVectorLessOrEqual(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
 /// Tests whether the components of a given vector are within set bounds.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorInBounds>
-#[inline(always)]
+#[inline]
 pub fn XMVectorInBounds(V: FXMVECTOR, Bounds: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -1889,7 +1889,7 @@ pub fn XMVectorInBounds(V: FXMVECTOR, Bounds: FXMVECTOR) -> XMVECTOR {
 /// Tests whether the components of a given vector are within certain bounds and sets a comparison value that can be examined using functions such as XMComparisonAllTrue.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorInBoundsR>
-#[inline(always)]
+#[inline]
 pub fn XMVectorInBoundsR(pCR: &mut u32, V: FXMVECTOR, Bounds: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -1941,7 +1941,7 @@ pub fn XMVectorInBoundsR(pCR: &mut u32, V: FXMVECTOR, Bounds: FXMVECTOR) -> XMVE
 /// Makes a per-component comparison between two vectors, and returns a vector containing the smallest components.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorIsInfinite>
-#[inline(always)]
+#[inline]
 pub fn XMVectorIsInfinite(V: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -1975,7 +1975,7 @@ pub fn XMVectorIsInfinite(V: FXMVECTOR) -> XMVECTOR {
 /// Makes a per-component comparison between two vectors, and returns a vector containing the smallest components.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorMin>
-#[inline(always)]
+#[inline]
 pub fn XMVectorMin(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -2004,7 +2004,7 @@ pub fn XMVectorMin(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
 /// Makes a per-component comparison between two vectors, and returns a vector containing the largest components.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorMax>
-#[inline(always)]
+#[inline]
 pub fn XMVectorMax(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -2063,7 +2063,7 @@ fn test_round_to_nearest() {
 /// Rounds each component of a vector to the nearest even integer (known as "Bankers Rounding").
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorRound>
-#[inline(always)]
+#[inline]
 pub fn XMVectorRound(V: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -2106,7 +2106,7 @@ pub fn XMVectorRound(V: FXMVECTOR) -> XMVECTOR {
 /// Rounds each component of a vector to the nearest integer value in the direction of zero.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorTruncate>
-#[inline(always)]
+#[inline]
 pub fn XMVectorTruncate(V: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -2163,7 +2163,7 @@ pub fn XMVectorTruncate(V: FXMVECTOR) -> XMVECTOR {
 /// Computes the floor of each component of an XMVECTOR.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorFloor>
-#[inline(always)]
+#[inline]
 pub fn XMVectorFloor(V: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -2212,7 +2212,7 @@ pub fn XMVectorFloor(V: FXMVECTOR) -> XMVECTOR {
 /// Computes the ceiling of each component of an XMVECTOR.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorCeiling>
-#[inline(always)]
+#[inline]
 pub fn XMVectorCeiling(V: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -2261,7 +2261,7 @@ pub fn XMVectorCeiling(V: FXMVECTOR) -> XMVECTOR {
 /// Clamps the components of a vector to a specified minimum and maximum range.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorClamp>
-#[inline(always)]
+#[inline]
 pub fn XMVectorClamp(
     V: FXMVECTOR,
     Min: FXMVECTOR,
@@ -2295,7 +2295,7 @@ pub fn XMVectorClamp(
 /// Saturates each component of a vector to the range 0.0f to 1.0f.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSaturate>
-#[inline(always)]
+#[inline]
 pub fn XMVectorSaturate(
     V: FXMVECTOR,
 ) -> XMVECTOR
@@ -2323,7 +2323,7 @@ pub fn XMVectorSaturate(
 /// Computes the logical AND of two vectors, treating each component as an unsigned integer.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorAndInt>
-#[inline(always)]
+#[inline]
 pub fn XMVectorAndInt(
     V1: FXMVECTOR,
     V2: FXMVECTOR,
@@ -2358,7 +2358,7 @@ pub fn XMVectorAndInt(
 /// Computes the logical OR of two vectors, treating each component as an unsigned integer.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorOrInt>
-#[inline(always)]
+#[inline]
 pub fn XMVectorOrInt(
     V1: FXMVECTOR,
     V2: FXMVECTOR,
@@ -2394,7 +2394,7 @@ pub fn XMVectorOrInt(
 /// Computes the logical XOR of two vectors, treating each component as an unsigned integer.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorXorInt>
-#[inline(always)]
+#[inline]
 pub fn XMVectorXorInt(
     V1: FXMVECTOR,
     V2: FXMVECTOR,
@@ -2428,7 +2428,7 @@ pub fn XMVectorXorInt(
 /// Computes the negation of a vector.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorNegate>
-#[inline(always)]
+#[inline]
 pub fn XMVectorNegate(
     V: FXMVECTOR,
 ) -> XMVECTOR
@@ -2464,7 +2464,7 @@ pub fn XMVectorNegate(
 /// Computes the sum of two vectors.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorAdd>
-#[inline(always)]
+#[inline]
 pub fn XMVectorAdd(
     V1: FXMVECTOR,
     V2: FXMVECTOR
@@ -2500,7 +2500,7 @@ pub fn XMVectorAdd(
 /// Computes the difference of two vectors.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSubtract>
-#[inline(always)]
+#[inline]
 pub fn XMVectorSubtract(
     V1: FXMVECTOR,
     V2: FXMVECTOR
@@ -2535,7 +2535,7 @@ pub fn XMVectorSubtract(
 /// Computes the per-component product of two vectors.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorMultiply>
-#[inline(always)]
+#[inline]
 pub fn XMVectorMultiply(
     V1: FXMVECTOR,
     V2: FXMVECTOR
@@ -2568,7 +2568,7 @@ pub fn XMVectorMultiply(
 /// Computes the product of the first two vectors added to the third vector.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorMultiplyAdd>
-#[inline(always)]
+#[inline]
 pub fn XMVectorMultiplyAdd(
     V1: FXMVECTOR,
     V2: FXMVECTOR,
@@ -2602,7 +2602,7 @@ pub fn XMVectorMultiplyAdd(
 /// Divides one instance of XMVECTOR by a second instance, returning the result in a third instance.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorDivide>
-#[inline(always)]
+#[inline]
 pub fn XMVectorDivide(
     V1: FXMVECTOR,
     V2: FXMVECTOR
@@ -2635,7 +2635,7 @@ pub fn XMVectorDivide(
 /// Computes the difference of a third vector and the product of the first two vectors.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorNegativeMultiplySubtract>
-#[inline(always)]
+#[inline]
 pub fn XMVectorNegativeMultiplySubtract(
     V1: FXMVECTOR,
     V2: FXMVECTOR,
@@ -2669,7 +2669,7 @@ pub fn XMVectorNegativeMultiplySubtract(
 /// Scalar multiplies a vector by a floating-point value.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorScale>
-#[inline(always)]
+#[inline]
 pub fn XMVectorScale(
     V: FXMVECTOR,
     ScaleFactor: f32,
@@ -2703,7 +2703,7 @@ pub fn XMVectorScale(
 /// Estimates the per-component reciprocal of a vector.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorReciprocalEst>
-#[inline(always)]
+#[inline]
 pub fn XMVectorReciprocalEst(
     V: FXMVECTOR,
 ) -> XMVECTOR
@@ -2735,7 +2735,7 @@ pub fn XMVectorReciprocalEst(
 /// Estimates the per-component reciprocal of a vector.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorReciprocal>
-#[inline(always)]
+#[inline]
 pub fn XMVectorReciprocal(
     V: FXMVECTOR,
 ) -> XMVECTOR
@@ -2767,7 +2767,7 @@ pub fn XMVectorReciprocal(
 /// Estimates the per-component square root of a vector.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSqrtEst>
-#[inline(always)]
+#[inline]
 pub fn XMVectorSqrtEst(
     V: FXMVECTOR,
 ) -> XMVECTOR
@@ -2799,7 +2799,7 @@ pub fn XMVectorSqrtEst(
 /// Computes the per-component square root of a vector.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSqrt>
-#[inline(always)]
+#[inline]
 pub fn XMVectorSqrt(
     V: FXMVECTOR,
 ) -> XMVECTOR
@@ -2831,7 +2831,7 @@ pub fn XMVectorSqrt(
 /// Estimates the per-component reciprocal square root of a vector.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorReciprocalSqrtEst>
-#[inline(always)]
+#[inline]
 pub fn XMVectorReciprocalSqrtEst(
     V: FXMVECTOR,
 ) -> XMVECTOR
@@ -2863,7 +2863,7 @@ pub fn XMVectorReciprocalSqrtEst(
 /// Computes  the per-component reciprocal square root of a vector.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorReciprocalSqrt>
-#[inline(always)]
+#[inline]
 pub fn XMVectorReciprocalSqrt(
     V: FXMVECTOR,
 ) -> XMVECTOR
@@ -2909,7 +2909,7 @@ pub fn XMVectorReciprocalSqrt(
 /// Computes the absolute value of each component of an XMVECTOR.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorAbs>
-#[inline(always)]
+#[inline]
 pub fn XMVectorAbs(
     V: FXMVECTOR,
 ) -> XMVECTOR
@@ -2944,7 +2944,7 @@ pub fn XMVectorAbs(
 /// Computes the per-component floating-point remainder of the quotient of two vectors.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorMod>
-#[inline(always)]
+#[inline]
 pub fn XMVectorMod(
     V1: FXMVECTOR,
     V2: FXMVECTOR,
@@ -2976,7 +2976,7 @@ pub fn XMVectorMod(
 /// Computes the per-component angle modulo 2PI.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorModAngles>
-#[inline(always)]
+#[inline]
 pub fn XMVectorModAngles(
     Angles: FXMVECTOR,
 ) -> XMVECTOR
@@ -3013,7 +3013,7 @@ pub fn XMVectorModAngles(
 /// Computes the sine of each component of an XMVECTOR.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSin>
-#[inline(always)]
+#[inline]
 pub fn XMVectorSin(
     V: FXMVECTOR,
 ) -> XMVECTOR
@@ -3093,7 +3093,7 @@ fn test_XMVectorSin() {
 /// Computes the cosine of each component of an XMVECTOR.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorCos>
-#[inline(always)]
+#[inline]
 pub fn XMVectorCos(
     V: FXMVECTOR,
 ) -> XMVECTOR
@@ -3176,7 +3176,7 @@ fn test_XMVectorCos() {
 /// Computes the sine and cosine of each component of an XMVECTOR.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSinCos>
-#[inline(always)]
+#[inline]
 pub fn XMVectorSinCos(
     pSin: &mut XMVECTOR,
     pCos: &mut XMVECTOR,
@@ -3277,7 +3277,7 @@ pub fn XMVectorSinCos(
 /// Computes the tangent of each component of an XMVECTOR.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorTan>
-#[inline(always)]
+#[inline]
 pub fn XMVectorTan(
     V: FXMVECTOR,
 ) -> XMVECTOR
@@ -3403,7 +3403,7 @@ fn test_XMVectorTan() {
 /// Computes the arcsine of each component of an XMVECTOR.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorASin>
-#[inline(always)]
+#[inline]
 pub fn XMVectorASin(
     V: FXMVECTOR,
 ) -> XMVECTOR
@@ -3472,7 +3472,7 @@ pub fn XMVectorASin(
 /// Computes the arccosine of each component of an XMVECTOR.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorACos>
-#[inline(always)]
+#[inline]
 pub fn XMVectorACos(
     V: FXMVECTOR,
 ) -> XMVECTOR
@@ -3540,7 +3540,7 @@ pub fn XMVectorACos(
 /// Computes the arctangent of each component of an XMVECTOR.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorATan>
-#[inline(always)]
+#[inline]
 pub fn XMVectorATan(
     V: FXMVECTOR,
 ) -> XMVECTOR
@@ -3621,7 +3621,7 @@ pub fn XMVectorATan(
 /// Computes the arctangent of Y/X.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorATan2>
-#[inline(always)]
+#[inline]
 pub fn XMVectorATan2(
     Y: FXMVECTOR,
     X: FXMVECTOR,
@@ -3694,7 +3694,7 @@ pub fn XMVectorATan2(
 /// Performs a linear interpolation between two vectors.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorLerp>
-#[inline(always)]
+#[inline]
 pub fn XMVectorLerp(
     V0: FXMVECTOR,
     V1: FXMVECTOR,
@@ -3726,7 +3726,7 @@ pub fn XMVectorLerp(
 /// Performs a linear interpolation between two vectors.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorLerpV>
-#[inline(always)]
+#[inline]
 pub fn XMVectorLerpV(
     V0: FXMVECTOR,
     V1: FXMVECTOR,
@@ -3756,7 +3756,7 @@ pub fn XMVectorLerpV(
 /// Performs a Hermite spline interpolation, using the specified vectors.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorHermite>
-#[inline(always)]
+#[inline]
 pub fn XMVectorHermite(
     Position0: FXMVECTOR,
     Tangent0: FXMVECTOR,
@@ -3816,7 +3816,7 @@ pub fn XMVectorHermite(
 /// Performs a Catmull-Rom interpolation, using the specified position vectors.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorCatmullRom>
-#[inline(always)]
+#[inline]
 pub fn XMVectorCatmullRom(
     Position0: FXMVECTOR,
     Position1: FXMVECTOR,
@@ -3878,7 +3878,7 @@ pub fn XMVectorCatmullRom(
 /// Returns a point in Barycentric coordinates, using the specified position vectors.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorBaryCentric>
-#[inline(always)]
+#[inline]
 pub fn XMVectorBaryCentric(
     Position0: FXMVECTOR,
     Position1: FXMVECTOR,

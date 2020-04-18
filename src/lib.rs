@@ -30,62 +30,62 @@ pub(crate) const fn _MM_SHUFFLE(z: u32, y: u32, x: u32, w: u32) -> i32 {
     ((z << 6) | (y << 4) | (x << 2) | w) as i32
 }
 
-#[inline(always)]
+#[inline]
 pub(crate) fn fabsf(x: f32) -> f32 {
     x.abs()
 }
 
-#[inline(always)]
+#[inline]
 pub(crate) fn floorf(x: f32) -> f32 {
     x.floor()
 }
 
-#[inline(always)]
+#[inline]
 pub(crate) fn ceilf(x: f32) -> f32 {
     x.ceil()
 }
 
-#[inline(always)]
+#[inline]
 pub(crate) fn sqrtf(x: f32) -> f32 {
     x.sqrt()
 }
 
-#[inline(always)]
+#[inline]
 pub(crate) fn sinf(x: f32) -> f32 {
     x.sin()
 }
 
-#[inline(always)]
+#[inline]
 pub(crate) fn cosf(x: f32) -> f32 {
     x.cos()
 }
 
-#[inline(always)]
+#[inline]
 pub(crate) fn tanf(x: f32) -> f32 {
     x.tan()
 }
 
-#[inline(always)]
+#[inline]
 pub(crate) fn asinf(x: f32) -> f32 {
     x.asin()
 }
 
-#[inline(always)]
+#[inline]
 pub(crate) fn acosf(x: f32) -> f32 {
     x.acos()
 }
 
-#[inline(always)]
+#[inline]
 pub(crate) fn atanf(x: f32) -> f32 {
     x.atan()
 }
 
-#[inline(always)]
+#[inline]
 pub(crate) fn atan2f(y: f32, x: f32) -> f32 {
     y.atan2(x)
 }
 
-#[inline(always)]
+#[inline]
 pub(crate) fn modff(x: f32) -> (f32, f32) {
     // https://github.com/rust-lang/libm/blob/d3f1dba56dc47fbae6f5d6e47c3a00a4aab5b6c5/src/math/modff.rs#L1
     // https://github.com/rust-lang/libm/blob/d3f1dba56dc47fbae6f5d6e47c3a00a4aab5b6c5/LICENSE-MIT
@@ -297,52 +297,52 @@ pub const XM_CRMASK_CR6BOUNDS: u32 = XM_CRMASK_CR6FALSE;
 
 pub const XM_CACHE_LINE_SIZE: u32 = 64;
 
-#[inline(always)]
+#[inline]
 pub fn XMConvertToRadians(fDegrees: f32) -> f32 { return fDegrees * (XM_PI / 180.0); }
 
-#[inline(always)]
+#[inline]
 pub fn XMConvertToDegrees(fRadians: f32) -> f32 { return fRadians * (180.0 / XM_PI); }
 
 /// Tests the comparison value to determine if all of the compared components are true.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMComparisonAllTrue>
-#[inline(always)]
+#[inline]
 pub fn XMComparisonAllTrue(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6TRUE) == XM_CRMASK_CR6TRUE); }
 
 /// Tests the comparison value to determine if any of the compared components are true.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMComparisonAnyTrue>
-#[inline(always)]
+#[inline]
 pub fn XMComparisonAnyTrue(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6FALSE) != XM_CRMASK_CR6FALSE); }
 
 /// Tests the comparison value to determine if all of the compared components are false.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMComparisonAllFalse>
-#[inline(always)]
+#[inline]
 pub fn XMComparisonAllFalse(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6FALSE) == XM_CRMASK_CR6FALSE); }
 
 /// Tests the comparison value to determine if any of the compared components are false.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMComparisonAnyFalse>
-#[inline(always)]
+#[inline]
 pub fn XMComparisonAnyFalse(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6TRUE) != XM_CRMASK_CR6TRUE); }
 
 /// Tests the comparison value to determine if the compared components had mixed results--some true and some false.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMComparisonMixed>
-#[inline(always)]
+#[inline]
 pub fn XMComparisonMixed(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6) == 0); }
 
 /// Tests the comparison value to determine if all of the compared components are within set bounds.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMComparisonAllInBounds>
-#[inline(always)]
+#[inline]
 pub fn XMComparisonAllInBounds(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6BOUNDS) == XM_CRMASK_CR6BOUNDS); }
 
 /// Tests the comparison value to determine if any of the compared components are outside the set bounds.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMComparisonAnyOutOfBounds>
-#[inline(always)]
+#[inline]
 pub fn XMComparisonAnyOutOfBounds(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6BOUNDS) != XM_CRMASK_CR6BOUNDS); }
 
 #[cfg(_XM_NO_INTRINSICS_)]
@@ -370,7 +370,7 @@ macro_rules! cast_m128 {
     ($Name:ident) => {
         impl $Name {
             #[cfg(_XM_SSE_INTRINSICS_)]
-            #[inline(always)]
+            #[inline]
             fn m128i(self) -> __m128i {
                 unsafe {
                     _mm_castps_si128(self.v)
@@ -378,7 +378,7 @@ macro_rules! cast_m128 {
             }
 
             #[cfg(_XM_SSE_INTRINSICS_)]
-            #[inline(always)]
+            #[inline]
             fn m128d(self) -> __m128d {
                 unsafe {
                     _mm_castps_pd(self.v)
@@ -489,7 +489,7 @@ pub type CXMMATRIX<'a> = &'a XMMATRIX;
 // TODO: XMFLOAT4X4
 // TODO: XMFLOAT4X4A
 
-#[inline(always)]
+#[inline]
 pub fn XMMin<T: PartialOrd>(a: T, b: T) -> T { 
     if a < b {
         a
@@ -498,7 +498,7 @@ pub fn XMMin<T: PartialOrd>(a: T, b: T) -> T {
     }
 }
 
-#[inline(always)]
+#[inline]
 pub fn XMMax<T: PartialOrd>(a: T, b: T) -> T { 
     if a > b {
         a
@@ -515,7 +515,7 @@ pub fn XMMax<T: PartialOrd>(a: T, b: T) -> T {
 // TODO: XMVectorRotateRight template
 // TODO: XMVectorInsert template
 
-#[inline(always)]
+#[inline]
 pub fn XMVectorSetBinaryConstant(C0: u32, C1: u32, C2: u32, C3: u32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -546,7 +546,7 @@ pub fn XMVectorSetBinaryConstant(C0: u32, C1: u32, C2: u32, C3: u32) -> XMVECTOR
     }
 }
 
-#[inline(always)]
+#[inline]
 pub fn XMVectorSplatConstant(IntConstant: i32, DivExponent: u32) -> XMVECTOR {
     assert!(IntConstant >= -16 && IntConstant <= 15);
     assert!(DivExponent < 32);
@@ -579,7 +579,7 @@ pub fn XMVectorSplatConstant(IntConstant: i32, DivExponent: u32) -> XMVECTOR {
     }
 }
 
-#[inline(always)]
+#[inline]
 pub fn XMVectorSplatConstantInt(IntConstant: i32) -> XMVECTOR {
     debug_assert!(IntConstant >= -16 && IntConstant <= 15);
 

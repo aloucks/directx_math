@@ -3,7 +3,7 @@ use std::mem;
 
 use crate::*;
 
-#[inline(always)]
+#[inline]
 pub fn XMConvertVectorIntToFloat(VInt: FXMVECTOR, DivExponent: u32) -> XMVECTOR {
     assert!(DivExponent < 32);
 
