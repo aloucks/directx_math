@@ -2,7 +2,7 @@ fn main() {
     #[cfg(feature="no_intrinsics")]
     println!("cargo:rustc-cfg=_XM_NO_INTRINSICS_");
 
-    #[cfg(all(target_feature="avx2", not(feature="no_intrinsics"), not(feature="no_avx2")))]
+    #[cfg(all(target_feature="avx", not(feature="no_intrinsics"), not(feature="no_avx2")))]
     println!("cargo:rustc-cfg=_XM_AVX2_INTRINSICS_");
 
     #[cfg(all(target_feature="fma", not(feature="no_intrinsics"), not(feature="no_fma3")))]
@@ -18,8 +18,8 @@ fn main() {
     println!("cargo:rustc-cfg=_XM_SSE_INTRINSICS_");
 
     #[cfg(all(target_arch="arm", not(feature="no_intrinsics")))]
-    // NOTE: ARM intrinics require nightly and don't seem to be fully
-    //       implemented/available.
-    // println!("cargo:rustc-cfg=_XM_ARM_NEON_INTRINSICS_");
     println!("cargo:rustc-cfg=_XM_NO_INTRINSICS_");
+    // NOTE: ARM intrinics require nightly and don't seem to be fully
+    //       implemented/available (or they're missing on docs.rs).
+    // println!("cargo:rustc-cfg=_XM_ARM_NEON_INTRINSICS_");
 }
