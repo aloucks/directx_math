@@ -66,6 +66,26 @@ pub(crate) fn tanf(x: f32) -> f32 {
 }
 
 #[inline(always)]
+pub(crate) fn asinf(x: f32) -> f32 {
+    x.asin()
+}
+
+#[inline(always)]
+pub(crate) fn acosf(x: f32) -> f32 {
+    x.acos()
+}
+
+#[inline(always)]
+pub(crate) fn atanf(x: f32) -> f32 {
+    x.atan()
+}
+
+#[inline(always)]
+pub(crate) fn atan2f(y: f32, x: f32) -> f32 {
+    y.atan2(x)
+}
+
+#[inline(always)]
 pub(crate) fn modff(x: f32) -> (f32, f32) {
     // https://github.com/rust-lang/libm/blob/d3f1dba56dc47fbae6f5d6e47c3a00a4aab5b6c5/src/math/modff.rs#L1
     // https://github.com/rust-lang/libm/blob/d3f1dba56dc47fbae6f5d6e47c3a00a4aab5b6c5/LICENSE-MIT
