@@ -3044,6 +3044,19 @@ pub fn XMVectorSin(
     }
 }
 
+#[test]
+fn test_XMVectorSin() {
+    for angle in &[-XM_PI, -XM_PI/2.0, -XM_PI/3.0, -XM_PI/4.0, 0.0, XM_PI/4.0, XM_PI/3.0, XM_PI/2.0, XM_PI] {
+        let scalar = angle.sin();
+        let vector = XMVectorReplicate(*angle);
+        let vector = XMVectorSin(vector);
+        assert_approx_eq!(scalar, XMVectorGetX(vector));
+        assert_approx_eq!(scalar, XMVectorGetY(vector));
+        assert_approx_eq!(scalar, XMVectorGetZ(vector));
+        assert_approx_eq!(scalar, XMVectorGetW(vector));
+    }
+}
+
 /// Computes the cosine of each component of an XMVECTOR.
 /// 
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorCos>
@@ -3111,6 +3124,19 @@ pub fn XMVectorCos(
         Result = XM_FMADD_PS!(Result, x2, g_XMOne.v);
         Result = _mm_mul_ps(Result, sign);
         return Result;
+    }
+}
+
+#[test]
+fn test_XMVectorCos() {
+    for angle in &[-XM_PI, -XM_PI/2.0, -XM_PI/3.0, -XM_PI/4.0, 0.0, XM_PI/4.0, XM_PI/3.0, XM_PI/2.0, XM_PI] {
+        let scalar = angle.cos();
+        let vector = XMVectorReplicate(*angle);
+        let vector = XMVectorCos(vector);
+        assert_approx_eq!(scalar, XMVectorGetX(vector));
+        assert_approx_eq!(scalar, XMVectorGetY(vector));
+        assert_approx_eq!(scalar, XMVectorGetZ(vector));
+        assert_approx_eq!(scalar, XMVectorGetW(vector));
     }
 }
 
@@ -3326,16 +3352,13 @@ pub fn XMVectorTan(
 
 #[test]
 fn test_XMVectorTan() {
-    let step = XM_PI / 90.0;
-    let mut angle = step;
-    loop {
+    for angle in &[-XM_PI/3.0, -XM_PI/4.0, 0.0, XM_PI/4.0, XM_PI/3.0] {
         let scalar = angle.tan();
-        let vector = XMVectorReplicate(angle);
+        let vector = XMVectorReplicate(*angle);
         let vector = XMVectorTan(vector);
         assert_approx_eq!(scalar, XMVectorGetX(vector));
-        angle += step;
-        if angle > XM_PIDIV4 {
-            break;
-        }
+        assert_approx_eq!(scalar, XMVectorGetY(vector));
+        assert_approx_eq!(scalar, XMVectorGetZ(vector));
+        assert_approx_eq!(scalar, XMVectorGetW(vector));
     }
 }
