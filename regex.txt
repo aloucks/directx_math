@@ -1,0 +1,26 @@
+
+__m128 (.+) = 
+let $1: __m128 = 
+
+
+const XMVECTOR (.+) = (.+);
+const $1: XMVECTOR = unsafe { $2.v };
+
+
+_PS\(
+_PS!(
+
+
+g_([\w)]+)\)
+g_$1.v)
+
+
+XMVECTOR ([\w]+) =
+let $1: XMVECTOR =
+
+
+([\w]+) ([\w]+) =
+let $2: $1 =
+
+(\d)\.([\d]+)f
+$1.$2
