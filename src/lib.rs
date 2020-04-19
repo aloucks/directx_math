@@ -11,6 +11,7 @@
 #![deny(unused_variables)]
 #![deny(unused_unsafe)]
 #![deny(dead_code)]
+#![deny(unused_mut)]
 
 #[allow(unused_imports)]
 use std::mem;
@@ -291,10 +292,12 @@ macro_rules! XM_PREFETCH {
 pub mod vector;
 pub mod convert;
 pub mod globals;
+pub mod misc;
 
 pub use vector::*;
 pub use convert::*;
 pub use globals::*;
+pub use misc::*;
 
 pub const XM_PI: f32 = 3.141592654;
 pub const XM_2PI: f32 = 6.283185307;

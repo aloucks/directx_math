@@ -412,6 +412,31 @@ pub fn XMVectorSplatEpsilon() -> XMVECTOR {
     }
 }
 
+/// Return a vector of -0.0f (0x80000000),-0.0f,-0.0f,-0.0f
+#[inline]
+pub fn XMVectorSplatSignMask() -> XMVECTOR {
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut vResult: XMVECTORU32 = mem::MaybeUninit::uninit().assume_init();
+        vResult.u[0] = 0x80000000u32;
+        vResult.u[1] = 0x80000000u32;
+        vResult.u[2] = 0x80000000u32;
+        vResult.u[3] = 0x80000000u32;
+        return vResult.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let V: __m128i  = _mm_set1_epi32(0x80000000u32 as i32);
+        return _mm_castsi128_ps(V);
+    }
+}
+
 /// Return a floating point value via an index. This is not a recommended
 /// function to use due to performance loss.
 #[inline]
@@ -6383,6 +6408,186 @@ pub fn XMVector4Length(
     }
 }
 
+/// Estimates the normalized version of a 4D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4NormalizeEst>
+#[inline]
+pub fn XMVector4NormalizeEst(
+    V: FXMVECTOR,
+) -> FXMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    {
+        let mut Result: XMVECTOR;
 
+        Result = XMVector4ReciprocalLength(V);
+        Result = XMVectorMultiply(V, Result);
 
+        return Result;
+    }
 
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE4_INTRINSICS_)]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_dp_ps(V, V, 0xff);
+        let vResult: XMVECTOR = _mm_rsqrt_ps(vTemp);
+        return _mm_mul_ps(vResult, V);
+    }
+
+    #[cfg(all(_XM_SSE3_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        let mut vDot: XMVECTOR = _mm_mul_ps(V, V);
+        vDot = _mm_hadd_ps(vDot, vDot);
+        vDot = _mm_hadd_ps(vDot, vDot);
+        vDot = _mm_rsqrt_ps(vDot);
+        vDot = _mm_mul_ps(vDot, V);
+        return vDot;
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE3_INTRINSICS_), not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        // Perform the dot product on x,y,z and w
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        // vTemp has z and w
+        let mut vTemp: XMVECTOR = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(3, 2, 3, 2));
+        // x+z, y+w
+        vLengthSq = _mm_add_ps(vLengthSq, vTemp);
+        // x+z,x+z,x+z,y+w
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(1, 0, 0, 0));
+        // ??,??,y+w,y+w
+        vTemp = _mm_shuffle_ps(vTemp, vLengthSq, _MM_SHUFFLE(3, 3, 0, 0));
+        // ??,??,x+z+y+w,??
+        vLengthSq = _mm_add_ps(vLengthSq, vTemp);
+        // Splat the length
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(2, 2, 2, 2));
+        // Get the reciprocal
+        let mut vResult: XMVECTOR = _mm_rsqrt_ps(vLengthSq);
+        // Reciprocal mul to perform the normalization
+        vResult = _mm_mul_ps(vResult, V);
+        return vResult;
+    }
+}
+
+/// Computes the normalized version of a 4D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4Normalize>
+#[inline]
+pub fn XMVector4Normalize(
+    V: FXMVECTOR,
+) -> FXMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut fLength: f32;
+        let mut vResult: XMVECTOR;
+
+        vResult = XMVector4Length(V);
+        fLength = vResult.vector4_f32[0];
+
+        // Prevent divide by zero
+        if (fLength > 0.0)
+        {
+            fLength = 1.0 / fLength;
+        }
+
+        vResult.vector4_f32[0] = V.vector4_f32[0] * fLength;
+        vResult.vector4_f32[1] = V.vector4_f32[1] * fLength;
+        vResult.vector4_f32[2] = V.vector4_f32[2] * fLength;
+        vResult.vector4_f32[3] = V.vector4_f32[3] * fLength;
+        return vResult;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE4_INTRINSICS_)]
+    unsafe {
+        let mut vLengthSq: XMVECTOR = _mm_dp_ps(V, V, 0xff);
+        // Prepare for the division
+        let mut vResult: XMVECTOR = _mm_sqrt_ps(vLengthSq);
+        // Create zero with a single instruction
+        let mut vZeroMask: XMVECTOR = _mm_setzero_ps();
+        // Test for a divide by zero (Must be FP to detect -0.0)
+        vZeroMask = _mm_cmpneq_ps(vZeroMask, vResult);
+        // Failsafe on zero (Or epsilon) length planes
+        // If the length is infinity, set the elements to zero
+        vLengthSq = _mm_cmpneq_ps(vLengthSq, g_XMInfinity.v);
+        // Divide to perform the normalization
+        vResult = _mm_div_ps(V, vResult);
+        // Any that are infinity, set to zero
+        vResult = _mm_and_ps(vResult, vZeroMask);
+        // Select qnan or result based on infinite length
+        let vTemp1: XMVECTOR = _mm_andnot_ps(vLengthSq, g_XMQNaN.v);
+        let vTemp2: XMVECTOR = _mm_and_ps(vResult, vLengthSq);
+        vResult = _mm_or_ps(vTemp1, vTemp2);
+        return vResult;
+    }
+
+    #[cfg(all(_XM_SSE3_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        // Perform the dot product on x,y,z and w
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        vLengthSq = _mm_hadd_ps(vLengthSq, vLengthSq);
+        vLengthSq = _mm_hadd_ps(vLengthSq, vLengthSq);
+        // Prepare for the division
+        let mut vResult: XMVECTOR = _mm_sqrt_ps(vLengthSq);
+        // Create zero with a single instruction
+        let mut vZeroMask: XMVECTOR = _mm_setzero_ps();
+        // Test for a divide by zero (Must be FP to detect -0.0)
+        vZeroMask = _mm_cmpneq_ps(vZeroMask, vResult);
+        // Failsafe on zero (Or epsilon) length planes
+        // If the length is infinity, set the elements to zero
+        vLengthSq = _mm_cmpneq_ps(vLengthSq, g_XMInfinity.v);
+        // Divide to perform the normalization
+        vResult = _mm_div_ps(V, vResult);
+        // Any that are infinity, set to zero
+        vResult = _mm_and_ps(vResult, vZeroMask);
+        // Select qnan or result based on infinite length
+        let vTemp1: XMVECTOR = _mm_andnot_ps(vLengthSq, g_XMQNaN.v);
+        let vTemp2: XMVECTOR = _mm_and_ps(vResult, vLengthSq);
+        vResult = _mm_or_ps(vTemp1, vTemp2);
+        return vResult;
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE3_INTRINSICS_), not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        // Perform the dot product on x,y,z and w
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        // vTemp has z and w
+        let mut vTemp: XMVECTOR = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(3, 2, 3, 2));
+        // x+z, y+w
+        vLengthSq = _mm_add_ps(vLengthSq, vTemp);
+        // x+z,x+z,x+z,y+w
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(1, 0, 0, 0));
+        // ??,??,y+w,y+w
+        vTemp = _mm_shuffle_ps(vTemp, vLengthSq, _MM_SHUFFLE(3, 3, 0, 0));
+        // ??,??,x+z+y+w,??
+        vLengthSq = _mm_add_ps(vLengthSq, vTemp);
+        // Splat the length
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(2, 2, 2, 2));
+        // Prepare for the division
+        let mut vResult: XMVECTOR = _mm_sqrt_ps(vLengthSq);
+        // Create zero with a single instruction
+        let mut vZeroMask: XMVECTOR = _mm_setzero_ps();
+        // Test for a divide by zero (Must be FP to detect -0.0)
+        vZeroMask = _mm_cmpneq_ps(vZeroMask, vResult);
+        // Failsafe on zero (Or epsilon) length planes
+        // If the length is infinity, set the elements to zero
+        vLengthSq = _mm_cmpneq_ps(vLengthSq, g_XMInfinity.v);
+        // Divide to perform the normalization
+        vResult = _mm_div_ps(V, vResult);
+        // Any that are infinity, set to zero
+        vResult = _mm_and_ps(vResult, vZeroMask);
+        // Select qnan or result based on infinite length
+        let vTemp1: XMVECTOR = _mm_andnot_ps(vLengthSq, g_XMQNaN.v);
+        let vTemp2: XMVECTOR = _mm_and_ps(vResult, vLengthSq);
+        vResult = _mm_or_ps(vTemp1, vTemp2);
+        return vResult;
+    }
+}
