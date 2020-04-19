@@ -330,26 +330,32 @@ pub const XM_CRMASK_CR6BOUNDS: u32 = XM_CRMASK_CR6FALSE;
 
 pub const XM_CACHE_LINE_SIZE: u32 = 64;
 
+/// Converts an angle measured in degrees into one measured in radians.
+///
+/// https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMConvertToRadians
 #[inline]
 pub fn XMConvertToRadians(fDegrees: f32) -> f32 { return fDegrees * (XM_PI / 180.0); }
 
+/// Converts an angle measured in radians into one measured in degrees.
+///
+/// https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMConvertToDegrees
 #[inline]
 pub fn XMConvertToDegrees(fRadians: f32) -> f32 { return fRadians * (180.0 / XM_PI); }
 
 /// Tests the comparison value to determine if all of the compared components are true.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMComparisonAllTrue>
 #[inline]
 pub fn XMComparisonAllTrue(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6TRUE) == XM_CRMASK_CR6TRUE); }
 
 /// Tests the comparison value to determine if any of the compared components are true.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMComparisonAnyTrue>
 #[inline]
 pub fn XMComparisonAnyTrue(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6FALSE) != XM_CRMASK_CR6FALSE); }
 
 /// Tests the comparison value to determine if all of the compared components are false.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMComparisonAllFalse>
 #[inline]
 pub fn XMComparisonAllFalse(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6FALSE) == XM_CRMASK_CR6FALSE); }
@@ -361,7 +367,7 @@ pub fn XMComparisonAllFalse(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6FALSE)
 pub fn XMComparisonAnyFalse(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6TRUE) != XM_CRMASK_CR6TRUE); }
 
 /// Tests the comparison value to determine if the compared components had mixed results--some true and some false.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMComparisonMixed>
 #[inline]
 pub fn XMComparisonMixed(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6) == 0); }
@@ -373,7 +379,7 @@ pub fn XMComparisonMixed(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6) == 0); 
 pub fn XMComparisonAllInBounds(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6BOUNDS) == XM_CRMASK_CR6BOUNDS); }
 
 /// Tests the comparison value to determine if any of the compared components are outside the set bounds.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMComparisonAnyOutOfBounds>
 #[inline]
 pub fn XMComparisonAnyOutOfBounds(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6BOUNDS) != XM_CRMASK_CR6BOUNDS); }
@@ -524,6 +530,11 @@ pub type CXMMATRIX<'a> = &'a XMMATRIX;
 // TODO: XMFLOAT4X4
 // TODO: XMFLOAT4X4A
 
+/// Compares two numeric data type instances, or two instances of an object
+/// which supports an overload of `<`, and returns the smaller one of the two
+/// instances. The data type of the arguments and the return value is the same.
+///
+/// https://docs.microsoft.com/en-us/windows/win32/dxmath/xmmin-template
 #[inline]
 pub fn XMMin<T: PartialOrd>(a: T, b: T) -> T { 
     if a < b {
@@ -533,6 +544,11 @@ pub fn XMMin<T: PartialOrd>(a: T, b: T) -> T {
     }
 }
 
+/// Compares two numeric data type instances, or two instances of an object
+/// which supports an overload of `<`, and returns the larger one of the two
+/// instances. The data type of the arguments and the return value is the same.
+///
+/// https://docs.microsoft.com/en-us/windows/win32/dxmath/xmmax-template
 #[inline]
 pub fn XMMax<T: PartialOrd>(a: T, b: T) -> T { 
     if a > b {
@@ -550,6 +566,9 @@ pub fn XMMax<T: PartialOrd>(a: T, b: T) -> T {
 // TODO: XMVectorRotateRight template
 // TODO: XMVectorInsert template
 
+/// Creates a vector, each of whose components is either 0.0f or 1.0f.
+///
+/// https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSetBinaryConstant
 #[inline]
 pub fn XMVectorSetBinaryConstant(C0: u32, C1: u32, C2: u32, C3: u32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -581,6 +600,9 @@ pub fn XMVectorSetBinaryConstant(C0: u32, C1: u32, C2: u32, C3: u32) -> XMVECTOR
     }
 }
 
+/// Creates a vector with identical floating-point components. Each component is a constant divided by two raised to an integer exponent.
+///
+/// https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatConstant
 #[inline]
 pub fn XMVectorSplatConstant(IntConstant: i32, DivExponent: u32) -> XMVECTOR {
     assert!(IntConstant >= -16 && IntConstant <= 15);
@@ -613,6 +635,9 @@ pub fn XMVectorSplatConstant(IntConstant: i32, DivExponent: u32) -> XMVECTOR {
     }
 }
 
+/// Creates a vector with identical integer components.
+///
+/// https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatConstantInt
 #[inline]
 pub fn XMVectorSplatConstantInt(IntConstant: i32) -> XMVECTOR {
     debug_assert!(IntConstant >= -16 && IntConstant <= 15);
