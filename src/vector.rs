@@ -3727,7 +3727,62 @@ pub fn XMVectorATan2(
     }
 }
 
-// TODO: XMVectorSinEst
+
+/// Estimates the sine of each component of an XMVECTOR.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSinEst>
+#[inline]
+pub fn XMVectorSinEst(
+    V: FXMVECTOR,
+) -> XMVECTOR
+{
+    // 7-degree minimax approximation
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Result = XMVECTORF32 {
+            f: [
+                sinf(V.vector4_f32[0]),
+                sinf(V.vector4_f32[1]),
+                sinf(V.vector4_f32[2]),
+                sinf(V.vector4_f32[3])
+            ]
+        };
+        return Result.v;
+    }
+
+    #[cfg(not(_XM_NO_INTRINSICS_))]
+    unsafe {
+        // Force the value within the bounds of pi
+        let mut x: XMVECTOR = XMVectorModAngles(V);
+
+        // Map in [-pi/2,pi/2] with sin(y) = sin(x).
+        let sign: __m128 = _mm_and_ps(x, g_XMNegativeZero.v);
+        let c: __m128 = _mm_or_ps(g_XMPi.v, sign);  // pi when x >= 0, -pi when x < 0
+        let absx: __m128 = _mm_andnot_ps(sign, x);  // |x|
+        let rflx: __m128 = _mm_sub_ps(c, x);
+        let comp: __m128 = _mm_cmple_ps(absx, g_XMHalfPi.v);
+        let select0: __m128 = _mm_and_ps(comp, x);
+        let select1: __m128 = _mm_andnot_ps(comp, rflx);
+        x = _mm_or_ps(select0, select1);
+
+        let x2: __m128 = _mm_mul_ps(x, x);
+
+        // Compute polynomial approximation
+        const SEC: XMVECTOR = unsafe { g_XMSinCoefficients1.v };
+        let vConstantsB: __m128 = XM_PERMUTE_PS!(SEC, _MM_SHUFFLE(3, 3, 3, 3));
+        let mut vConstants: __m128 = XM_PERMUTE_PS!(SEC, _MM_SHUFFLE(2, 2, 2, 2));
+        let mut Result: __m128 = XM_FMADD_PS!(vConstantsB, x2, vConstants);
+
+        vConstants = XM_PERMUTE_PS!(SEC, _MM_SHUFFLE(1, 1, 1, 1));
+        Result = XM_FMADD_PS!(Result, x2, vConstants);
+        Result = XM_FMADD_PS!(Result, x2, g_XMOne.v);
+        Result = _mm_mul_ps(Result, x);
+        return Result;
+    }
+}
+
+
 // TODO: XMVectorCosEst
 // TODO: XMVectorSinCosEst
 // TODO: XMVectorTanEst

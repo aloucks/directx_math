@@ -251,14 +251,14 @@ macro_rules! XM_FNMADD_PS {
 
 // --
 
-#[cfg(not(_XM_FMA3_INTRINSICS_))]
+#[cfg(all(not(_XM_FMA3_INTRINSICS_), _XM_SSE_INTRINSICS_))]
 macro_rules! XM_FMADD_PS {
     ($a:expr, $b:expr, $c:expr) => {
         $crate::arch::_mm_add_ps(_mm_mul_ps(($a), ($b)), ($c))
     }
 }
 
-#[cfg(not(_XM_FMA3_INTRINSICS_))]
+#[cfg(all(not(_XM_FMA3_INTRINSICS_), _XM_SSE_INTRINSICS_))]
 macro_rules! XM_FNMADD_PS {
     ($a:expr, $b:expr, $c:expr) => {
         $crate::arch::_mm_sub_ps(($c), _mm_mul_ps(($a), ($b)))
@@ -274,7 +274,7 @@ macro_rules! XM_PERMUTE_PS {
     }
 }
 
-#[cfg(not(all(_XM_AVX_INTRINSICS_, _XM_FAVOR_INTEL_)))]
+#[cfg(all(not(all(_XM_AVX_INTRINSICS_, _XM_FAVOR_INTEL_)), _XM_SSE_INTRINSICS_))]
 macro_rules! XM_PERMUTE_PS {
     ($v:expr, $c:expr) => {
         $crate::arch::_mm_shuffle_ps(($v), ($v), $c)

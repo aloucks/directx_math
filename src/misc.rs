@@ -236,7 +236,8 @@ pub fn XMQuaternionInverse(
 ) -> FXMVECTOR
 {
     unsafe {
-        // const XMVECTOR  Zero = XMVectorZero();
+        // const Zero: XMVECTOR = XMVectorZero();
+        const Zero: XMVECTOR = unsafe { g_XMZero.v };
 
         let L: XMVECTOR = XMVector4LengthSq(Q);
         let Conjugate: XMVECTOR = XMQuaternionConjugate(Q);
@@ -245,14 +246,70 @@ pub fn XMQuaternionInverse(
 
         let mut Result: XMVECTOR = XMVectorDivide(Conjugate, L);
 
-        Result = XMVectorSelect(Result, g_XMZero.v, Control);
+        Result = XMVectorSelect(Result, Zero, Control);
 
         return Result;
     }
 }
 
-// TODO: XMQuaternionLn
-// TODO: XMQuaternionExp
+/// Computes the natural logarithm of a given unit quaternion.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionLn>
+#[inline]
+pub fn XMQuaternionLn(
+    Q: FXMVECTOR,
+) -> FXMVECTOR
+{
+    unsafe {
+        // TODO: PERFORMANCE static const
+        const OneMinusEpsilon: XMVECTOR = unsafe { XMVECTORF32 { f: [1.0 - 0.00001, 1.0 - 0.00001, 1.0 - 0.00001, 1.0 - 0.00001] }.v };
+
+        let QW: XMVECTOR = XMVectorSplatW(Q);
+        let Q0: XMVECTOR = XMVectorSelect(g_XMSelect1110.v, Q, g_XMSelect1110.v);
+
+        let ControlW: XMVECTOR = XMVectorInBounds(QW, OneMinusEpsilon);
+
+        let Theta: XMVECTOR = XMVectorACos(QW);
+        let SinTheta: XMVECTOR = XMVectorSin(Theta);
+
+        let S: XMVECTOR = XMVectorDivide(Theta, SinTheta);
+
+        let mut Result: XMVECTOR = XMVectorMultiply(Q0, S);
+        Result = XMVectorSelect(Q0, Result, ControlW);
+
+        return Result;
+    }
+}
+
+/// Computes the exponential of a given pure quaternion.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionExp>
+#[inline]
+pub fn XMQuaternionExp(
+    Q: FXMVECTOR,
+) -> FXMVECTOR
+{
+    unsafe {
+        let Theta: XMVECTOR = XMVector3Length(Q);
+
+        let mut SinTheta: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut CosTheta: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        XMVectorSinCos(&mut SinTheta, &mut CosTheta, Theta);
+
+        let S: XMVECTOR = XMVectorDivide(SinTheta, Theta);
+
+        let mut Result: XMVECTOR = XMVectorMultiply(Q, S);
+
+        //const let Zero: XMVECTOR = XMVectorZero();
+        const Zero: XMVECTOR = unsafe { g_XMZero.v };
+        let Control: XMVECTOR = XMVectorNearEqual(Theta, Zero, g_XMEpsilon.v);
+        Result = XMVectorSelect(Result, Q, Control);
+
+        Result = XMVectorSelect(CosTheta, Result, g_XMSelect1110.v);
+
+        return Result;
+    }
+}
 
 
 /// Interpolates between two unit quaternions, using spherical linear interpolation.
@@ -370,5 +427,180 @@ pub fn XMQuaternionSlerpV(
         S1 = _mm_mul_ps(S1, Q1);
         Result = _mm_add_ps(Result, S1);
         return Result;
+    }
+}
+
+/// Interpolates between four unit quaternions, using spherical quadrangle interpolation.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionSquad>
+#[inline]
+pub fn XMQuaternionSquad(
+    Q0: FXMVECTOR,
+    Q1: FXMVECTOR,
+    Q2: FXMVECTOR,
+    Q3: GXMVECTOR,
+    t: f32,
+) -> FXMVECTOR
+{
+    let T: XMVECTOR = XMVectorReplicate(t);
+    return XMQuaternionSquadV(Q0, Q1, Q2, Q3, T);
+}
+
+/// Interpolates between four unit quaternions, using spherical quadrangle interpolation.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionSquad>
+#[inline]
+pub fn XMQuaternionSquadV(
+    Q0: FXMVECTOR,
+    Q1: FXMVECTOR,
+    Q2: FXMVECTOR,
+    Q3: GXMVECTOR,
+    T: XMVECTOR,
+) -> FXMVECTOR
+{
+    // debug_assert!((XMVectorGetY(T) == XMVectorGetX(T)) && (XMVectorGetZ(T) == XMVectorGetX(T)) && (XMVectorGetW(T) == XMVectorGetX(T)));
+
+    let mut TP: XMVECTOR = T;
+
+    let Two: XMVECTOR = XMVectorSplatConstant(2, 0);
+
+    let Q03: XMVECTOR = XMQuaternionSlerpV(Q0, Q3, T);
+    let Q12: XMVECTOR = XMQuaternionSlerpV(Q1, Q2, T);
+
+    TP = XMVectorNegativeMultiplySubtract(TP, TP, TP);
+    TP = XMVectorMultiply(TP, Two);
+
+    let Result: XMVECTOR = XMQuaternionSlerpV(Q03, Q12, TP);
+
+    return Result;
+}
+
+/// Provides addresses of setup control points for spherical quadrangle interpolation.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent
+/// quaternions, where the `X`, `Y`, and `Z` components are the vector part and the
+/// `W` component is the scalar part.
+///
+/// The results returned in `pA`, `pB`, and `pC` are used as the inputs to the
+/// `Q1`, `Q2`, and `Q3` parameters of XMQuaternionSquad.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionSquadSetup>
+#[inline]
+pub fn XMQuaternionSquadSetup(
+    pA: &mut XMVECTOR,
+    pB: &mut XMVECTOR,
+    pC: &mut XMVECTOR,
+    Q0: FXMVECTOR,
+    Q1: FXMVECTOR,
+    Q2: FXMVECTOR,
+    Q3: GXMVECTOR
+)
+{
+    let LS12: XMVECTOR = XMQuaternionLengthSq(XMVectorAdd(Q1, Q2));
+    let LD12: XMVECTOR = XMQuaternionLengthSq(XMVectorSubtract(Q1, Q2));
+    let mut SQ2: XMVECTOR = XMVectorNegate(Q2);
+
+    let Control1: XMVECTOR = XMVectorLess(LS12, LD12);
+    SQ2 = XMVectorSelect(Q2, SQ2, Control1);
+
+    let LS01: XMVECTOR = XMQuaternionLengthSq(XMVectorAdd(Q0, Q1));
+    let LD01: XMVECTOR = XMQuaternionLengthSq(XMVectorSubtract(Q0, Q1));
+    let mut SQ0: XMVECTOR = XMVectorNegate(Q0);
+
+    let LS23: XMVECTOR = XMQuaternionLengthSq(XMVectorAdd(SQ2, Q3));
+    let LD23: XMVECTOR = XMQuaternionLengthSq(XMVectorSubtract(SQ2, Q3));
+    let mut SQ3: XMVECTOR = XMVectorNegate(Q3);
+
+    let Control0: XMVECTOR = XMVectorLess(LS01, LD01);
+    let Control2: XMVECTOR = XMVectorLess(LS23, LD23);
+
+    SQ0 = XMVectorSelect(Q0, SQ0, Control0);
+    SQ3 = XMVectorSelect(Q3, SQ3, Control2);
+
+    let InvQ1: XMVECTOR = XMQuaternionInverse(Q1);
+    let InvQ2: XMVECTOR = XMQuaternionInverse(SQ2);
+
+    let LnQ0: XMVECTOR = XMQuaternionLn(XMQuaternionMultiply(InvQ1, SQ0));
+    let LnQ2: XMVECTOR = XMQuaternionLn(XMQuaternionMultiply(InvQ1, SQ2));
+    let LnQ1: XMVECTOR = XMQuaternionLn(XMQuaternionMultiply(InvQ2, Q1));
+    let LnQ3: XMVECTOR = XMQuaternionLn(XMQuaternionMultiply(InvQ2, SQ3));
+
+    let NegativeOneQuarter: XMVECTOR = XMVectorSplatConstant(-1, 2);
+
+    let mut ExpQ02: XMVECTOR = XMVectorMultiply(XMVectorAdd(LnQ0, LnQ2), NegativeOneQuarter);
+    let mut ExpQ13: XMVECTOR = XMVectorMultiply(XMVectorAdd(LnQ1, LnQ3), NegativeOneQuarter);
+    ExpQ02 = XMQuaternionExp(ExpQ02);
+    ExpQ13 = XMQuaternionExp(ExpQ13);
+
+    *pA = XMQuaternionMultiply(Q1, ExpQ02);
+    *pB = XMQuaternionMultiply(SQ2, ExpQ13);
+    *pC = SQ2;
+}
+
+// TODO: XMQuaternionBaryCentric
+// TODO: XMQuaternionBaryCentricV
+
+/// Returns the identity quaternion.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionIdentity>
+#[inline]
+pub fn XMQuaternionIdentity() -> FXMVECTOR
+{
+    unsafe {
+        return g_XMIdentityR3.v;
+    }
+}
+
+
+/// Computes a rotation quaternion based on the pitch, yaw, and roll (Euler angles).
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionRotationRollPitchYaw>
+#[inline]
+pub fn XMQuaternionRotationRollPitchYaw(
+    Pitch: f32,
+    Yaw: f32,
+    Roll: f32,
+) -> FXMVECTOR
+{
+    let Angles: XMVECTOR = XMVectorSet(Pitch, Yaw, Roll, 0.0);
+    let Q: XMVECTOR = XMQuaternionRotationRollPitchYawFromVector(Angles);
+    return Q;
+}
+
+/// Computes a rotation quaternion based on a vector containing the Euler angles (pitch, yaw, and roll).
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionRotationRollPitchYawFromVector>
+#[inline]
+pub fn XMQuaternionRotationRollPitchYawFromVector(
+    Angles: XMVECTOR, // <Pitch, Yaw, Roll, 0>
+) -> FXMVECTOR
+{
+    unsafe {
+        // TODO: This is defined as a static const
+        const Sign: XMVECTORF32 = XMVECTORF32 { f: [1.0, -1.0, -1.0, 1.0 ] };
+
+        let HalfAngles: XMVECTOR = XMVectorMultiply(Angles, g_XMOneHalf.v);
+
+        let mut SinAngles: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut CosAngles: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        XMVectorSinCos(&mut SinAngles, &mut CosAngles, HalfAngles);
+
+        // TODO: PERFORMANCE XMVectorPermute
+        let P0: XMVECTOR = XMVectorPermute(SinAngles, CosAngles, XM_PERMUTE_0X, XM_PERMUTE_1X, XM_PERMUTE_1X, XM_PERMUTE_1X);
+        let Y0: XMVECTOR = XMVectorPermute(SinAngles, CosAngles, XM_PERMUTE_1Y, XM_PERMUTE_0Y, XM_PERMUTE_1Y, XM_PERMUTE_1Y);
+        let R0: XMVECTOR = XMVectorPermute(SinAngles, CosAngles, XM_PERMUTE_1Z, XM_PERMUTE_1Z, XM_PERMUTE_0Z, XM_PERMUTE_1Z);
+        let P1: XMVECTOR = XMVectorPermute(CosAngles, SinAngles, XM_PERMUTE_0X, XM_PERMUTE_1X, XM_PERMUTE_1X, XM_PERMUTE_1X);
+        let Y1: XMVECTOR = XMVectorPermute(CosAngles, SinAngles, XM_PERMUTE_1Y, XM_PERMUTE_0Y, XM_PERMUTE_1Y, XM_PERMUTE_1Y);
+        let R1: XMVECTOR = XMVectorPermute(CosAngles, SinAngles, XM_PERMUTE_1Z, XM_PERMUTE_1Z, XM_PERMUTE_0Z, XM_PERMUTE_1Z);
+
+        let mut Q1: XMVECTOR = XMVectorMultiply(P1, Sign.v);
+        let mut Q0: XMVECTOR = XMVectorMultiply(P0, Y0);
+        Q1 = XMVectorMultiply(Q1, Y1);
+        Q0 = XMVectorMultiply(Q0, R0);
+        let Q: XMVECTOR = XMVectorMultiplyAdd(Q1, R1, Q0);
+
+        return Q;
     }
 }
