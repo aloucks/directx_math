@@ -3687,7 +3687,67 @@ pub fn XMVectorATan2(
 // TODO: XMVectorSinCosEst
 // TODO: XMVectorTanEst
 // TODO: XMVectorASinEst
-// TODO: XMVectorACosEst
+
+
+/// Estimates the arccosine of each component of an XMVECTOR.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorACosEst>
+#[inline]
+pub fn XMVectorACosEst(
+    V: FXMVECTOR,
+) -> FXMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Result = XMVECTORF32 {
+            f: [
+                acosf(V.vector4_f32[0]),
+                acosf(V.vector4_f32[1]),
+                acosf(V.vector4_f32[2]),
+                acosf(V.vector4_f32[3])
+            ]
+        };
+        return Result.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let nonnegative: __m128 = _mm_cmpge_ps(V, g_XMZero.v);
+        let mvalue: __m128 = _mm_sub_ps(g_XMZero.v, V);
+        let x: __m128 = _mm_max_ps(V, mvalue);  // |V|
+
+        // Compute (1-|V|), clamp to zero to avoid sqrt of negative number.
+        let oneMValue: __m128 = _mm_sub_ps(g_XMOne.v, x);
+        let clampOneMValue: __m128 = _mm_max_ps(g_XMZero.v, oneMValue);
+        let root: __m128 = _mm_sqrt_ps(clampOneMValue);  // sqrt(1-|V|)
+
+        // Compute polynomial approximation
+        const AEC: XMVECTOR = unsafe { g_XMArcEstCoefficients.v };
+        let vConstantsB: __m128 = XM_PERMUTE_PS!(AEC, _MM_SHUFFLE(3, 3, 3, 3));
+        let mut vConstants: __m128 = XM_PERMUTE_PS!(AEC, _MM_SHUFFLE(2, 2, 2, 2));
+        let mut t0: __m128 = XM_FMADD_PS!(vConstantsB, x, vConstants);
+
+        vConstants = XM_PERMUTE_PS!(AEC, _MM_SHUFFLE(1, 1, 1, 1));
+        t0 = XM_FMADD_PS!(t0, x, vConstants);
+
+        vConstants = XM_PERMUTE_PS!(AEC, _MM_SHUFFLE(0, 0, 0, 0));
+        t0 = XM_FMADD_PS!(t0, x, vConstants);
+        t0 = _mm_mul_ps(t0, root);
+
+        let mut t1: __m128 = _mm_sub_ps(g_XMPi.v, t0);
+        t0 = _mm_and_ps(nonnegative, t0);
+        t1 = _mm_andnot_ps(nonnegative, t1);
+        t0 = _mm_or_ps(t0, t1);
+        return t0;
+    }
+}
+
+
 // TODO: XMVectorATanEst
 // TODO: XMVectorATan2Est
 
@@ -3966,6 +4026,7 @@ pub fn XMVectorBaryCentric(
 // TODO: XMVector2TransformNormal
 // TODO: XMVector2TransformNormalStream
 
+// 3D Vector
 
 /// Tests whether two 3D vectors are equal.
 ///
@@ -5037,4 +5098,565 @@ pub fn XMVector3Normalize(
         vResult = _mm_or_ps(vTemp1, vTemp2);
         return vResult;
     }
+}
+
+/// Clamps the length of a 3D vector to a given range.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3ClampLength>
+#[inline]
+pub fn XMVector3ClampLength(
+    V: FXMVECTOR,
+    LengthMin: f32,
+    LengthMax: f32,
+) -> FXMVECTOR
+{
+    let ClampMax: XMVECTOR = XMVectorReplicate(LengthMax);
+    let ClampMin: XMVECTOR = XMVectorReplicate(LengthMin);
+
+    return XMVector3ClampLengthV(V, ClampMin, ClampMax);
+}
+
+/// Clamps the length of a 3D vector to a given range.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3ClampLengthV>
+#[inline]
+pub fn XMVector3ClampLengthV(
+    V: FXMVECTOR,
+    LengthMin: FXMVECTOR,
+    LengthMax: FXMVECTOR,
+) -> FXMVECTOR
+{
+    let LengthSq: XMVECTOR = XMVector3LengthSq(V);
+
+    // const Zero: XMVECTOR = XMVectorZero();
+
+    let RcpLength: XMVECTOR = XMVectorReciprocalSqrt(LengthSq);
+
+    let InfiniteLength: XMVECTOR = XMVectorEqualInt(LengthSq, unsafe { g_XMInfinity.v });
+    let ZeroLength: XMVECTOR = XMVectorEqual(LengthSq, unsafe { g_XMZero.v });
+
+    let mut Normal: XMVECTOR = XMVectorMultiply(V, RcpLength);
+
+    let mut Length: XMVECTOR = XMVectorMultiply(LengthSq, RcpLength);
+
+    let Select: XMVECTOR = XMVectorEqualInt(InfiniteLength, ZeroLength);
+    Length = XMVectorSelect(LengthSq, Length, Select);
+    Normal = XMVectorSelect(LengthSq, Normal, Select);
+
+    let ControlMax: XMVECTOR = XMVectorGreater(Length, LengthMax);
+    let ControlMin: XMVECTOR = XMVectorLess(Length, LengthMin);
+
+    let mut ClampLength: XMVECTOR = XMVectorSelect(Length, LengthMax, ControlMax);
+    ClampLength = XMVectorSelect(ClampLength, LengthMin, ControlMin);
+
+    let mut Result: XMVECTOR = XMVectorMultiply(Normal, ClampLength);
+
+    // Preserve the original vector (with no precision loss) if the length falls within the given range
+    let Control: XMVECTOR = XMVectorEqualInt(ControlMax, ControlMin);
+    Result = XMVectorSelect(Result, V, Control);
+
+    return Result;
+}
+
+/// Reflects an incident 3D vector across a 3D normal vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3Reflect>
+#[inline]
+pub fn XMVector3Reflect(
+    Incident: FXMVECTOR,
+    Normal: FXMVECTOR
+) -> FXMVECTOR
+{
+    // Result = Incident - (2 * dot(Incident, Normal)) * Normal
+
+    let mut Result: XMVECTOR = XMVector3Dot(Incident, Normal);
+    Result = XMVectorAdd(Result, Result);
+    Result = XMVectorNegativeMultiplySubtract(Result, Normal, Incident);
+
+    return Result;
+}
+
+/// Refracts an incident 3D vector across a 3D normal vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3Refract>
+#[inline]
+pub fn XMVector3Refract(
+    Incident: FXMVECTOR,
+    Normal: FXMVECTOR,
+    RefractionIndex: f32,
+) -> FXMVECTOR
+{
+    let Index: XMVECTOR = XMVectorReplicate(RefractionIndex);
+    return XMVector3RefractV(Incident, Normal, Index);
+}
+
+/// Refracts an incident 3D vector across a 3D normal vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3RefractV>
+#[inline]
+pub fn XMVector3RefractV(
+    Incident: FXMVECTOR,
+    Normal: FXMVECTOR,
+    RefractionIndex: FXMVECTOR,
+) -> FXMVECTOR
+{
+    // Result = RefractionIndex * Incident - Normal * (RefractionIndex * dot(Incident, Normal) +
+    // sqrt(1 - RefractionIndex * RefractionIndex * (1 - dot(Incident, Normal) * dot(Incident, Normal))))
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        const Zero: XMVECTOR = unsafe { g_XMZero.v };
+
+        let IDotN: XMVECTOR = XMVector3Dot(Incident, Normal);
+
+        // R = 1.0f - RefractionIndex * RefractionIndex * (1.0f - IDotN * IDotN)
+        let mut R: XMVECTOR = XMVectorNegativeMultiplySubtract(IDotN, IDotN, g_XMOne.v);
+        R = XMVectorMultiply(R, RefractionIndex);
+        R = XMVectorNegativeMultiplySubtract(R, RefractionIndex, g_XMOne.v);
+
+        if (XMVector4LessOrEqual(R, Zero))
+        {
+            // Total internal reflection
+            return Zero;
+        }
+        else
+        {
+            // R = RefractionIndex * IDotN + sqrt(R)
+            R = XMVectorSqrt(R);
+            R = XMVectorMultiplyAdd(RefractionIndex, IDotN, R);
+
+            // Result = RefractionIndex * Incident - Normal * R
+            let mut Result: XMVECTOR = XMVectorMultiply(RefractionIndex, Incident);
+            Result = XMVectorNegativeMultiplySubtract(Normal, R, Result);
+
+            return Result;
+        }
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        // Result = RefractionIndex * Incident - Normal * (RefractionIndex * dot(Incident, Normal) +
+        // sqrt(1 - RefractionIndex * RefractionIndex * (1 - dot(Incident, Normal) * dot(Incident, Normal))))
+        let IDotN: XMVECTOR = XMVector3Dot(Incident, Normal);
+        // R = 1.0f - RefractionIndex * RefractionIndex * (1.0f - IDotN * IDotN)
+        let mut R: XMVECTOR = XM_FNMADD_PS!(IDotN, IDotN, g_XMOne.v);
+        let R2: XMVECTOR = _mm_mul_ps(RefractionIndex, RefractionIndex);
+        R = XM_FNMADD_PS!(R, R2, g_XMOne.v);
+
+        let mut vResult: XMVECTOR = _mm_cmple_ps(R, g_XMZero.v);
+        if (_mm_movemask_ps(vResult) == 0x0f)
+        {
+            // Total internal reflection
+            vResult = g_XMZero.v;
+        }
+        else
+        {
+            // R = RefractionIndex * IDotN + sqrt(R)
+            R = _mm_sqrt_ps(R);
+            R = XM_FMADD_PS!(RefractionIndex, IDotN, R);
+            // Result = RefractionIndex * Incident - Normal * R
+            vResult = _mm_mul_ps(RefractionIndex, Incident);
+            vResult = XM_FNMADD_PS!(R, Normal, vResult);
+        }
+        return vResult;
+    }
+}
+
+/// Computes a vector perpendicular to a 3D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3Orthogonal>
+#[inline]
+pub fn XMVector3Orthogonal(
+    V: FXMVECTOR,
+) -> FXMVECTOR
+{
+    let Zero: XMVECTOR = XMVectorZero();
+    let Z: XMVECTOR = XMVectorSplatZ(V);
+    // let YZYY: XMVECTOR = XMVectorSwizzle<XM_SWIZZLE_Y, XM_SWIZZLE_Z, XM_SWIZZLE_Y, XM_SWIZZLE_Y>(V);
+    // NOTE: (PERFORMANCE) The fast-path XMVectorSwizzle template functions are not yet implemented.
+    let YZYY: XMVECTOR = XMVectorSwizzle(V, XM_SWIZZLE_Y, XM_SWIZZLE_Z, XM_SWIZZLE_Y, XM_SWIZZLE_Y);
+
+    let NegativeV: XMVECTOR = XMVectorSubtract(Zero, V);
+
+    let ZIsNegative: XMVECTOR = XMVectorLess(Z, Zero);
+    let YZYYIsNegative: XMVECTOR = XMVectorLess(YZYY, Zero);
+
+    let S: XMVECTOR = XMVectorAdd(YZYY, Z);
+    let D: XMVECTOR = XMVectorSubtract(YZYY, Z);
+
+    let Select: XMVECTOR = XMVectorEqualInt(ZIsNegative, YZYYIsNegative);
+
+    // let R0: XMVECTOR = XMVectorPermute<XM_PERMUTE_1X, XM_PERMUTE_0X, XM_PERMUTE_0X, XM_PERMUTE_0X>(NegativeV, S);
+    // let R1: XMVECTOR = XMVectorPermute<XM_PERMUTE_1X, XM_PERMUTE_0X, XM_PERMUTE_0X, XM_PERMUTE_0X>(V, D);
+
+    // NOTE: (PERFORMANCE) The fast-path XMVectorPermute template functions are not yet implemented.
+    let R0: XMVECTOR = XMVectorPermute(NegativeV, S, XM_PERMUTE_1X, XM_PERMUTE_0X, XM_PERMUTE_0X, XM_PERMUTE_0X);
+    let R1: XMVECTOR = XMVectorPermute(V, D, XM_PERMUTE_1X, XM_PERMUTE_0X, XM_PERMUTE_0X, XM_PERMUTE_0X);
+
+    return XMVectorSelect(R1, R0, Select);
+}
+
+/// Estimates the radian angle between two normalized 3D vectors.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3AngleBetweenNormalsEst>
+#[inline]
+pub fn XMVector3AngleBetweenNormalsEst(
+    N1: FXMVECTOR,
+    N2: FXMVECTOR,
+) -> FXMVECTOR
+{
+    unsafe {
+        let mut Result: XMVECTOR = XMVector3Dot(N1, N2);
+        Result = XMVectorClamp(Result, g_XMNegativeOne.v, g_XMOne.v);
+        Result = XMVectorACosEst(Result);
+        return Result;
+    }
+}
+
+/// Computes the radian angle between two normalized 3D vectors.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3AngleBetweenNormals>
+#[inline]
+pub fn XMVector3AngleBetweenNormals(
+    N1: FXMVECTOR,
+    N2: FXMVECTOR,
+) -> FXMVECTOR
+{
+    unsafe {
+        let mut Result: XMVECTOR = XMVector3Dot(N1, N2);
+        Result = XMVectorClamp(Result, g_XMNegativeOne.v, g_XMOne.v);
+        Result = XMVectorACos(Result);
+        return Result;
+    }
+}
+
+/// Computes the radian angle between two 3D vectors.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3AngleBetweenVectors>
+#[inline]
+pub fn XMVector3AngleBetweenVectors(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> FXMVECTOR
+{
+    unsafe {
+        let mut L1: XMVECTOR = XMVector3ReciprocalLength(V1);
+        let L2: XMVECTOR = XMVector3ReciprocalLength(V2);
+
+        let Dot: XMVECTOR = XMVector3Dot(V1, V2);
+
+        L1 = XMVectorMultiply(L1, L2);
+
+        let mut CosAngle: XMVECTOR = XMVectorMultiply(Dot, L1);
+        CosAngle = XMVectorClamp(CosAngle, g_XMNegativeOne.v, g_XMOne.v);
+
+        return XMVectorACos(CosAngle);
+    }
+}
+
+/// Computes the minimum distance between a line and a point.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3LinePointDistance>
+#[inline]
+pub fn XMVector3LinePointDistance(
+    LinePoint1: FXMVECTOR,
+    LinePoint2: FXMVECTOR,
+    Point: FXMVECTOR
+) -> FXMVECTOR
+{
+    // Given a vector PointVector from LinePoint1 to Point and a vector
+    // LineVector from LinePoint1 to LinePoint2, the scaled distance
+    // PointProjectionScale from LinePoint1 to the perpendicular projection
+    // of PointVector onto the line is defined as:
+    //
+    //     PointProjectionScale = dot(PointVector, LineVector) / LengthSq(LineVector)
+
+    let PointVector: XMVECTOR = XMVectorSubtract(Point, LinePoint1);
+    let LineVector: XMVECTOR = XMVectorSubtract(LinePoint2, LinePoint1);
+
+    let LengthSq: XMVECTOR = XMVector3LengthSq(LineVector);
+
+    let mut PointProjectionScale: XMVECTOR = XMVector3Dot(PointVector, LineVector);
+    PointProjectionScale = XMVectorDivide(PointProjectionScale, LengthSq);
+
+    let mut DistanceVector: XMVECTOR = XMVectorMultiply(LineVector, PointProjectionScale);
+    DistanceVector = XMVectorSubtract(PointVector, DistanceVector);
+
+    return XMVector3Length(DistanceVector);
+}
+
+/// Using a reference normal vector, splits a 3D vector into components that are parallel and perpendicular to the normal.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3ComponentsFromNormal>
+#[inline]
+pub fn XMVector3ComponentsFromNormal(
+    pParallel: &mut XMVECTOR,
+    pPerpendicular: &mut XMVECTOR,
+    V: FXMVECTOR,
+    Normal: FXMVECTOR
+)
+{
+    let Scale: XMVECTOR = XMVector3Dot(V, Normal);
+
+    let Parallel: XMVECTOR = XMVectorMultiply(Normal, Scale);
+
+    *pParallel = Parallel;
+    *pPerpendicular = XMVectorSubtract(V, Parallel);
+}
+
+// TODO: XMVector3Rotate (FIXME: XMQuaternionMultiply)
+
+/*
+/// Rotates a 3D vector using a quaternion.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3Rotate>
+#[inline]
+pub fn XMVector3Rotate(
+    _V: FXMVECTOR,
+    _RotationQuaternion: FXMVECTOR,
+) -> XMVECTOR
+{
+    unsafe {
+        let A: XMVECTOR = XMVectorSelect(g_XMSelect1110.v, V, g_XMSelect1110.v);
+        let Q: XMVECTOR = XMQuaternionConjugate(RotationQuaternion);
+        let Result: XMVECTOR = XMQuaternionMultiply(Q, A);
+        return XMQuaternionMultiply(Result, RotationQuaternion);
+    }
+}
+*/
+
+// TODO: XMVector3InverseRotate (FIXME: XMQuaternionMultiply)
+
+/// Transforms a 3D vector by a matrix.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3Transform>
+#[inline]
+pub fn XMVector3Transform(
+    V: FXMVECTOR,
+    M: FXMMATRIX,
+) -> FXMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Z: XMVECTOR = XMVectorSplatZ(V);
+        let Y: XMVECTOR = XMVectorSplatY(V);
+        let X: XMVECTOR = XMVectorSplatX(V);
+
+        let mut Result: XMVECTOR = XMVectorMultiplyAdd(Z, M.r[2], M.r[3]);
+        Result = XMVectorMultiplyAdd(Y, M.r[1], Result);
+        Result = XMVectorMultiplyAdd(X, M.r[0], Result);
+
+        return Result;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut vResult: XMVECTOR = XM_PERMUTE_PS!(V, _MM_SHUFFLE(2, 2, 2, 2)); // Z
+        vResult = XM_FMADD_PS!(vResult, M.r[2], M.r[3]);
+        let mut vTemp: XMVECTOR = XM_PERMUTE_PS!(V, _MM_SHUFFLE(1, 1, 1, 1)); // Y
+        vResult = XM_FMADD_PS!(vTemp, M.r[1], vResult);
+        vTemp = XM_PERMUTE_PS!(V, _MM_SHUFFLE(0, 0, 0, 0)); // X
+        vResult = XM_FMADD_PS!(vTemp, M.r[0], vResult);
+        return vResult;
+    }
+}
+
+
+// TODO: XMVector3TransformCoord
+
+/// Transforms a 3D vector by a given matrix, projecting the result back into w = 1.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3TransformCoord>
+#[inline]
+pub fn XMVector3TransformCoord(
+    V: FXMVECTOR,
+    M: FXMMATRIX,
+) -> FXMVECTOR
+{
+    unsafe {
+        let Z: XMVECTOR = XMVectorSplatZ(V);
+        let Y: XMVECTOR = XMVectorSplatY(V);
+        let X: XMVECTOR = XMVectorSplatX(V);
+
+        let mut Result: XMVECTOR = XMVectorMultiplyAdd(Z, M.r[2], M.r[3]);
+        Result = XMVectorMultiplyAdd(Y, M.r[1], Result);
+        Result = XMVectorMultiplyAdd(X, M.r[0], Result);
+
+        let W: XMVECTOR = XMVectorSplatW(Result);
+        return XMVectorDivide(Result, W);
+    }
+}
+
+// TODO: XMVector3TransformCoordStream
+
+
+/// Transforms the 3D vector normal by the given matrix.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3TransformNormal>
+#[inline]
+pub fn XMVector3TransformNormal(
+    V: FXMVECTOR,
+    M: FXMMATRIX,
+) -> FXMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Z: XMVECTOR = XMVectorSplatZ(V);
+        let Y: XMVECTOR = XMVectorSplatY(V);
+        let X: XMVECTOR = XMVectorSplatX(V);
+    
+        let mut Result: XMVECTOR = XMVectorMultiply(Z, M.r[2]);
+        Result = XMVectorMultiplyAdd(Y, M.r[1], Result);
+        Result = XMVectorMultiplyAdd(X, M.r[0], Result);
+    
+        return Result;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut vResult: XMVECTOR = XM_PERMUTE_PS!(V, _MM_SHUFFLE(2, 2, 2, 2)); // Z
+        vResult = _mm_mul_ps(vResult, M.r[2]);
+        let mut vTemp: XMVECTOR = XM_PERMUTE_PS!(V, _MM_SHUFFLE(1, 1, 1, 1)); // Y
+        vResult = XM_FMADD_PS!(vTemp, M.r[1], vResult);
+        vTemp = XM_PERMUTE_PS!(V, _MM_SHUFFLE(0, 0, 0, 0)); // X
+        vResult = XM_FMADD_PS!(vTemp, M.r[0], vResult);
+        return vResult;
+    }
+}
+
+// TODO: XMVector3TransformNormalStream
+
+// TODO: XMVector3Project (FIXME: XMMatrixMultiply)
+
+/*
+/// Project a 3D vector from object space into screen space.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3Project>
+#[inline]
+pub fn XMVector3Project(
+    V: FXMVECTOR,
+    ViewportX: f32,
+    ViewportY: f32,
+    ViewportWidth: f32,
+    ViewportHeight: f32,
+    ViewportMinZ: f32,
+    ViewportMaxZ: f32,
+    Projection: FXMMATRIX,
+    View: CXMMATRIX,
+    World: CXMMATRIX,
+) -> FXMVECTOR
+{
+    let HalfViewportWidth: f32 = ViewportWidth * 0.5;
+    let HalfViewportHeight: f32 = ViewportHeight * 0.5;
+
+    let Scale: XMVECTOR = XMVectorSet(HalfViewportWidth, -HalfViewportHeight, ViewportMaxZ - ViewportMinZ, 0.0f);
+    let Offset: XMVECTOR = XMVectorSet(ViewportX + HalfViewportWidth, ViewportY + HalfViewportHeight, ViewportMinZ, 0.0f);
+
+    let mut Transform: XMMATRIX = XMMatrixMultiply(World, View);
+    Transform = XMMatrixMultiply(Transform, Projection);
+
+    let mut Result: XMVECTOR = XMVector3TransformCoord(V, Transform);
+
+    Result = XMVectorMultiplyAdd(Result, Scale, Offset);
+
+    return Result;
+}
+*/
+
+// TODO: XMVector3ProjectStream
+// TODO: XMVector3Unproject
+// TODO: XMVector3UnprojectStream
+
+
+// 4D Vector
+
+/// Tests whether two 4D vectors are equal.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4Equal>
+#[inline]
+pub fn XMVector4Equal(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (((V1.vector4_f32[0] == V2.vector4_f32[0]) && (V1.vector4_f32[1] == V2.vector4_f32[1]) && (V1.vector4_f32[2] == V2.vector4_f32[2]) && (V1.vector4_f32[3] == V2.vector4_f32[3])) != false);
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_cmpeq_ps(V1, V2);
+        return ((_mm_movemask_ps(vTemp) == 0x0f) != false);
+    }
+
+    // NOTE: The source contains a fallback that does not seem reachable
+    // return XMComparisonAllTrue(XMVector4EqualR(V1, V2));
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/// XMVector4LessOrEqual
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4LessOrEqual>
+#[inline]
+pub fn XMVector4LessOrEqual(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (((V1.vector4_f32[0] <= V2.vector4_f32[0]) && (V1.vector4_f32[1] <= V2.vector4_f32[1]) && (V1.vector4_f32[2] <= V2.vector4_f32[2]) && (V1.vector4_f32[3] <= V2.vector4_f32[3])) != false);
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_cmple_ps(V1, V2);
+        return ((_mm_movemask_ps(vTemp) == 0x0f) != false);
+    }
+
+    // NOTE: The source has a fallback that does not seem reachable
+    // return XMComparisonAllTrue(XMVector4GreaterOrEqualR(V2, V1));
 }
