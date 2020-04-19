@@ -235,7 +235,12 @@ pub fn XMVectorSplatX(V: FXMVECTOR) -> XMVECTOR {
         unimplemented!()
     }
 
-    #[cfg(_XM_SSE_INTRINSICS_)]
+    #[cfg(all(_XM_AVX2_INTRINSICS_, _XM_FAVOR_INTEL_))]
+    unsafe {
+        return _mm_broadcastss_ps(V);
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(all(_XM_AVX2_INTRINSICS_, _XM_FAVOR_INTEL_))))]
     unsafe {
         return XM_PERMUTE_PS!(V, _MM_SHUFFLE(0, 0, 0, 0));
     }
@@ -1083,11 +1088,13 @@ pub fn XMVectorPermute(
 
     #[cfg(_XM_AVX_INTRINSICS_)]
     unsafe {
-        let mut elem: Align16<[u32; 4]> = Align16([PermuteX, PermuteY, PermuteZ, PermuteW]);
-        let mut vControl: __m128i = _mm_load_si128(mem::transmute::<*const __m128i>(&elem[0]));
+        const three: XMVECTORU32 = XMVECTORU32 { u: [ 3, 3, 3, 3 ] };
 
-        let vSelect: __m128i = _mm_cmpgt_epi32(vControl, three);
-        vControl = _mm_castps_si128(_mm_and_ps(_mm_castsi128_ps(vControl), three));
+        let elem: Align16<[u32; 4]> = Align16([PermuteX, PermuteY, PermuteZ, PermuteW]);
+        let mut vControl: __m128i = _mm_load_si128(mem::transmute::<_, *const __m128i>(&elem[0]));
+
+        let vSelect: __m128i = _mm_cmpgt_epi32(vControl, three.m128i());
+        vControl = _mm_castps_si128(_mm_and_ps(_mm_castsi128_ps(vControl), three.v));
 
         let shuffled1: __m128 = _mm_permutevar_ps(V1, vControl);
         let shuffled2: __m128 = _mm_permutevar_ps(V2, vControl);

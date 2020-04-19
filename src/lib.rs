@@ -246,14 +246,14 @@ macro_rules! XM_FNMADD_PS {
 
 // --
 
-#[cfg(_XM_AVX_INTRINSICS_)]
+#[cfg(all(_XM_AVX_INTRINSICS_, _XM_FAVOR_INTEL_))]
 macro_rules! XM_PERMUTE_PS {
     ($v:expr, $c:expr) => {
         $crate::arch::_mm_permute_ps(($v), $c)
     }
 }
 
-#[cfg(not(_XM_AVX_INTRINSICS_))]
+#[cfg(not(all(_XM_AVX_INTRINSICS_, _XM_FAVOR_INTEL_)))]
 macro_rules! XM_PERMUTE_PS {
     ($v:expr, $c:expr) => {
         $crate::arch::_mm_shuffle_ps(($v), ($v), $c)

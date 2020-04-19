@@ -1,5 +1,5 @@
 [package]
-name = "xm"
+name = "directx_math"
 version = "0.0.0"
 authors = ["Aaron Loucks <aloucks@cofront.net>"]
 edition = "2018"
@@ -9,10 +9,12 @@ license = "MIT OR Apache-2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
+no_avx = []
 no_avx2 = []
 no_fma3 = []
 no_sse4 = []
 no_sse3 = []
-no_intrinsics = ["no_avx2", "no_fma3", "no_sse4", "no_sse3"]
+no_intrinsics = ["no_avx", "no_avx2", "no_fma3", "no_sse4", "no_sse3"]
+favor_intel = []
 
 [dependencies]
