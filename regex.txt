@@ -7,6 +7,8 @@ const XMVECTOR (.+) = (.+);
 const $1: XMVECTOR = unsafe { $2.v };
 
 
+# NOTE: Remember to turn on case sensitive regex replace
+
 _PS\(
 _PS!(
 

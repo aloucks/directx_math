@@ -1,5 +1,3 @@
-
-use std::ops::{Add, Mul, Div, AddAssign, MulAssign, DivAssign};
 use std::mem;
 
 use crate::*;
@@ -1489,27 +1487,21 @@ pub fn XMVectorEqualInt(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
 #[inline]
 pub fn XMVectorEqualIntR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
-    #[allow(unused_unsafe)]
-    unsafe {
-        // let Control: XMVECTOR = XMVectorEqualInt(V1, V2);
-        // 
-        // *pCR = 0;
-        // if (XMVector4EqualInt(Control, XMVectorTrueInt()))
-        // {
-        //     // All elements are equal
-        //     *pCR |= XM_CRMASK_CR6TRUE;
-        // }
-        // else if (XMVector4EqualInt(Control, XMVectorFalseInt()))
-        // {
-        //     // All elements are not equal
-        //     *pCR |= XM_CRMASK_CR6FALSE;
-        // }
-        // return Control;
+    {
+        let Control: XMVECTOR = XMVectorEqualInt(V1, V2);
 
-        drop(pCR);
-        drop(V1);
-        drop(V2);
-        unimplemented!("FIXME: Needs XMVector4EqualInt");
+        *pCR = 0;
+        if (XMVector4EqualInt(Control, XMVectorTrueInt()))
+        {
+            // All elements are equal
+            *pCR |= XM_CRMASK_CR6TRUE;
+        }
+        else if (XMVector4EqualInt(Control, XMVectorFalseInt()))
+        {
+            // All elements are not equal
+            *pCR |= XM_CRMASK_CR6FALSE;
+        }
+        return Control;
     }
 
     #[cfg(_XM_ARM_NEON_INTRINSICS_)]
@@ -2039,6 +2031,7 @@ pub fn XMVectorMax(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
 
 // Round to nearest (even) a.k.a. banker's rounding
 #[inline]
+#[cfg(_XM_NO_INTRINSICS_)]
 fn round_to_nearest(mut x: f32) -> f32 {
     let i = floorf(x);
     x -= i;
@@ -2059,6 +2052,7 @@ fn round_to_nearest(mut x: f32) -> f32 {
 }
 
 #[test]
+#[cfg(_XM_NO_INTRINSICS_)]
 fn test_round_to_nearest() {
     assert_eq!(24.0, round_to_nearest(23.5));
     assert_eq!(24.0, round_to_nearest(24.5));
@@ -3567,6 +3561,11 @@ pub fn XMVectorATan(
         return Result.v;
     }
 
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
     #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {
         let absV: __m128 = XMVectorAbs(V);
@@ -3634,6 +3633,20 @@ pub fn XMVectorATan2(
     X: FXMVECTOR,
 ) -> XMVECTOR
 {
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Result = XMVECTORF32 {
+            f: [
+                atan2f(Y.vector4_f32[0], X.vector4_f32[0]),
+                atan2f(Y.vector4_f32[1], X.vector4_f32[1]),
+                atan2f(Y.vector4_f32[2], X.vector4_f32[2]),
+                atan2f(Y.vector4_f32[3], X.vector4_f32[3])
+            ]
+        };
+        return Result.v;
+    }
+
+    #[cfg(not(_XM_NO_INTRINSICS_))]
     unsafe {
         // Return the inverse tangent of Y / X in the range of -Pi to Pi with the following exceptions:
 
@@ -5621,25 +5634,241 @@ pub fn XMVector4Equal(
     // return XMComparisonAllTrue(XMVector4EqualR(V1, V2));
 }
 
+// TODO: XMVector4EqualR
+
+/// Tests whether two 4D vectors are equal, treating each component as an unsigned integer.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4EqualInt>
+#[inline]
+pub fn XMVector4EqualInt(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (((V1.vector4_u32[0] == V2.vector4_u32[0]) && (V1.vector4_u32[1] == V2.vector4_u32[1]) && (V1.vector4_u32[2] == V2.vector4_u32[2]) && (V1.vector4_u32[3] == V2.vector4_u32[3])) != false);
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let vTemp: __m128i = _mm_cmpeq_epi32(_mm_castps_si128(V1), _mm_castps_si128(V2));
+        return ((_mm_movemask_ps(_mm_castsi128_ps(vTemp)) == 0xf) != false);
+    }
+
+    // NOTE: The source has a fallback that does not seem reachable
+    // return return XMComparisonAllTrue(XMVector4EqualIntR(V1, V2));
+}
+
+/// Tests whether two 4D vectors are equal, treating each component as an
+/// unsigned integer. In addition, this function returns a comparison value
+/// that can be examined using functions such as XMComparisonAllTrue.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4EqualIntR>
+#[inline]
+pub fn XMVector4EqualIntR(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> u32
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut CR: u32 = 0;
+        if (V1.vector4_u32[0] == V2.vector4_u32[0] &&
+            V1.vector4_u32[1] == V2.vector4_u32[1] &&
+            V1.vector4_u32[2] == V2.vector4_u32[2] &&
+            V1.vector4_u32[3] == V2.vector4_u32[3])
+        {
+            CR = XM_CRMASK_CR6TRUE;
+        }
+        else if (V1.vector4_u32[0] != V2.vector4_u32[0] &&
+            V1.vector4_u32[1] != V2.vector4_u32[1] &&
+            V1.vector4_u32[2] != V2.vector4_u32[2] &&
+            V1.vector4_u32[3] != V2.vector4_u32[3])
+        {
+            CR = XM_CRMASK_CR6FALSE;
+        }
+        return CR;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let vTemp: __m128i = _mm_cmpeq_epi32(_mm_castps_si128(V1), _mm_castps_si128(V2));
+        let iTest: i32 = _mm_movemask_ps(_mm_castsi128_ps(vTemp));
+        let mut CR: u32 = 0;
+        if (iTest == 0xf)     // All equal?
+        {
+            CR = XM_CRMASK_CR6TRUE;
+        }
+        else if (iTest == 0)  // All not equal?
+        {
+            CR = XM_CRMASK_CR6FALSE;
+        }
+        return CR;
+    }
+}
 
 
+/// Tests whether two 4D vectors are not equal.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4NotEqual>
+#[inline]
+pub fn XMVector4NotEqual(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (((V1.vector4_f32[0] != V2.vector4_f32[0]) || (V1.vector4_f32[1] != V2.vector4_f32[1]) || (V1.vector4_f32[2] != V2.vector4_f32[2]) || (V1.vector4_f32[3] != V2.vector4_f32[3])) != false);
+    }
 
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
 
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_cmpneq_ps(V1, V2);
+        return ((_mm_movemask_ps(vTemp)) != 0);
+    }
 
+    // NOTE: The source contains a fallback that does not seem reachable
+    // return XMComparisonAnyFalse(XMVector4EqualR(V1, V2));
+}
 
+/// Test whether two 4D vectors are not equal, treating each component as an unsigned integer.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4NotEqualInt>
+#[inline]
+pub fn XMVector4NotEqualInt(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (((V1.vector4_u32[0] != V2.vector4_u32[0]) || (V1.vector4_u32[1] != V2.vector4_u32[1]) || (V1.vector4_u32[2] != V2.vector4_u32[2]) || (V1.vector4_u32[3] != V2.vector4_u32[3])) != false);
+    }
 
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
 
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let vTemp: __m128i = _mm_cmpeq_epi32(_mm_castps_si128(V1), _mm_castps_si128(V2));
+        return ((_mm_movemask_ps(_mm_castsi128_ps(vTemp)) != 0xF) != false);
+    }
 
+    // NOTE: The source contains a fallback that does not seem reachable
+    // return XMComparisonAnyFalse(XMVector4EqualIntR(V1, V2));
+}
 
+/// Tests whether one 4D vector is greater than another 4D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4Greater>
+#[inline]
+pub fn XMVector4Greater(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (((V1.vector4_f32[0] > V2.vector4_f32[0]) && (V1.vector4_f32[1] > V2.vector4_f32[1]) && (V1.vector4_f32[2] > V2.vector4_f32[2]) && (V1.vector4_f32[3] > V2.vector4_f32[3])) != false);
+    }
 
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
 
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_cmpgt_ps(V1, V2);
+        return ((_mm_movemask_ps(vTemp) == 0x0f) != false);
+    }
 
+    // NOTE: The source contains a fallback that does not seem reachable
+    // return XMComparisonAllTrue(XMVector4GreaterR(V1, V2));
+}
 
+// TODO: XMVector4GreaterR
 
+/// Tests whether one 4D vector is greater-than-or-equal-to another 4D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4GreaterOrEqual>
+#[inline]
+pub fn XMVector4GreaterOrEqual(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (((V1.vector4_f32[0] >= V2.vector4_f32[0]) && (V1.vector4_f32[1] >= V2.vector4_f32[1]) && (V1.vector4_f32[2] >= V2.vector4_f32[2]) && (V1.vector4_f32[3] >= V2.vector4_f32[3])) != false);
+    }
 
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
 
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_cmpge_ps(V1, V2);
+        return ((_mm_movemask_ps(vTemp) == 0x0f) != false);
+    }
 
-/// XMVector4LessOrEqual
+    // NOTE: The source contains a fallback that does not seem reachable
+    // return XMComparisonAllTrue(XMVector4GreaterOrEqualR(V1, V2));
+}
+
+// TODO: XMVector4GreaterOrEqualR
+
+/// Tests whether one 4D vector is less than another 4D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4Less>
+#[inline]
+pub fn XMVector4Less(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (((V1.vector4_f32[0] < V2.vector4_f32[0]) && (V1.vector4_f32[1] < V2.vector4_f32[1]) && (V1.vector4_f32[2] < V2.vector4_f32[2]) && (V1.vector4_f32[3] < V2.vector4_f32[3])) != false);
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_cmplt_ps(V1, V2);
+        return ((_mm_movemask_ps(vTemp) == 0x0f) != false);
+    }
+
+    // NOTE: The source contains a fallback that does not seem reachable
+    // return XMComparisonAllTrue(XMVector4GreaterR(V2, V1));
+}
+
+/// Tests whether one 4D vector is less than or equal to another 4D vector.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4LessOrEqual>
 #[inline]
@@ -5664,6 +5893,496 @@ pub fn XMVector4LessOrEqual(
         return ((_mm_movemask_ps(vTemp) == 0x0f) != false);
     }
 
-    // NOTE: The source has a fallback that does not seem reachable
+    // NOTE: The source contains a fallback that does not seem reachable
     // return XMComparisonAllTrue(XMVector4GreaterOrEqualR(V2, V1));
 }
+
+/// Tests whether the components of a 4D vector are within set bounds.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4InBounds>
+#[inline]
+pub fn XMVector4InBounds(
+    V: FXMVECTOR,
+    Bounds: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (((V.vector4_f32[0] <= Bounds.vector4_f32[0] && V.vector4_f32[0] >= -Bounds.vector4_f32[0]) &&
+            (V.vector4_f32[1] <= Bounds.vector4_f32[1] && V.vector4_f32[1] >= -Bounds.vector4_f32[1]) &&
+            (V.vector4_f32[2] <= Bounds.vector4_f32[2] && V.vector4_f32[2] >= -Bounds.vector4_f32[2]) &&
+            (V.vector4_f32[3] <= Bounds.vector4_f32[3] && V.vector4_f32[3] >= -Bounds.vector4_f32[3])) != false);
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        // Test if less than or equal
+        let mut vTemp1: XMVECTOR = _mm_cmple_ps(V, Bounds);
+        // Negate the bounds
+        let mut vTemp2: XMVECTOR = _mm_mul_ps(Bounds, g_XMNegativeOne.v);
+        // Test if greater or equal (Reversed)
+        vTemp2 = _mm_cmple_ps(vTemp2, V);
+        // Blend answers
+        vTemp1 = _mm_and_ps(vTemp1, vTemp2);
+        // All in bounds?
+        return ((_mm_movemask_ps(vTemp1) == 0x0f) != false);
+    }
+
+    // NOTE: The source contains a fallback that does not seem reachable
+    // return XMComparisonAllInBounds(XMVector4InBoundsR(V, Bounds));
+}
+
+/// Tests whether any component of a 4D vector is a NaN.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4IsNaN>
+#[inline]
+pub fn XMVector4IsNaN(
+    V: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (XMISNAN!(V.vector4_f32[0]) ||
+            XMISNAN!(V.vector4_f32[1]) ||
+            XMISNAN!(V.vector4_f32[2]) ||
+            XMISNAN!(V.vector4_f32[3]));
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        // Test against itself. NaN is always not equal
+        let vTempNan: XMVECTOR = _mm_cmpneq_ps(V, V);
+        // If any are NaN, the mask is non-zero
+        return (_mm_movemask_ps(vTempNan) != 0);
+    }
+
+    // NOTE: The source contains a fallback that does not seem reachable
+    // return XMComparisonAllInBounds(XMVector4InBoundsR(V, Bounds));
+}
+
+/// Tests whether any component of a 4D vector is a NaN.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4IsInfinite>
+#[inline]
+pub fn XMVector4IsInfinite(
+    V: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (XMISINF!(V.vector4_f32[0]) ||
+            XMISINF!(V.vector4_f32[1]) ||
+            XMISINF!(V.vector4_f32[2]) ||
+            XMISINF!(V.vector4_f32[3]));
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        // Mask off the sign bit
+        let mut vTemp: XMVECTOR = _mm_and_ps(V, g_XMAbsMask.v);
+        // Compare to infinity
+        vTemp = _mm_cmpeq_ps(vTemp, g_XMInfinity.v);
+        // If any are infinity, the signs are true.
+        return (_mm_movemask_ps(vTemp) != 0);
+    }
+}
+
+
+/// Computes the dot product between 4D vectors.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4Dot>
+#[inline]
+pub fn XMVector4Dot(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> FXMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Value = V1.vector4_f32[0] * V2.vector4_f32[0] + V1.vector4_f32[1] * V2.vector4_f32[1] + V1.vector4_f32[2] * V2.vector4_f32[2] + V1.vector4_f32[3] * V2.vector4_f32[3];
+        let mut vResult: XMVECTORF32 = mem::MaybeUninit::uninit().assume_init();
+        vResult.f[0] = Value;
+        vResult.f[1] = Value;
+        vResult.f[2] = Value;
+        vResult.f[3] = Value;
+        return vResult.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE4_INTRINSICS_)]
+    unsafe {
+        return _mm_dp_ps(V1, V2, 0xff);
+    }
+
+    #[cfg(all(_XM_SSE3_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        let mut vTemp: XMVECTOR = _mm_mul_ps(V1, V2);
+        vTemp = _mm_hadd_ps(vTemp, vTemp);
+        return _mm_hadd_ps(vTemp, vTemp);
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE3_INTRINSICS_), not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        let mut vTemp2: XMVECTOR = V2;
+        let mut vTemp: XMVECTOR = _mm_mul_ps(V1, vTemp2);
+        vTemp2 = _mm_shuffle_ps(vTemp2, vTemp, _MM_SHUFFLE(1, 0, 0, 0)); // Copy X to the Z position and Y to the W position
+        vTemp2 = _mm_add_ps(vTemp2, vTemp);          // Add Z = X+Z; W = Y+W;
+        vTemp = _mm_shuffle_ps(vTemp, vTemp2, _MM_SHUFFLE(0, 3, 0, 0));  // Copy W to the Z position
+        vTemp = _mm_add_ps(vTemp, vTemp2);           // Add Z and W together
+        return XM_PERMUTE_PS!(vTemp, _MM_SHUFFLE(2, 2, 2, 2));    // Splat Z and return
+    }
+}
+
+
+/// Computes the cross product between 4D vectors.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4Cross>
+#[inline]
+pub fn XMVector4Cross(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+    V3: FXMVECTOR,
+) -> FXMVECTOR
+{
+    // [ ((v2.z*v3.w-v2.w*v3.z)*v1.y)-((v2.y*v3.w-v2.w*v3.y)*v1.z)+((v2.y*v3.z-v2.z*v3.y)*v1.w),
+    //   ((v2.w*v3.z-v2.z*v3.w)*v1.x)-((v2.w*v3.x-v2.x*v3.w)*v1.z)+((v2.z*v3.x-v2.x*v3.z)*v1.w),
+    //   ((v2.y*v3.w-v2.w*v3.y)*v1.x)-((v2.x*v3.w-v2.w*v3.x)*v1.y)+((v2.x*v3.y-v2.y*v3.x)*v1.w),
+    //   ((v2.z*v3.y-v2.y*v3.z)*v1.x)-((v2.z*v3.x-v2.x*v3.z)*v1.y)+((v2.y*v3.x-v2.x*v3.y)*v1.z) ]
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let vResult: XMVECTORF32 = XMVECTORF32 {
+            f: [
+                (((V2.vector4_f32[2] * V3.vector4_f32[3]) - (V2.vector4_f32[3] * V3.vector4_f32[2])) * V1.vector4_f32[1]) - (((V2.vector4_f32[1] * V3.vector4_f32[3]) - (V2.vector4_f32[3] * V3.vector4_f32[1])) * V1.vector4_f32[2]) + (((V2.vector4_f32[1] * V3.vector4_f32[2]) - (V2.vector4_f32[2] * V3.vector4_f32[1])) * V1.vector4_f32[3]),
+                (((V2.vector4_f32[3] * V3.vector4_f32[2]) - (V2.vector4_f32[2] * V3.vector4_f32[3])) * V1.vector4_f32[0]) - (((V2.vector4_f32[3] * V3.vector4_f32[0]) - (V2.vector4_f32[0] * V3.vector4_f32[3])) * V1.vector4_f32[2]) + (((V2.vector4_f32[2] * V3.vector4_f32[0]) - (V2.vector4_f32[0] * V3.vector4_f32[2])) * V1.vector4_f32[3]),
+                (((V2.vector4_f32[1] * V3.vector4_f32[3]) - (V2.vector4_f32[3] * V3.vector4_f32[1])) * V1.vector4_f32[0]) - (((V2.vector4_f32[0] * V3.vector4_f32[3]) - (V2.vector4_f32[3] * V3.vector4_f32[0])) * V1.vector4_f32[1]) + (((V2.vector4_f32[0] * V3.vector4_f32[1]) - (V2.vector4_f32[1] * V3.vector4_f32[0])) * V1.vector4_f32[3]),
+                (((V2.vector4_f32[2] * V3.vector4_f32[1]) - (V2.vector4_f32[1] * V3.vector4_f32[2])) * V1.vector4_f32[0]) - (((V2.vector4_f32[2] * V3.vector4_f32[0]) - (V2.vector4_f32[0] * V3.vector4_f32[2])) * V1.vector4_f32[1]) + (((V2.vector4_f32[1] * V3.vector4_f32[0]) - (V2.vector4_f32[0] * V3.vector4_f32[1])) * V1.vector4_f32[2]),
+            ]
+        };
+        return vResult.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        // V2zwyz * V3wzwy
+        let mut vResult: XMVECTOR = XM_PERMUTE_PS!(V2, _MM_SHUFFLE(2, 1, 3, 2));
+        let mut vTemp3: XMVECTOR = XM_PERMUTE_PS!(V3, _MM_SHUFFLE(1, 3, 2, 3));
+        vResult = _mm_mul_ps(vResult, vTemp3);
+        // - V2wzwy * V3zwyz
+        let mut vTemp2: XMVECTOR = XM_PERMUTE_PS!(V2, _MM_SHUFFLE(1, 3, 2, 3));
+        vTemp3 = XM_PERMUTE_PS!(vTemp3, _MM_SHUFFLE(1, 3, 0, 1));
+        vResult = XM_FNMADD_PS!(vTemp2, vTemp3, vResult);
+        // term1 * V1yxxx
+        let mut vTemp1: XMVECTOR = XM_PERMUTE_PS!(V1, _MM_SHUFFLE(0, 0, 0, 1));
+        vResult = _mm_mul_ps(vResult, vTemp1);
+
+        // V2ywxz * V3wxwx
+        vTemp2 = XM_PERMUTE_PS!(V2, _MM_SHUFFLE(2, 0, 3, 1));
+        vTemp3 = XM_PERMUTE_PS!(V3, _MM_SHUFFLE(0, 3, 0, 3));
+        vTemp3 = _mm_mul_ps(vTemp3, vTemp2);
+        // - V2wxwx * V3ywxz
+        vTemp2 = XM_PERMUTE_PS!(vTemp2, _MM_SHUFFLE(2, 1, 2, 1));
+        vTemp1 = XM_PERMUTE_PS!(V3, _MM_SHUFFLE(2, 0, 3, 1));
+        vTemp3 = XM_FNMADD_PS!(vTemp2, vTemp1, vTemp3);
+        // vResult - temp * V1zzyy
+        vTemp1 = XM_PERMUTE_PS!(V1, _MM_SHUFFLE(1, 1, 2, 2));
+        vResult = XM_FNMADD_PS!(vTemp1, vTemp3, vResult);
+
+        // V2yzxy * V3zxyx
+        vTemp2 = XM_PERMUTE_PS!(V2, _MM_SHUFFLE(1, 0, 2, 1));
+        vTemp3 = XM_PERMUTE_PS!(V3, _MM_SHUFFLE(0, 1, 0, 2));
+        vTemp3 = _mm_mul_ps(vTemp3, vTemp2);
+        // - V2zxyx * V3yzxy
+        vTemp2 = XM_PERMUTE_PS!(vTemp2, _MM_SHUFFLE(2, 0, 2, 1));
+        vTemp1 = XM_PERMUTE_PS!(V3, _MM_SHUFFLE(1, 0, 2, 1));
+        vTemp3 = XM_FNMADD_PS!(vTemp1, vTemp2, vTemp3);
+        // vResult + term * V1wwwz
+        vTemp1 = XM_PERMUTE_PS!(V1, _MM_SHUFFLE(2, 3, 3, 3));
+        vResult = XM_FMADD_PS!(vTemp3, vTemp1, vResult);
+        return vResult;
+    }
+}
+
+/// Computes the square of the length of a 4D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4LengthSq>
+#[inline]
+pub fn XMVector4LengthSq(
+    V: FXMVECTOR,
+) -> FXMVECTOR
+{
+    return XMVector4Dot(V, V);
+}
+
+/// Estimates the reciprocal of the length of a 4D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4ReciprocalLengthEst>
+#[inline]
+pub fn XMVector4ReciprocalLengthEst(
+    V: FXMVECTOR,
+) -> FXMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    {
+        let mut Result: XMVECTOR;
+
+        Result = XMVector4LengthSq(V);
+        Result = XMVectorReciprocalSqrtEst(Result);
+
+        return Result;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE4_INTRINSICS_)]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_dp_ps(V, V, 0xff);
+        return _mm_rsqrt_ps(vTemp);
+    }
+
+    #[cfg(all(_XM_SSE3_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        vLengthSq = _mm_hadd_ps(vLengthSq, vLengthSq);
+        vLengthSq = _mm_hadd_ps(vLengthSq, vLengthSq);
+        vLengthSq = _mm_rsqrt_ps(vLengthSq);
+        return vLengthSq;
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE3_INTRINSICS_), not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        // Perform the dot product on x,y,z and w
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        // vTemp has z and w
+        let mut vTemp: XMVECTOR = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(3, 2, 3, 2));
+        // x+z, y+w
+        vLengthSq = _mm_add_ps(vLengthSq, vTemp);
+        // x+z,x+z,x+z,y+w
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(1, 0, 0, 0));
+        // ??,??,y+w,y+w
+        vTemp = _mm_shuffle_ps(vTemp, vLengthSq, _MM_SHUFFLE(3, 3, 0, 0));
+        // ??,??,x+z+y+w,??
+        vLengthSq = _mm_add_ps(vLengthSq, vTemp);
+        // Splat the length
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(2, 2, 2, 2));
+        // Get the reciprocal
+        vLengthSq = _mm_rsqrt_ps(vLengthSq);
+        return vLengthSq;
+    }
+}
+
+/// Computes the reciprocal of the length of a 4D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4ReciprocalLength>
+#[inline]
+pub fn XMVector4ReciprocalLength(
+    V: FXMVECTOR,
+) -> FXMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    {
+        let mut Result: XMVECTOR;
+
+        Result = XMVector4LengthSq(V);
+        Result = XMVectorReciprocalSqrt(Result);
+
+        return Result;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE4_INTRINSICS_)]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_dp_ps(V, V, 0xff);
+        let vLengthSq: XMVECTOR = _mm_sqrt_ps(vTemp);
+        return _mm_div_ps(g_XMOne.v, vLengthSq);
+    }
+
+    #[cfg(all(_XM_SSE3_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        vLengthSq = _mm_hadd_ps(vLengthSq, vLengthSq);
+        vLengthSq = _mm_hadd_ps(vLengthSq, vLengthSq);
+        vLengthSq = _mm_sqrt_ps(vLengthSq);
+        vLengthSq = _mm_div_ps(g_XMOne.v, vLengthSq);
+        return vLengthSq;
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE3_INTRINSICS_), not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        // Perform the dot product on x,y,z and w
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        // vTemp has z and w
+        let mut vTemp: XMVECTOR = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(3, 2, 3, 2));
+        // x+z, y+w
+        vLengthSq = _mm_add_ps(vLengthSq, vTemp);
+        // x+z,x+z,x+z,y+w
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(1, 0, 0, 0));
+        // ??,??,y+w,y+w
+        vTemp = _mm_shuffle_ps(vTemp, vLengthSq, _MM_SHUFFLE(3, 3, 0, 0));
+        // ??,??,x+z+y+w,??
+        vLengthSq = _mm_add_ps(vLengthSq, vTemp);
+        // Splat the length
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(2, 2, 2, 2));
+        // Get the reciprocal
+        vLengthSq = _mm_sqrt_ps(vLengthSq);
+        // Accurate!
+        vLengthSq = _mm_div_ps(g_XMOne.v, vLengthSq);
+        return vLengthSq;
+    }
+}
+
+/// Estimates the length of a 4D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4LengthEst>
+#[inline]
+pub fn XMVector4LengthEst(
+    V: FXMVECTOR,
+) -> FXMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    {
+        let mut Result: XMVECTOR;
+
+        Result = XMVector4LengthSq(V);
+        Result = XMVectorSqrtEst(Result);
+
+        return Result;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE4_INTRINSICS_)]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_dp_ps(V, V, 0xff);
+        return _mm_sqrt_ps(vTemp);
+    }
+
+    #[cfg(all(_XM_SSE3_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        vLengthSq = _mm_hadd_ps(vLengthSq, vLengthSq);
+        vLengthSq = _mm_hadd_ps(vLengthSq, vLengthSq);
+        vLengthSq = _mm_sqrt_ps(vLengthSq);
+        return vLengthSq;
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE3_INTRINSICS_), not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        // Perform the dot product on x,y,z and w
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        // vTemp has z and w
+        let mut vTemp: XMVECTOR = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(3, 2, 3, 2));
+        // x+z, y+w
+        vLengthSq = _mm_add_ps(vLengthSq, vTemp);
+        // x+z,x+z,x+z,y+w
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(1, 0, 0, 0));
+        // ??,??,y+w,y+w
+        vTemp = _mm_shuffle_ps(vTemp, vLengthSq, _MM_SHUFFLE(3, 3, 0, 0));
+        // ??,??,x+z+y+w,??
+        vLengthSq = _mm_add_ps(vLengthSq, vTemp);
+        // Splat the length
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(2, 2, 2, 2));
+        // Get the length
+        vLengthSq = _mm_sqrt_ps(vLengthSq);
+        return vLengthSq;
+    }
+}
+
+
+/// Computes the length of a 4D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4Length>
+#[inline]
+pub fn XMVector4Length(
+    V: FXMVECTOR,
+) -> FXMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    {
+        let mut Result: XMVECTOR;
+
+        Result = XMVector4LengthSq(V);
+        Result = XMVectorSqrt(Result);
+
+        return Result;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE4_INTRINSICS_)]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_dp_ps(V, V, 0xff);
+        return _mm_sqrt_ps(vTemp);
+    }
+
+    #[cfg(all(_XM_SSE3_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        vLengthSq = _mm_hadd_ps(vLengthSq, vLengthSq);
+        vLengthSq = _mm_hadd_ps(vLengthSq, vLengthSq);
+        vLengthSq = _mm_sqrt_ps(vLengthSq);
+        return vLengthSq;
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE3_INTRINSICS_), not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        // Perform the dot product on x,y,z and w
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        // vTemp has z and w
+        let mut vTemp: XMVECTOR = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(3, 2, 3, 2));
+        // x+z, y+w
+        vLengthSq = _mm_add_ps(vLengthSq, vTemp);
+        // x+z,x+z,x+z,y+w
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(1, 0, 0, 0));
+        // ??,??,y+w,y+w
+        vTemp = _mm_shuffle_ps(vTemp, vLengthSq, _MM_SHUFFLE(3, 3, 0, 0));
+        // ??,??,x+z+y+w,??
+        vLengthSq = _mm_add_ps(vLengthSq, vTemp);
+        // Splat the length
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(2, 2, 2, 2));
+        // Get the length
+        vLengthSq = _mm_sqrt_ps(vLengthSq);
+        return vLengthSq;
+    }
+}
+
+
+
+

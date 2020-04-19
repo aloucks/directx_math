@@ -4,10 +4,15 @@
 #![allow(non_upper_case_globals)]
 #![allow(unused_parens)]
 
-#![allow(unused_imports)]
+// TODO: Change allow unused_macros to deny
 #![allow(unused_macros)]
-#![allow(dead_code)]
 
+#![deny(unreachable_code)]
+#![deny(unused_variables)]
+#![deny(unused_unsafe)]
+#![deny(dead_code)]
+
+#[allow(unused_imports)]
 use std::mem;
 
 #[cfg(all(target_arch="x86_64", not(_XM_NO_INTRINSICS_)))]
@@ -26,66 +31,79 @@ pub use std::arch::arm as arch;
 use arch::*;
 
 #[inline]
+#[cfg(not(_XM_NO_INTRINSICS_))]
 pub(crate) const fn _MM_SHUFFLE(z: u32, y: u32, x: u32, w: u32) -> i32 {
     ((z << 6) | (y << 4) | (x << 2) | w) as i32
 }
 
 #[inline]
+#[cfg(_XM_NO_INTRINSICS_)]
 pub(crate) fn fabsf(x: f32) -> f32 {
     x.abs()
 }
 
 #[inline]
+#[cfg(_XM_NO_INTRINSICS_)]
 pub(crate) fn floorf(x: f32) -> f32 {
     x.floor()
 }
 
 #[inline]
+#[cfg(_XM_NO_INTRINSICS_)]
 pub(crate) fn ceilf(x: f32) -> f32 {
     x.ceil()
 }
 
 #[inline]
+#[cfg(_XM_NO_INTRINSICS_)]
 pub(crate) fn sqrtf(x: f32) -> f32 {
     x.sqrt()
 }
 
 #[inline]
+#[cfg(_XM_NO_INTRINSICS_)]
 pub(crate) fn sinf(x: f32) -> f32 {
     x.sin()
 }
 
 #[inline]
+#[cfg(_XM_NO_INTRINSICS_)]
 pub(crate) fn cosf(x: f32) -> f32 {
     x.cos()
 }
 
 #[inline]
+#[cfg(_XM_NO_INTRINSICS_)]
 pub(crate) fn tanf(x: f32) -> f32 {
     x.tan()
 }
 
 #[inline]
+#[cfg(_XM_NO_INTRINSICS_)]
 pub(crate) fn asinf(x: f32) -> f32 {
     x.asin()
 }
 
 #[inline]
+#[cfg(_XM_NO_INTRINSICS_)]
 pub(crate) fn acosf(x: f32) -> f32 {
     x.acos()
 }
 
 #[inline]
+#[cfg(_XM_NO_INTRINSICS_)]
 pub(crate) fn atanf(x: f32) -> f32 {
     x.atan()
 }
 
 #[inline]
+#[cfg(_XM_NO_INTRINSICS_)]
 pub(crate) fn atan2f(y: f32, x: f32) -> f32 {
     y.atan2(x)
 }
 
 #[inline]
+#[cfg(_XM_NO_INTRINSICS_)]
 pub(crate) fn modff(x: f32) -> (f32, f32) {
     // https://github.com/rust-lang/libm/blob/d3f1dba56dc47fbae6f5d6e47c3a00a4aab5b6c5/src/math/modff.rs#L1
     // https://github.com/rust-lang/libm/blob/d3f1dba56dc47fbae6f5d6e47c3a00a4aab5b6c5/LICENSE-MIT
@@ -123,11 +141,13 @@ pub(crate) fn modff(x: f32) -> (f32, f32) {
 }
 
 #[inline(always)]
+#[allow(dead_code)]
 const fn ubool(a: u32) -> bool {
     a != 0
 }
 
 #[inline(always)]
+#[allow(dead_code)]
 const fn ibool(a: i32) -> bool {
     a != 0
 }
@@ -380,6 +400,7 @@ macro_rules! cast_m128 {
     ($Name:ident) => {
         impl $Name {
             #[cfg(_XM_SSE_INTRINSICS_)]
+            #[allow(dead_code)]
             #[inline]
             fn m128i(self) -> __m128i {
                 unsafe {
@@ -388,6 +409,7 @@ macro_rules! cast_m128 {
             }
 
             #[cfg(_XM_SSE_INTRINSICS_)]
+            #[allow(dead_code)]
             #[inline]
             fn m128d(self) -> __m128d {
                 unsafe {
@@ -563,7 +585,6 @@ pub fn XMVectorSplatConstant(IntConstant: i32, DivExponent: u32) -> XMVECTOR {
 
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        use convert::XMConvertVectorIntToFloat;
         let V = XMVECTORI32 { i: [IntConstant, IntConstant, IntConstant, IntConstant] };
         return XMConvertVectorIntToFloat(V.v, DivExponent);
     }
