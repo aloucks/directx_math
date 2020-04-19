@@ -122,6 +122,16 @@ pub(crate) fn modff(x: f32) -> (f32, f32) {
     return (x - rv2, rv2);
 }
 
+#[inline(always)]
+const fn ubool(a: u32) -> bool {
+    a != 0
+}
+
+#[inline(always)]
+const fn ibool(a: i32) -> bool {
+    a != 0
+}
+
 #[repr(C, align(16))]
 struct Align16<T>(T);
 

@@ -1383,10 +1383,10 @@ pub fn XMVectorEqualR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
         let uz = if V1.vector4_f32[2] == V2.vector4_f32[2] { 0xFFFFFFFFu32 } else { 0 };
         let uw = if V1.vector4_f32[3] == V2.vector4_f32[3] { 0xFFFFFFFFu32 } else { 0 };
         let mut CR = 0;
-        if ux & uy & uz & uw > 0 {
+        if ubool(ux & uy & uz & uw) {
             // All elements are greater
             CR = XM_CRMASK_CR6TRUE;
-        } else if !((ux | uy | uz | uw) > 0) {
+        } else if !ubool(ux | uy | uz | uw) {
             // All elements are not greater
             CR = XM_CRMASK_CR6FALSE;
         }
@@ -1411,7 +1411,7 @@ pub fn XMVectorEqualR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
             // All elements are greater
             CR = XM_CRMASK_CR6TRUE;
         }
-        else if (!(iTest > 0))
+        else if !ibool(iTest)
         {
             // All elements are not greater
             CR = XM_CRMASK_CR6FALSE;
@@ -1519,7 +1519,7 @@ pub fn XMVectorEqualIntR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTO
         {
             CR = XM_CRMASK_CR6TRUE;
         }
-        else if (!(iTemp > 0))
+        else if !ibool(iTemp)
         {
             CR = XM_CRMASK_CR6FALSE;
         }
@@ -1674,10 +1674,10 @@ pub fn XMVectorGreaterR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR
         let uz = if V1.vector4_f32[2] > V2.vector4_f32[2] { 0xFFFFFFFFu32 } else { 0 };
         let uw = if V1.vector4_f32[3] > V2.vector4_f32[3] { 0xFFFFFFFFu32 } else { 0 };
         let mut CR = 0;
-        if ux & uy & uz & uw > 0 {
+        if ubool(ux & uy & uz & uw) {
             // All elements are greater
             CR = XM_CRMASK_CR6TRUE;
-        } else if !((ux | uy | uz | uw) > 0) {
+        } else if !ubool(ux | uy | uz | uw) {
             // All elements are not greater
             CR = XM_CRMASK_CR6FALSE;
         }
@@ -1702,7 +1702,7 @@ pub fn XMVectorGreaterR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR
             // All elements are greater
             CR = XM_CRMASK_CR6TRUE;
         }
-        else if (!(iTest > 0))
+        else if !ibool(iTest)
         {
             // All elements are not greater
             CR = XM_CRMASK_CR6FALSE;
@@ -1753,10 +1753,10 @@ pub fn XMVectorGreaterOrEqualR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> X
         let uz = if V1.vector4_f32[2] >= V2.vector4_f32[2] { 0xFFFFFFFFu32 } else { 0 };
         let uw = if V1.vector4_f32[3] >= V2.vector4_f32[3] { 0xFFFFFFFFu32 } else { 0 };
         let mut CR = 0;
-        if ux & uy & uz & uw > 0 {
+        if ubool(ux & uy & uz & uw) {
             // All elements are greater
             CR = XM_CRMASK_CR6TRUE;
-        } else if !((ux | uy | uz | uw) > 0) {
+        } else if !ubool(ux | uy | uz | uw) {
             // All elements are not greater
             CR = XM_CRMASK_CR6FALSE;
         }
@@ -1781,7 +1781,7 @@ pub fn XMVectorGreaterOrEqualR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> X
             // All elements are greater
             CR = XM_CRMASK_CR6TRUE;
         }
-        else if (!(iTest > 0))
+        else if !ibool(iTest)
         {
             // All elements are not greater
             CR = XM_CRMASK_CR6FALSE;
@@ -1899,7 +1899,7 @@ pub fn XMVectorInBoundsR(pCR: &mut u32, V: FXMVECTOR, Bounds: FXMVECTOR) -> XMVE
         let uw = if V.vector4_f32[3] <= Bounds.vector4_f32[3] && V.vector4_f32[3] >= -Bounds.vector4_f32[3] { 0xFFFFFFFF } else { 0 };
 
         let mut CR = 0;
-        if ux & uy & uz & uw > 0 {
+        if ubool(ux & uy & uz & uw) {
             // All elements are in bounds
             CR = XM_CRMASK_CR6TRUE;
         }
@@ -4109,7 +4109,7 @@ pub fn XMVector3EqualR(
         {
             CR = XM_CRMASK_CR6TRUE;
         }
-        else if (!(iTest > 0))
+        else if !ibool(iTest)
         {
             CR = XM_CRMASK_CR6FALSE;
         }
@@ -4210,7 +4210,7 @@ pub fn XMVector3EqualIntR(
         {
             CR = XM_CRMASK_CR6TRUE;
         }
-        else if ((!iTemp) > 0)
+        else if !ibool(iTemp)
         {
             CR = XM_CRMASK_CR6FALSE;
         }
@@ -4379,7 +4379,7 @@ pub fn XMVector3GreaterR(
         {
             CR = XM_CRMASK_CR6TRUE;
         }
-        else if ((!iTest) > 0)
+        else if !ibool(iTest)
         {
             CR = XM_CRMASK_CR6FALSE;
         }
@@ -4455,7 +4455,7 @@ pub fn XMVector3GreaterOrEqualR(
         {
             CR = XM_CRMASK_CR6TRUE;
         }
-        else if ((!iTest) > 0)
+        else if !ibool(iTest)
         {
             CR = XM_CRMASK_CR6FALSE;
         }
