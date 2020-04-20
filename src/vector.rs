@@ -2520,8 +2520,98 @@ pub fn XMVectorAdd(
     }
 }
 
-// TODO: XMVectorSum
-// TODO: XMVectorAddAngles
+/// Computes the horizontal sum of the components of an XMVECTOR.
+/// The horizontal sum is the result of adding each component in
+/// the vector together.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSum>
+#[inline]
+pub fn XMVectorSum(
+    V: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let sum = V.vector4_f32[0] + V.vector4_f32[1] + V.vector4_f32[2] + V.vector4_f32[3];
+        let Result = XMVECTORF32 {
+            f: [ sum, sum, sum, sum ]
+        };
+        return Result.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE3_INTRINSICS_)]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_hadd_ps(V, V);
+        return _mm_hadd_ps(vTemp, vTemp);
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE3_INTRINSICS_)))]
+    unsafe {
+        let mut vTemp: XMVECTOR = XM_PERMUTE_PS!(V, _MM_SHUFFLE(2, 3, 0, 1));
+        let vTemp2: XMVECTOR = _mm_add_ps(V, vTemp);
+        vTemp = XM_PERMUTE_PS!(vTemp2, _MM_SHUFFLE(1, 0, 3, 2));
+        return _mm_add_ps(vTemp, vTemp2);
+    }
+}
+
+/// Adds two vectors representing angles.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorAddAngles>
+#[inline]
+pub fn XMVectorAddAngles(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        //const XMVECTOR Zero = XMVectorZero();
+        const Zero: XMVECTOR = unsafe { g_XMZero.v };
+
+        // Add the given angles together.  If the range of V1 is such
+        // that -Pi <= V1 < Pi and the range of V2 is such that
+        // -2Pi <= V2 <= 2Pi, then the range of the resulting angle
+        // will be -Pi <= Result < Pi.
+        let mut Result: XMVECTOR = XMVectorAdd(V1, V2);
+
+        let mut Mask: XMVECTOR = XMVectorLess(Result, g_XMNegativePi.v);
+        let mut Offset: XMVECTOR = XMVectorSelect(Zero, g_XMTwoPi.v, Mask);
+
+        Mask = XMVectorGreaterOrEqual(Result, g_XMPi.v);
+        Offset = XMVectorSelect(Offset, g_XMNegativeTwoPi.v, Mask);
+
+        Result = XMVectorAdd(Result, Offset);
+
+        return Result;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        // Adjust the angles
+        let mut vResult: XMVECTOR = _mm_add_ps(V1, V2);
+        // Less than Pi?
+        let mut vOffset: XMVECTOR = _mm_cmplt_ps(vResult, g_XMNegativePi.v);
+        vOffset = _mm_and_ps(vOffset, g_XMTwoPi.v);
+        // Add 2Pi to all entries less than -Pi
+        vResult = _mm_add_ps(vResult, vOffset);
+        // Greater than or equal to Pi?
+        vOffset = _mm_cmpge_ps(vResult, g_XMPi.v);
+        vOffset = _mm_and_ps(vOffset, g_XMTwoPi.v);
+        // Sub 2Pi to all entries greater than Pi
+        vResult = _mm_sub_ps(vResult, vOffset);
+        return vResult;
+    }
+}
 
 /// Computes the difference of two vectors.
 /// 
@@ -2556,7 +2646,60 @@ pub fn XMVectorSubtract(
     }
 }
 
-// TODO: XMVectorSubtractAngles
+/// Adds two vectors representing angles.
+/// 
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSubtractAngles>
+#[inline]
+pub fn XMVectorSubtractAngles(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        //const XMVECTOR Zero = XMVectorZero();
+        const Zero: XMVECTOR = unsafe { g_XMZero.v };
+
+        // Subtract the given angles.  If the range of V1 is such
+        // that -Pi <= V1 < Pi and the range of V2 is such that
+        // -2Pi <= V2 <= 2Pi, then the range of the resulting angle
+        // will be -Pi <= Result < Pi.
+        let mut Result: XMVECTOR = XMVectorSubtract(V1, V2);
+
+        let mut Mask: XMVECTOR = XMVectorLess(Result, g_XMNegativePi.v);
+        let mut Offset: XMVECTOR = XMVectorSelect(Zero, g_XMTwoPi.v, Mask);
+
+        Mask = XMVectorGreaterOrEqual(Result, g_XMPi.v);
+        Offset = XMVectorSelect(Offset, g_XMNegativeTwoPi.v, Mask);
+
+        Result = XMVectorAdd(Result, Offset);
+
+        return Result;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        // Adjust the angles
+        let mut vResult: XMVECTOR = _mm_sub_ps(V1, V2);
+        // Less than Pi?
+        let mut vOffset: XMVECTOR = _mm_cmplt_ps(vResult, g_XMNegativePi.v);
+        vOffset = _mm_and_ps(vOffset, g_XMTwoPi.v);
+        // Add 2Pi to all entries less than -Pi
+        vResult = _mm_add_ps(vResult, vOffset);
+        // Greater than or equal to Pi?
+        vOffset = _mm_cmpge_ps(vResult, g_XMPi.v);
+        vOffset = _mm_and_ps(vOffset, g_XMTwoPi.v);
+        // Sub 2Pi to all entries greater than Pi
+        vResult = _mm_sub_ps(vResult, vOffset);
+        return vResult;
+    }
+}
+
 
 /// Computes the per-component product of two vectors.
 /// 
@@ -5509,16 +5652,14 @@ pub fn XMVector3ComponentsFromNormal(
     *pPerpendicular = XMVectorSubtract(V, Parallel);
 }
 
-// TODO: XMVector3Rotate (FIXME: XMQuaternionMultiply)
 
-/*
 /// Rotates a 3D vector using a quaternion.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3Rotate>
 #[inline]
 pub fn XMVector3Rotate(
-    _V: FXMVECTOR,
-    _RotationQuaternion: FXMVECTOR,
+    V: FXMVECTOR,
+    RotationQuaternion: FXMVECTOR,
 ) -> XMVECTOR
 {
     unsafe {
@@ -5528,9 +5669,24 @@ pub fn XMVector3Rotate(
         return XMQuaternionMultiply(Result, RotationQuaternion);
     }
 }
-*/
 
-// TODO: XMVector3InverseRotate (FIXME: XMQuaternionMultiply)
+
+/// Rotates a 3D vector using the inverse of a quaternion.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3InverseRotate>
+#[inline]
+pub fn XMVector3InverseRotate(
+    V: FXMVECTOR,
+    RotationQuaternion: FXMVECTOR,
+) -> XMVECTOR
+{
+    unsafe {
+        let A: XMVECTOR = XMVectorSelect(g_XMSelect1110.v, V, g_XMSelect1110.v);
+        let Result: XMVECTOR = XMQuaternionMultiply(RotationQuaternion, A);
+        let Q: XMVECTOR = XMQuaternionConjugate(RotationQuaternion);
+        return XMQuaternionMultiply(Result, Q);
+    }
+}
 
 /// Transforms a 3D vector by a matrix.
 ///
@@ -5570,9 +5726,6 @@ pub fn XMVector3Transform(
         return vResult;
     }
 }
-
-
-// TODO: XMVector3TransformCoord
 
 /// Transforms a 3D vector by a given matrix, projecting the result back into w = 1.
 ///
