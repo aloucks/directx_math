@@ -604,3 +604,138 @@ pub fn XMQuaternionRotationRollPitchYawFromVector(
         return Q;
     }
 }
+
+/// Computes the rotation quaternion about a normal vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionRotationNormal>
+#[inline]
+pub fn XMQuaternionRotationNormal(
+    NormalAxis: XMVECTOR,
+    Angle: f32,
+) -> FXMVECTOR
+{
+    #[cfg(any(_XM_NO_INTRINSICS_, _XM_ARM_NEON_INTRINSICS_))]
+    unsafe {
+        let N: XMVECTOR = XMVectorSelect(g_XMOne.v, NormalAxis, g_XMSelect1110.v);
+
+        let mut SinV: f32 = 0.0;
+        let mut CosV: f32 = 0.0;
+        XMScalarSinCos(&mut SinV, &mut CosV, 0.5 * Angle);
+
+        let Scale: XMVECTOR = XMVectorSet(SinV, SinV, SinV, CosV);
+        return XMVectorMultiply(N, Scale);
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut N: XMVECTOR = _mm_and_ps(NormalAxis, g_XMMask3.v);
+        N = _mm_or_ps(N, g_XMIdentityR3.v);
+        let mut Scale: XMVECTOR = _mm_set_ps1(0.5 * Angle);
+        let mut vSine: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut vCosine: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        XMVectorSinCos(&mut vSine, &mut vCosine, Scale);
+        Scale = _mm_and_ps(vSine, g_XMMask3.v);
+        vCosine = _mm_and_ps(vCosine, g_XMMaskW.v);
+        Scale = _mm_or_ps(Scale, vCosine);
+        N = _mm_mul_ps(N, Scale);
+        return N;
+    }
+}
+
+/// Computes a rotation quaternion about an axis.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionRotationAxis>
+#[inline]
+pub fn XMQuaternionRotationAxis(
+    Axis: XMVECTOR,
+    Angle: f32,
+) -> FXMVECTOR
+{
+    debug_assert!(!XMVector3Equal(Axis, XMVectorZero()));
+    debug_assert!(!XMVector3IsInfinite(Axis));
+
+    let Normal: XMVECTOR = XMVector3Normalize(Axis);
+    let Q: XMVECTOR = XMQuaternionRotationNormal(Normal, Angle);
+    return Q;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ------------
+
+/// Computes both the sine and cosine of a radian angle.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarSinCos>
+#[inline]
+pub fn XMScalarSinCos(
+    pSin: &mut f32,
+    pCos: &mut f32,
+    Value: f32,
+)
+{
+    // assert(pSin);
+    // assert(pCos);
+
+    // Map Value to y in [-pi,pi], x = 2*pi*quotient + remainder.
+    let mut quotient: f32 = XM_1DIV2PI * Value;
+    if (Value >= 0.0)
+    {
+        quotient = ((quotient + 0.5) as i32) as f32;
+    }
+    else
+    {
+        quotient = ((quotient - 0.5) as i32) as f32;
+    }
+    let mut y: f32 = Value - XM_2PI * quotient;
+
+    // Map y to [-pi/2,pi/2] with sin(y) = sin(Value).
+    let sign: f32;
+    if (y > XM_PIDIV2)
+    {
+        y = XM_PI - y;
+        sign = -1.0;
+    }
+    else if (y < -XM_PIDIV2)
+    {
+        y = -XM_PI - y;
+        sign = -1.0;
+    }
+    else
+    {
+        sign = 1.0; // +1.0
+    }
+
+    let y2: f32 = y * y;
+
+    // 11-degree minimax approximation
+    *pSin = (((((-2.3889859e-08 * y2 + 2.7525562e-06) * y2 - 0.00019840874) * y2 + 0.0083333310) * y2 - 0.16666667) * y2 + 1.0) * y;
+
+    // 10-degree minimax approximation
+    let p: f32 = ((((-2.6051615e-07 * y2 + 2.4760495e-05) * y2 - 0.0013888378) * y2 + 0.041666638) * y2 - 0.5) * y2 + 1.0;
+    *pCos = sign * p;
+}
