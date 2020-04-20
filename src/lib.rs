@@ -461,8 +461,7 @@ pub union XMVECTORU32 {
 }
 cast_m128!(XMVECTORU32);
 
-/// Unit struct wrapper for `Add`, `AddAssign`, `Mul`, `MulAssign`, `Div`, 
-/// and `DivAssign` [XMVECTOR] overloads.
+/// Unit struct for `Add`, `Sub`, `Mul`, `Div`, and `*Assign` [XMVECTOR] overloads.
 /// 
 /// [XMVECTOR]: type.XMVECTOR.html
 #[derive(Copy, Clone)]

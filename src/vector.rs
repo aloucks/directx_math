@@ -6646,3 +6646,108 @@ pub fn XMVector4Normalize(
         return vResult;
     }
 }
+
+// TODO: XMVector4ClampLength
+// TODO: XMVector4ClampLengthV
+// TODO: XMVector4Reflect
+// TODO: XMVector4Refract
+// TODO: XMVector4RefractV
+// TODO: XMVector4Orthogonal
+// TODO: XMVector4AngleBetweenNormalsEst
+// TODO: XMVector4AngleBetweenNormals
+// TODO: XMVector4AngleBetweenVectors
+// TODO: XMVector4Transform
+// TODO: XMVector4TransformStream
+
+impl std::ops::Deref for XMVector {
+    type Target = XMVECTOR;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::ops::DerefMut for XMVector {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl std::ops::Add for XMVector {
+    type Output = XMVector;
+    fn add(self, V2: XMVector) -> Self::Output {
+        XMVector(XMVectorAdd(self.0, V2.0))
+    }
+}
+
+impl std::ops::AddAssign for XMVector {
+    fn add_assign(&mut self, V2: XMVector) {
+        self.0 = XMVectorAdd(self.0, V2.0);
+    }
+}
+
+impl std::ops::Sub for XMVector {
+    type Output = XMVector;
+    fn sub(self, V2: XMVector) -> Self::Output {
+        XMVector(XMVectorSubtract(self.0, V2.0))
+    }
+}
+
+impl std::ops::SubAssign for XMVector {
+    fn sub_assign(&mut self, V2: XMVector) {
+        self.0 = XMVectorSubtract(self.0, V2.0);
+    }
+}
+
+impl std::ops::Mul for XMVector {
+    type Output = XMVector;
+    fn mul(self, V2: XMVector) -> Self::Output {
+        XMVector(XMVectorMultiply(self.0, V2.0))
+    }
+}
+
+impl std::ops::MulAssign for XMVector {
+    fn mul_assign(&mut self, V2: XMVector) {
+        self.0 = XMVectorMultiply(self.0, V2.0);
+    }
+}
+
+impl std::ops::Div for XMVector {
+    type Output = XMVector;
+    fn div(self, V2: XMVector) -> Self::Output {
+        XMVector(XMVectorDivide(self.0, V2.0))
+    }
+}
+
+impl std::ops::DivAssign for XMVector {
+    fn div_assign(&mut self, V2: XMVector) {
+        self.0 = XMVectorDivide(self.0, V2.0);
+    }
+}
+
+impl std::ops::Mul<f32> for XMVector {
+    type Output = XMVector;
+    fn mul(self, S: f32) -> Self::Output {
+        XMVector(XMVectorScale(self.0, S))
+    }
+}
+
+impl std::ops::MulAssign<f32> for XMVector {
+    fn mul_assign(&mut self, S: f32) {
+        self.0 = XMVectorScale(self.0, S);
+    }
+}
+
+impl std::ops::Div<f32> for XMVector {
+    type Output = XMVector;
+    fn div(self, S: f32) -> Self::Output {
+        let vS = XMVectorReplicate(S);
+        XMVector(XMVectorDivide(self.0, vS))
+    }
+}
+
+impl std::ops::DivAssign<f32> for XMVector {
+    fn div_assign(&mut self, S: f32) {
+        let vS = XMVectorReplicate(S);
+        self.0 = XMVectorDivide(self.0, vS);
+    }
+}
