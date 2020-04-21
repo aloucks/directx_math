@@ -395,9 +395,11 @@ pub fn XMComparisonAnyOutOfBounds(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6
 
 #[cfg(_XM_NO_INTRINSICS_)]
 #[derive(Copy, Clone)]
+#[repr(C, align(16))]
+#[doc(hidden)]
 pub union __vector4 {
-    pub vector4_f32: [f32; 4],
-    pub vector4_u32: [u32; 4],
+    vector4_f32: [f32; 4],
+    vector4_u32: [u32; 4],
 }
 
 #[cfg(_XM_NO_INTRINSICS_)]
@@ -517,7 +519,7 @@ pub struct XMVector(pub XMVECTOR);
 
 #[cfg(_XM_NO_INTRINSICS_)]
 #[derive(Copy, Clone, Debug)]
-#[repr(C)]
+#[doc(hidden)]
 pub struct mm {
     pub _11: f32,
     pub _12: f32,
@@ -539,16 +541,18 @@ pub struct mm {
 
 #[cfg(_XM_NO_INTRINSICS_)]
 #[derive(Copy, Clone)]
-#[repr(C)]
+#[repr(C, align(16))]
 pub union XMMATRIX {
     pub r: [XMVECTOR; 4],
+    #[doc(hidden)]
     pub m: [[f32; 4]; 4],
+    #[doc(hidden)]
     pub mm: mm,
 }
 
 #[cfg(not(_XM_NO_INTRINSICS_))]
 #[derive(Copy, Clone)]
-#[repr(C)]
+#[repr(C, align(16))]
 pub union XMMATRIX {
     pub r: [XMVECTOR; 4],
 }
@@ -798,6 +802,19 @@ fn test_XMVectorPermuteTrait() {
 }
 
 /// Specialized case
+/// ```rust
+/// # use directx_math::*;
+/// let a = XMVectorSet(1.0, 2.0, 3.0, 4.0);
+/// let b = XMVectorSet(5.0, 6.0, 7.0, 8.0);
+///
+/// let c = <&(Permute0X, Permute0Y, Permute0Z, Permute0W)>::XMVectorPermute(a, b);
+/// let d = XMVectorSet(1.0, 2.0, 3.0, 4.0);
+///
+/// assert_eq!(XMVectorGetX(c), XMVectorGetX(d));
+/// assert_eq!(XMVectorGetY(c), XMVectorGetY(d));
+/// assert_eq!(XMVectorGetZ(c), XMVectorGetZ(d));
+/// assert_eq!(XMVectorGetW(c), XMVectorGetW(d));
+/// ```
 impl XMVectorPermute for &(Permute0X, Permute0Y, Permute0Z, Permute0W) {
     const WhichX: bool = Permute0X::PERMUTE > 3;
     const WhichY: bool = Permute0Y::PERMUTE > 3;
@@ -805,19 +822,6 @@ impl XMVectorPermute for &(Permute0X, Permute0Y, Permute0Z, Permute0W) {
     const WhichW: bool = Permute0W::PERMUTE > 3;
     const Shuffle: i32 = _MM_SHUFFLE(Permute0W::PERMUTE & 3, Permute0Z::PERMUTE & 3, Permute0Y::PERMUTE & 3, Permute0X::PERMUTE & 3);
 
-    /// ```rust
-    /// # use directx_math::*;
-    /// let a = XMVectorSet(1.0, 2.0, 3.0, 4.0);
-    /// let b = XMVectorSet(5.0, 6.0, 7.0, 8.0);
-    ///
-    /// let c = <&(Permute0X, Permute0Y, Permute0Z, Permute0W)>::XMVectorPermute(a, b);
-    /// let d = XMVectorSet(1.0, 2.0, 3.0, 4.0);
-    ///
-    /// assert_eq!(XMVectorGetX(c), XMVectorGetX(d));
-    /// assert_eq!(XMVectorGetY(c), XMVectorGetY(d));
-    /// assert_eq!(XMVectorGetZ(c), XMVectorGetZ(d));
-    /// assert_eq!(XMVectorGetW(c), XMVectorGetW(d));
-    /// ```
     #[inline(always)]
     fn XMVectorPermute(V1: XMVECTOR, _V2: XMVECTOR) -> XMVECTOR {
         V1
@@ -825,6 +829,19 @@ impl XMVectorPermute for &(Permute0X, Permute0Y, Permute0Z, Permute0W) {
 }
 
 /// Specialized case
+/// ```rust
+/// # use directx_math::*;
+/// let a = XMVectorSet(1.0, 2.0, 3.0, 4.0);
+/// let b = XMVectorSet(5.0, 6.0, 7.0, 8.0);
+///
+/// let c = <&(Permute1X, Permute1Y, Permute1Z, Permute1W)>::XMVectorPermute(a, b);
+/// let d = XMVectorSet(5.0, 6.0, 7.0, 8.0);
+///
+/// assert_eq!(XMVectorGetX(c), XMVectorGetX(d));
+/// assert_eq!(XMVectorGetY(c), XMVectorGetY(d));
+/// assert_eq!(XMVectorGetZ(c), XMVectorGetZ(d));
+/// assert_eq!(XMVectorGetW(c), XMVectorGetW(d));
+/// ```
 impl XMVectorPermute for &(Permute1X, Permute1Y, Permute1Z, Permute1W) {
     const WhichX: bool = Permute1X::PERMUTE > 3;
     const WhichY: bool = Permute1Y::PERMUTE > 3;
@@ -832,19 +849,6 @@ impl XMVectorPermute for &(Permute1X, Permute1Y, Permute1Z, Permute1W) {
     const WhichW: bool = Permute1W::PERMUTE > 3;
     const Shuffle: i32 = _MM_SHUFFLE(Permute1W::PERMUTE & 3, Permute1Z::PERMUTE & 3, Permute1Y::PERMUTE & 3, Permute1X::PERMUTE & 3);
 
-    /// ```rust
-    /// # use directx_math::*;
-    /// let a = XMVectorSet(1.0, 2.0, 3.0, 4.0);
-    /// let b = XMVectorSet(5.0, 6.0, 7.0, 8.0);
-    ///
-    /// let c = <&(Permute1X, Permute1Y, Permute1Z, Permute1W)>::XMVectorPermute(a, b);
-    /// let d = XMVectorSet(5.0, 6.0, 7.0, 8.0);
-    ///
-    /// assert_eq!(XMVectorGetX(c), XMVectorGetX(d));
-    /// assert_eq!(XMVectorGetY(c), XMVectorGetY(d));
-    /// assert_eq!(XMVectorGetZ(c), XMVectorGetZ(d));
-    /// assert_eq!(XMVectorGetW(c), XMVectorGetW(d));
-    /// ```
     #[inline(always)]
     fn XMVectorPermute(_V1: XMVECTOR, V2: XMVECTOR) -> XMVECTOR {
         V2
@@ -852,6 +856,19 @@ impl XMVectorPermute for &(Permute1X, Permute1Y, Permute1Z, Permute1W) {
 }
 
 /// Specialized case
+/// ```rust
+/// # use directx_math::*;
+/// let a = XMVectorSet(1.0, 2.0, 3.0, 4.0);
+/// let b = XMVectorSet(5.0, 6.0, 7.0, 8.0);
+///
+/// let c = <&(Permute0X, Permute0Y, Permute1X, Permute1Y)>::XMVectorPermute(a, b);
+/// let d = XMVectorSet(1.0, 2.0, 5.0, 6.0);
+///
+/// assert_eq!(XMVectorGetX(c), XMVectorGetX(d));
+/// assert_eq!(XMVectorGetY(c), XMVectorGetY(d));
+/// assert_eq!(XMVectorGetZ(c), XMVectorGetZ(d));
+/// assert_eq!(XMVectorGetW(c), XMVectorGetW(d));
+/// ```
 impl XMVectorPermute for &(Permute0X, Permute0Y, Permute1X, Permute1Y) {
     const WhichX: bool = Permute0X::PERMUTE > 3;
     const WhichY: bool = Permute0Y::PERMUTE > 3;
@@ -859,19 +876,6 @@ impl XMVectorPermute for &(Permute0X, Permute0Y, Permute1X, Permute1Y) {
     const WhichW: bool = Permute1Y::PERMUTE > 3;
     const Shuffle: i32 = _MM_SHUFFLE(Permute1Y::PERMUTE & 3, Permute1X::PERMUTE & 3, Permute0Y::PERMUTE & 3, Permute0X::PERMUTE & 3);
 
-    /// ```rust
-    /// # use directx_math::*;
-    /// let a = XMVectorSet(1.0, 2.0, 3.0, 4.0);
-    /// let b = XMVectorSet(5.0, 6.0, 7.0, 8.0);
-    ///
-    /// let c = <&(Permute0X, Permute0Y, Permute1X, Permute1Y)>::XMVectorPermute(a, b);
-    /// let d = XMVectorSet(1.0, 2.0, 5.0, 6.0);
-    ///
-    /// assert_eq!(XMVectorGetX(c), XMVectorGetX(d));
-    /// assert_eq!(XMVectorGetY(c), XMVectorGetY(d));
-    /// assert_eq!(XMVectorGetZ(c), XMVectorGetZ(d));
-    /// assert_eq!(XMVectorGetW(c), XMVectorGetW(d));
-    /// ```
     #[inline(always)]
     fn XMVectorPermute(V1: XMVECTOR, V2: XMVECTOR) -> XMVECTOR {
         #[cfg(any(_XM_SSE_INTRINSICS_, _XM_AVX_INTRINSICS_))]
@@ -896,6 +900,19 @@ impl XMVectorPermute for &(Permute0X, Permute0Y, Permute1X, Permute1Y) {
 }
 
 /// Specialized case
+/// ```rust
+/// # use directx_math::*;
+/// let a = XMVectorSet(1.0, 2.0, 3.0, 4.0);
+/// let b = XMVectorSet(5.0, 6.0, 7.0, 8.0);
+///
+/// let c = <&(Permute1Z, Permute1W, Permute0Z, Permute0W)>::XMVectorPermute(a, b);
+/// let d = XMVectorSet(7.0, 8.0, 3.0, 4.0);
+///
+/// assert_eq!(XMVectorGetX(c), XMVectorGetX(d));
+/// assert_eq!(XMVectorGetY(c), XMVectorGetY(d));
+/// assert_eq!(XMVectorGetZ(c), XMVectorGetZ(d));
+/// assert_eq!(XMVectorGetW(c), XMVectorGetW(d));
+/// ```
 impl XMVectorPermute for &(Permute1Z, Permute1W, Permute0Z, Permute0W) {
     const WhichX: bool = Permute1Z::PERMUTE > 3;
     const WhichY: bool = Permute1W::PERMUTE > 3;
@@ -903,19 +920,6 @@ impl XMVectorPermute for &(Permute1Z, Permute1W, Permute0Z, Permute0W) {
     const WhichW: bool = Permute0W::PERMUTE > 3;
     const Shuffle: i32 = _MM_SHUFFLE(Permute0W::PERMUTE & 3, Permute0Z::PERMUTE & 3, Permute1W::PERMUTE & 3, Permute1Z::PERMUTE & 3);
 
-    /// ```rust
-    /// # use directx_math::*;
-    /// let a = XMVectorSet(1.0, 2.0, 3.0, 4.0);
-    /// let b = XMVectorSet(5.0, 6.0, 7.0, 8.0);
-    ///
-    /// let c = <&(Permute1Z, Permute1W, Permute0Z, Permute0W)>::XMVectorPermute(a, b);
-    /// let d = XMVectorSet(7.0, 8.0, 3.0, 4.0);
-    ///
-    /// assert_eq!(XMVectorGetX(c), XMVectorGetX(d));
-    /// assert_eq!(XMVectorGetY(c), XMVectorGetY(d));
-    /// assert_eq!(XMVectorGetZ(c), XMVectorGetZ(d));
-    /// assert_eq!(XMVectorGetW(c), XMVectorGetW(d));
-    /// ```
     #[inline(always)]
     fn XMVectorPermute(V1: XMVECTOR, V2: XMVECTOR) -> XMVECTOR {
         #[cfg(any(_XM_SSE_INTRINSICS_, _XM_AVX_INTRINSICS_))]
