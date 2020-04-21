@@ -1023,6 +1023,10 @@ pub fn XMVectorSetIntW(V: XMVECTOR, w: u32) -> XMVECTOR {
 
 /// Swizzles a vector.
 /// 
+/// For the case of constant indices (E0, E1, E2, E3), it is much more efficent to use the template form of [`XMVectorSwizzle`].
+///
+/// [`XMVectorSwizzle`]: ../trait.XMVectorSwizzle.html
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSwizzle>
 #[inline]
 pub fn XMVectorSwizzle(
@@ -1033,7 +1037,7 @@ pub fn XMVectorSwizzle(
     E3: u32
 ) -> XMVECTOR
 {
-    // debug_assert!((E0 < 4) && (E1 < 4) && (E2 < 4) && (E3 < 4));
+    debug_assert!((E0 < 4) && (E1 < 4) && (E2 < 4) && (E3 < 4));
 
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -1090,8 +1094,17 @@ fn test_XMVectorSwizzle() {
 }
 
 /// Permutes the components of two vectors to create a new vector.
-/// 
+///
+/// ### Remarks
+///
+/// If all 4 indices reference only a single vector (i.e. they are all in the range 0-3 or all in the range 4-7),
+/// use `XMVectorSwizzle` instead for better performance.
+///
+/// For constant PermuteX/Y/Z/W parameters, it is much more efficent to use the template form of [`XMVectorPermute`]
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorPermute>
+///
+/// [`XMVectorPermute`]: ../trait.XMVectorPermute.html
 #[inline]
 pub fn XMVectorPermute(
     V1: FXMVECTOR,
@@ -1330,7 +1343,7 @@ pub fn XMVectorMergeZW(
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorShiftLeft>
 #[inline]
 pub fn XMVectorShiftLeft(V1: FXMVECTOR, V2: FXMVECTOR, Elements: u32) -> XMVECTOR {
-    // debug_assert!(Elements < 4);
+    debug_assert!(Elements < 4);
     return XMVectorPermute(V1, V2, Elements, ((Elements)+1), ((Elements)+2), ((Elements)+3));
 }
 
@@ -1339,7 +1352,7 @@ pub fn XMVectorShiftLeft(V1: FXMVECTOR, V2: FXMVECTOR, Elements: u32) -> XMVECTO
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorRotateLeft>
 #[inline]
 pub fn XMVectorRotateLeft(V: FXMVECTOR, Elements: u32) -> XMVECTOR {
-    // debug_assert!(Elements < 4);
+    debug_assert!(Elements < 4);
     return XMVectorSwizzle(V, Elements & 3, (Elements + 1) & 3, (Elements + 2) & 3, (Elements + 3) & 3);
 }
 
@@ -1348,7 +1361,7 @@ pub fn XMVectorRotateLeft(V: FXMVECTOR, Elements: u32) -> XMVECTOR {
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorRotateRight>
 #[inline]
 pub fn XMVectorRotateRight(V: FXMVECTOR, Elements: u32) -> XMVECTOR {
-    // debug_assert!(Elements < 4);
+    debug_assert!(Elements < 4);
     return XMVectorSwizzle(V, (4 - (Elements)) & 3, (5 - (Elements)) & 3, (6 - (Elements)) & 3, (7 - (Elements)) & 3);
 }
 
@@ -1960,7 +1973,35 @@ pub fn XMVectorInBoundsR(pCR: &mut u32, V: FXMVECTOR, Bounds: FXMVECTOR) -> XMVE
     }
 }
 
-// TODO: XMVectorIsNaN
+/// Performs a per-component NaN test on a vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorIsNaN>
+#[inline]
+pub fn XMVectorIsNaN(V: FXMVECTOR) -> XMVECTOR {
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Control = XMVECTORU32 {
+            u: [
+                if XMISNAN!(V.vector4_f32[0]) { 0xFFFFFFFFu32 } else { 0 },
+                if XMISNAN!(V.vector4_f32[1]) { 0xFFFFFFFFu32 } else { 0 },
+                if XMISNAN!(V.vector4_f32[2]) { 0xFFFFFFFFu32 } else { 0 },
+                if XMISNAN!(V.vector4_f32[3]) { 0xFFFFFFFFu32 } else { 0 },
+            ]
+        };
+        return Control.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        // Test against itself. NaN is always not equal
+        return _mm_cmpneq_ps(V, V);
+    }
+}
 
 /// Makes a per-component comparison between two vectors, and returns a vector containing the smallest components.
 ///
@@ -2379,10 +2420,42 @@ pub fn XMVectorAndInt(
     }
 }
 
-// TODO: XMVectorAndCInt
+/// Computes the logical AND of one vector with the negation of a second vector, treating each component as an unsigned integer.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorAndCInt>
+#[inline]
+pub fn XMVectorAndCInt(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Result = XMVECTORU32 {
+            u: [
+                V1.vector4_u32[0] & !V2.vector4_u32[0],
+                V1.vector4_u32[1] & !V2.vector4_u32[1],
+                V1.vector4_u32[2] & !V2.vector4_u32[2],
+                V1.vector4_u32[3] & !V2.vector4_u32[3]
+            ]
+        };
+        return Result.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let V: __m128i = _mm_andnot_si128(_mm_castps_si128(V2), _mm_castps_si128(V1));
+        return _mm_castsi128_ps(V);
+    }
+}
 
 /// Computes the logical OR of two vectors, treating each component as an unsigned integer.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorOrInt>
 #[inline]
 pub fn XMVectorOrInt(
@@ -2415,7 +2488,41 @@ pub fn XMVectorOrInt(
     }
 }
 
-// TODO: XMVectorNorInt
+/// Computes the logical NOR of two vectors, treating each component as an unsigned integer.
+/// 
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorNorInt>
+#[inline]
+pub fn XMVectorNorInt(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Result = XMVECTORU32 {
+            u: [
+                !(V1.vector4_u32[0] | V2.vector4_u32[0]),
+                !(V1.vector4_u32[1] | V2.vector4_u32[1]),
+                !(V1.vector4_u32[2] | V2.vector4_u32[2]),
+                !(V1.vector4_u32[3] | V2.vector4_u32[3])
+            ]
+        };
+        return Result.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut Result: __m128i;
+        Result = _mm_or_si128(_mm_castps_si128(V1), _mm_castps_si128(V2));
+        Result = _mm_andnot_si128(Result, g_XMNegOneMask.m128i());
+        return _mm_castsi128_ps(Result);
+    }
+}
 
 /// Computes the logical XOR of two vectors, treating each component as an unsigned integer.
 /// 
@@ -3074,6 +3181,48 @@ pub fn XMVectorReciprocalSqrt(
 // TODO: XMVectorLogE
 // TODO: XMVectorLog
 // TODO: XMVectorPow [needed for color]
+
+/// Computes V1 raised to the power of V2.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorPow>
+#[inline]
+pub fn XMVectorPow(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Result = XMVECTORF32 {
+            f: [
+                powf(V1.vector4_f32[0], V2.vector4_f32[0]),
+                powf(V1.vector4_f32[1], V2.vector4_f32[1]),
+                powf(V1.vector4_f32[2], V2.vector4_f32[2]),
+                powf(V1.vector4_f32[3], V2.vector4_f32[3])
+            ]
+        };
+        return Result.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut a: Align16<[f32; 4]> = mem::MaybeUninit::uninit().assume_init();
+        let mut b: Align16<[f32; 4]> = mem::MaybeUninit::uninit().assume_init();
+        _mm_store_ps(a.as_mut_ptr(), V1);
+        _mm_store_ps(b.as_mut_ptr(), V2);
+        let vResult: XMVECTOR = _mm_setr_ps(
+            powf(a[0], b[0]),
+            powf(a[1], b[1]),
+            powf(a[2], b[2]),
+            powf(a[3], b[3]));
+        return vResult;
+    }
+}
 
 /// Computes the absolute value of each component of an XMVECTOR.
 /// 
@@ -3926,11 +4075,265 @@ pub fn XMVectorSinEst(
 }
 
 
-// TODO: XMVectorCosEst
-// TODO: XMVectorSinCosEst
-// TODO: XMVectorTanEst
+/// Estimates the cosine of each component of an XMVECTOR.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorCosEst>
+#[inline]
+pub fn XMVectorCosEst(
+    V: FXMVECTOR,
+) -> XMVECTOR
+{
+    // 6-degree minimax approximation
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Result = XMVECTORF32 {
+            f: [
+                cosf(V.vector4_f32[0]),
+                cosf(V.vector4_f32[1]),
+                cosf(V.vector4_f32[2]),
+                cosf(V.vector4_f32[3])
+            ]
+        };
+        return Result.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        // Map V to x in [-pi,pi].
+        let mut x: XMVECTOR = XMVectorModAngles(V);
+
+        // Map in [-pi/2,pi/2] with cos(y) = sign*cos(x).
+        let mut sign: XMVECTOR = _mm_and_ps(x, g_XMNegativeZero.v);
+        let c: __m128 = _mm_or_ps(g_XMPi.v, sign);  // pi when x >= 0, -pi when x < 0
+        let absx: __m128 = _mm_andnot_ps(sign, x);  // |x|
+        let rflx: __m128 = _mm_sub_ps(c, x);
+        let comp: __m128  = _mm_cmple_ps(absx, g_XMHalfPi.v);
+        let mut select0: __m128 = _mm_and_ps(comp, x);
+        let mut select1: __m128 = _mm_andnot_ps(comp, rflx);
+        x = _mm_or_ps(select0, select1);
+        select0 = _mm_and_ps(comp, g_XMOne.v);
+        select1 = _mm_andnot_ps(comp, g_XMNegativeOne.v);
+        sign = _mm_or_ps(select0, select1);
+
+        let x2: __m128 = _mm_mul_ps(x, x);
+
+        // Compute polynomial approximation
+        const CEC: XMVECTOR = unsafe { g_XMCosCoefficients1.v };
+        let vConstantsB: __m128 = XM_PERMUTE_PS!(CEC, _MM_SHUFFLE(3, 3, 3, 3));
+        let mut vConstants: __m128 = XM_PERMUTE_PS!(CEC, _MM_SHUFFLE(2, 2, 2, 2));
+        let mut Result: __m128 = XM_FMADD_PS!(vConstantsB, x2, vConstants);
+
+        vConstants = XM_PERMUTE_PS!(CEC, _MM_SHUFFLE(1, 1, 1, 1));
+        Result = XM_FMADD_PS!(Result, x2, vConstants);
+        Result = XM_FMADD_PS!(Result, x2, g_XMOne.v);
+        Result = _mm_mul_ps(Result, sign);
+        return Result;
+    }
+}
+
+
+/// Estimates the sine and cosine of each component of an XMVECTOR.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSinCosEst>
+#[inline]
+pub fn XMVectorSinCosEst(
+    pSin: &mut XMVECTOR,
+    pCos: &mut XMVECTOR,
+    V: FXMVECTOR,
+)
+{
+    // 7/6-degree minimax approximation
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Sin = XMVECTORF32 {
+            f: [
+                sinf(V.vector4_f32[0]),
+                sinf(V.vector4_f32[1]),
+                sinf(V.vector4_f32[2]),
+                sinf(V.vector4_f32[3])
+            ]
+        };
+        let Cos = XMVECTORF32 {
+            f: [
+                cosf(V.vector4_f32[0]),
+                cosf(V.vector4_f32[1]),
+                cosf(V.vector4_f32[2]),
+                cosf(V.vector4_f32[3])
+            ]
+        };
+        *pSin = Sin.v;
+        *pCos = Cos.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        // Force the value within the bounds of pi
+        let mut x: XMVECTOR = XMVectorModAngles(V);
+
+        // Map in [-pi/2,pi/2] with sin(y) = sin(x), cos(y) = sign*cos(x).
+        let mut sign: XMVECTOR = _mm_and_ps(x, g_XMNegativeZero.v);
+        let c: __m128 = _mm_or_ps(g_XMPi.v, sign);  // pi when x >= 0, -pi when x < 0
+        let absx: __m128 = _mm_andnot_ps(sign, x);  // |x|
+        let rflx: __m128 = _mm_sub_ps(c, x);
+        let comp: __m128 = _mm_cmple_ps(absx, g_XMHalfPi.v);
+        let mut select0: __m128 = _mm_and_ps(comp, x);
+        let mut select1: __m128 = _mm_andnot_ps(comp, rflx);
+        x = _mm_or_ps(select0, select1);
+        select0 = _mm_and_ps(comp, g_XMOne.v);
+        select1 = _mm_andnot_ps(comp, g_XMNegativeOne.v);
+        sign = _mm_or_ps(select0, select1);
+
+        let x2: __m128 = _mm_mul_ps(x, x);
+
+        // Compute polynomial approximation for sine
+        const SEC: XMVECTOR = unsafe { g_XMSinCoefficients1.v };
+        let mut vConstantsB: __m128 = XM_PERMUTE_PS!(SEC, _MM_SHUFFLE(3, 3, 3, 3));
+        let mut vConstants: __m128 = XM_PERMUTE_PS!(SEC, _MM_SHUFFLE(2, 2, 2, 2));
+        let mut Result: __m128 = XM_FMADD_PS!(vConstantsB, x2, vConstants);
+
+        vConstants = XM_PERMUTE_PS!(SEC, _MM_SHUFFLE(1, 1, 1, 1));
+        Result = XM_FMADD_PS!(Result, x2, vConstants);
+        Result = XM_FMADD_PS!(Result, x2, g_XMOne.v);
+        Result = _mm_mul_ps(Result, x);
+        *pSin = Result;
+
+        // Compute polynomial approximation for cosine
+        const CEC: XMVECTOR = unsafe { g_XMCosCoefficients1.v };
+        vConstantsB = XM_PERMUTE_PS!(CEC, _MM_SHUFFLE(3, 3, 3, 3));
+        vConstants = XM_PERMUTE_PS!(CEC, _MM_SHUFFLE(2, 2, 2, 2));
+        Result = XM_FMADD_PS!(vConstantsB, x2, vConstants);
+
+        vConstants = XM_PERMUTE_PS!(CEC, _MM_SHUFFLE(1, 1, 1, 1));
+        Result = XM_FMADD_PS!(Result, x2, vConstants);
+        Result = XM_FMADD_PS!(Result, x2, g_XMOne.v);
+        Result = _mm_mul_ps(Result, sign);
+        *pCos = Result;
+    }
+}
+
+/// Estimates the tangent of each component of an XMVECTOR.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorTanEst>
+#[inline]
+pub fn XMVectorTanEst(
+    V: FXMVECTOR,
+) -> FXMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Result = XMVECTORF32 {
+            f: [
+                tanf(V.vector4_f32[0]),
+                tanf(V.vector4_f32[1]),
+                tanf(V.vector4_f32[2]),
+                tanf(V.vector4_f32[3])
+            ]
+        };
+        return Result.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let OneOverPi: XMVECTOR = XMVectorSplatW(g_XMTanEstCoefficients.v);
+
+        let mut V1: XMVECTOR = XMVectorMultiply(V, OneOverPi);
+        V1 = XMVectorRound(V1);
+
+        V1 = XMVectorNegativeMultiplySubtract(g_XMPi.v, V1, V);
+
+        let T0: XMVECTOR = XMVectorSplatX(g_XMTanEstCoefficients.v);
+        let T1: XMVECTOR = XMVectorSplatY(g_XMTanEstCoefficients.v);
+        let T2: XMVECTOR = XMVectorSplatZ(g_XMTanEstCoefficients.v);
+
+        let V2T2: XMVECTOR = XMVectorNegativeMultiplySubtract(V1, V1, T2);
+        let V2: XMVECTOR = XMVectorMultiply(V1, V1);
+        let V1T0: XMVECTOR = XMVectorMultiply(V1, T0);
+        let V1T1: XMVECTOR = XMVectorMultiply(V1, T1);
+
+        let D: XMVECTOR = XMVectorReciprocalEst(V2T2);
+        let N: XMVECTOR = XMVectorMultiplyAdd(V2, V1T1, V1T0);
+
+        return XMVectorMultiply(N, D);
+    }
+}
+
 // TODO: XMVectorASinEst
 
+/// Estimates the arcsine of each component of an XMVECTOR.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorASinEst>
+#[inline]
+pub fn XMVectorASinEst(
+    V: FXMVECTOR,
+) -> FXMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Result = XMVECTORF32 {
+            f: [
+                asinf(V.vector4_f32[0]),
+                asinf(V.vector4_f32[1]),
+                asinf(V.vector4_f32[2]),
+                asinf(V.vector4_f32[3])
+            ]
+        };
+        return Result.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let nonnegative: __m128 = _mm_cmpge_ps(V, g_XMZero.v);
+        let mvalue: __m128 = _mm_sub_ps(g_XMZero.v, V);
+        let x: __m128 = _mm_max_ps(V, mvalue);  // |V|
+
+        // Compute (1-|V|), clamp to zero to avoid sqrt of negative number.
+        let oneMValue: __m128 = _mm_sub_ps(g_XMOne.v, x);
+        let clampOneMValue: __m128 = _mm_max_ps(g_XMZero.v, oneMValue);
+        let root: __m128 = _mm_sqrt_ps(clampOneMValue);  // sqrt(1-|V|)
+
+        // Compute polynomial approximation
+        const AEC: XMVECTOR = unsafe { g_XMArcEstCoefficients.v };
+        let vConstantsB: __m128 = XM_PERMUTE_PS!(AEC, _MM_SHUFFLE(3, 3, 3, 3));
+        let mut vConstants: __m128 = XM_PERMUTE_PS!(AEC, _MM_SHUFFLE(2, 2, 2, 2));
+        let mut t0: __m128 = XM_FMADD_PS!(vConstantsB, x, vConstants);
+
+        vConstants = XM_PERMUTE_PS!(AEC, _MM_SHUFFLE(1, 1, 1, 1));
+        t0 = XM_FMADD_PS!(t0, x, vConstants);
+
+        vConstants = XM_PERMUTE_PS!(AEC, _MM_SHUFFLE(0, 0, 0, 0));
+        t0 = XM_FMADD_PS!(t0, x, vConstants);
+        t0 = _mm_mul_ps(t0, root);
+
+        let mut t1: __m128 = _mm_sub_ps(g_XMPi.v, t0);
+        t0 = _mm_and_ps(nonnegative, t0);
+        t1 = _mm_andnot_ps(nonnegative, t1);
+        t0 = _mm_or_ps(t0, t1);
+        t0 = _mm_sub_ps(g_XMHalfPi.v, t0);
+        return t0;
+    }
+}
 
 /// Estimates the arccosine of each component of an XMVECTOR.
 ///
@@ -3990,9 +4393,142 @@ pub fn XMVectorACosEst(
     }
 }
 
+/// Estimates the arctangent of each component of an XMVECTOR.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorATanEst>
+#[inline]
+pub fn XMVectorATanEst(
+    V: FXMVECTOR,
+) -> FXMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Result = XMVECTORF32 {
+            f: [
+                atanf(V.vector4_f32[0]),
+                atanf(V.vector4_f32[1]),
+                atanf(V.vector4_f32[2]),
+                atanf(V.vector4_f32[3])
+            ]
+        };
+        return Result.v;
+    }
 
-// TODO: XMVectorATanEst
-// TODO: XMVectorATan2Est
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let absV: __m128 = XMVectorAbs(V);
+        let invV: __m128 = _mm_div_ps(g_XMOne.v, V);
+        let mut comp: __m128 = _mm_cmpgt_ps(V, g_XMOne.v);
+        let mut select0: __m128 = _mm_and_ps(comp, g_XMOne.v);
+        let mut select1: __m128 = _mm_andnot_ps(comp, g_XMNegativeOne.v);
+        let mut sign: __m128 = _mm_or_ps(select0, select1);
+        comp = _mm_cmple_ps(absV, g_XMOne.v);
+        select0 = _mm_and_ps(comp, g_XMZero.v);
+        select1 = _mm_andnot_ps(comp, sign);
+        sign = _mm_or_ps(select0, select1);
+        select0 = _mm_and_ps(comp, V);
+        select1 = _mm_andnot_ps(comp, invV);
+        let x: __m128 = _mm_or_ps(select0, select1);
+
+        let x2: __m128 = _mm_mul_ps(x, x);
+
+        // Compute polynomial approximation
+        const AEC: XMVECTOR = unsafe { g_XMATanEstCoefficients1.v };
+        let vConstantsB: __m128 = XM_PERMUTE_PS!(AEC, _MM_SHUFFLE(3, 3, 3, 3));
+        let mut vConstants: __m128 = XM_PERMUTE_PS!(AEC, _MM_SHUFFLE(2, 2, 2, 2));
+        let mut Result: __m128 = XM_FMADD_PS!(vConstantsB, x2, vConstants);
+
+        vConstants = XM_PERMUTE_PS!(AEC, _MM_SHUFFLE(1, 1, 1, 1));
+        Result = XM_FMADD_PS!(Result, x2, vConstants);
+
+        vConstants = XM_PERMUTE_PS!(AEC, _MM_SHUFFLE(0, 0, 0, 0));
+        Result = XM_FMADD_PS!(Result, x2, vConstants);
+        // ATanEstCoefficients0 is already splatted
+        Result = XM_FMADD_PS!(Result, x2, g_XMATanEstCoefficients0.v);
+        Result = _mm_mul_ps(Result, x);
+        let mut result1: __m128 = _mm_mul_ps(sign, g_XMHalfPi.v);
+        result1 = _mm_sub_ps(result1, Result);
+
+        comp = _mm_cmpeq_ps(sign, g_XMZero.v);
+        select0 = _mm_and_ps(comp, Result);
+        select1 = _mm_andnot_ps(comp, result1);
+        Result = _mm_or_ps(select0, select1);
+        return Result;
+    }
+}
+
+
+/// Estimates the arctangent of Y/X.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorATan2Est>
+#[inline]
+pub fn XMVectorATan2Est(
+    Y: FXMVECTOR,
+    X: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Result = XMVECTORF32 {
+            f: [
+                atan2f(Y.vector4_f32[0], X.vector4_f32[0]),
+                atan2f(Y.vector4_f32[1], X.vector4_f32[1]),
+                atan2f(Y.vector4_f32[2], X.vector4_f32[2]),
+                atan2f(Y.vector4_f32[3], X.vector4_f32[3])
+            ]
+        };
+        return Result.v;
+    }
+
+    #[cfg(not(_XM_NO_INTRINSICS_))]
+    unsafe {
+        const ATan2Constants: XMVECTORF32 = XMVECTORF32 { f: [ XM_PI, XM_PIDIV2, XM_PIDIV4, XM_PI * 3.0 / 4.0 ] };
+
+        let Zero: XMVECTOR = XMVectorZero();
+        let mut ATanResultValid: XMVECTOR = XMVectorTrueInt();
+
+        let mut Pi: XMVECTOR = XMVectorSplatX(ATan2Constants.v);
+        let mut PiOverTwo: XMVECTOR = XMVectorSplatY(ATan2Constants.v);
+        let mut PiOverFour: XMVECTOR = XMVectorSplatZ(ATan2Constants.v);
+        let mut ThreePiOverFour: XMVECTOR = XMVectorSplatW(ATan2Constants.v);
+
+        let YEqualsZero: XMVECTOR = XMVectorEqual(Y, Zero);
+        let XEqualsZero: XMVECTOR = XMVectorEqual(X, Zero);
+        let mut XIsPositive: XMVECTOR = XMVectorAndInt(X, g_XMNegativeZero.v);
+        XIsPositive = XMVectorEqualInt(XIsPositive, Zero);
+        let YEqualsInfinity: XMVECTOR = XMVectorIsInfinite(Y);
+        let XEqualsInfinity: XMVECTOR = XMVectorIsInfinite(X);
+
+        let YSign: XMVECTOR = XMVectorAndInt(Y, g_XMNegativeZero.v);
+        Pi = XMVectorOrInt(Pi, YSign);
+        PiOverTwo = XMVectorOrInt(PiOverTwo, YSign);
+        PiOverFour = XMVectorOrInt(PiOverFour, YSign);
+        ThreePiOverFour = XMVectorOrInt(ThreePiOverFour, YSign);
+
+        let mut R1: XMVECTOR = XMVectorSelect(Pi, YSign, XIsPositive);
+        let mut R2: XMVECTOR = XMVectorSelect(ATanResultValid, PiOverTwo, XEqualsZero);
+        let R3: XMVECTOR = XMVectorSelect(R2, R1, YEqualsZero);
+        let R4: XMVECTOR = XMVectorSelect(ThreePiOverFour, PiOverFour, XIsPositive);
+        let R5: XMVECTOR = XMVectorSelect(PiOverTwo, R4, XEqualsInfinity);
+        let Result: XMVECTOR = XMVectorSelect(R3, R5, YEqualsInfinity);
+        ATanResultValid = XMVectorEqualInt(Result, ATanResultValid);
+
+        let Reciprocal: XMVECTOR = XMVectorReciprocalEst(X);
+        let V: XMVECTOR = XMVectorMultiply(Y, Reciprocal);
+        let R0: XMVECTOR = XMVectorATanEst(V);
+
+        R1 = XMVectorSelect(Pi, g_XMNegativeZero.v, XIsPositive);
+        R2 = XMVectorAdd(R0, R1);
+
+        return XMVectorSelect(Result, R2, ATanResultValid);
+    }
+}
+
 
 /// Performs a linear interpolation between two vectors.
 ///
@@ -4800,6 +5336,35 @@ pub fn XMVector3InBounds(
 
 // TODO: XMVector3IsNaN
 
+/// Tests whether any component of a 3D vector is a NaN.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3IsNaN>
+#[inline]
+pub fn XMVector3IsNaN(
+    V: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (XMISNAN!(V.vector4_f32[0]) ||
+            XMISNAN!(V.vector4_f32[1]) ||
+            XMISNAN!(V.vector4_f32[2]));
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        // Test against itself. NaN is always not equal
+        let vTempNan: XMVECTOR = _mm_cmpneq_ps(V, V);
+        // If x or y or z are NaN, the mask is non-zero
+        return ((_mm_movemask_ps(vTempNan) & 7) != 0);
+    }
+}
+
 /// Tests whether any component of a 3D vector is positive or negative infinity.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3IsInfinite>
@@ -5520,9 +6085,11 @@ pub fn XMVector3Orthogonal(
 {
     let Zero: XMVECTOR = XMVectorZero();
     let Z: XMVECTOR = XMVectorSplatZ(V);
-    // let YZYY: XMVECTOR = XMVectorSwizzle<XM_SWIZZLE_Y, XM_SWIZZLE_Z, XM_SWIZZLE_Y, XM_SWIZZLE_Y>(V);
     // NOTE: (PERFORMANCE) The fast-path XMVectorSwizzle template functions are not yet implemented.
-    let YZYY: XMVECTOR = XMVectorSwizzle(V, XM_SWIZZLE_Y, XM_SWIZZLE_Z, XM_SWIZZLE_Y, XM_SWIZZLE_Y);
+    // let YZYY: XMVECTOR = XMVectorSwizzle(V, XM_SWIZZLE_Y, XM_SWIZZLE_Z, XM_SWIZZLE_Y, XM_SWIZZLE_Y);
+
+    // TODO: Delete note above after benchmarking
+    let YZYY: XMVECTOR = <(SwizzleY, SwizzleZ, SwizzleY, SwizzleY)>::XMVectorSwizzle(V);
 
     let NegativeV: XMVECTOR = XMVectorSubtract(Zero, V);
 
@@ -5534,12 +6101,13 @@ pub fn XMVector3Orthogonal(
 
     let Select: XMVECTOR = XMVectorEqualInt(ZIsNegative, YZYYIsNegative);
 
-    // let R0: XMVECTOR = XMVectorPermute<XM_PERMUTE_1X, XM_PERMUTE_0X, XM_PERMUTE_0X, XM_PERMUTE_0X>(NegativeV, S);
-    // let R1: XMVECTOR = XMVectorPermute<XM_PERMUTE_1X, XM_PERMUTE_0X, XM_PERMUTE_0X, XM_PERMUTE_0X>(V, D);
-
     // NOTE: (PERFORMANCE) The fast-path XMVectorPermute template functions are not yet implemented.
-    let R0: XMVECTOR = XMVectorPermute(NegativeV, S, XM_PERMUTE_1X, XM_PERMUTE_0X, XM_PERMUTE_0X, XM_PERMUTE_0X);
-    let R1: XMVECTOR = XMVectorPermute(V, D, XM_PERMUTE_1X, XM_PERMUTE_0X, XM_PERMUTE_0X, XM_PERMUTE_0X);
+    // let R0: XMVECTOR = XMVectorPermute(NegativeV, S, XM_PERMUTE_1X, XM_PERMUTE_0X, XM_PERMUTE_0X, XM_PERMUTE_0X);
+    // let R1: XMVECTOR = XMVectorPermute(V, D, XM_PERMUTE_1X, XM_PERMUTE_0X, XM_PERMUTE_0X, XM_PERMUTE_0X);
+
+    // TODO: Delete note above after benchmarking
+    let R0: XMVECTOR = <(Permute1X, Permute0X, Permute0X, Permute0X)>::XMVectorPermute(NegativeV, S);
+    let R1: XMVECTOR = <(Permute1X, Permute0X, Permute0X, Permute0X)>::XMVectorPermute(V, D);
 
     return XMVectorSelect(R1, R0, Select);
 }
@@ -6902,5 +7470,23 @@ impl std::ops::DivAssign<f32> for XMVector {
     fn div_assign(&mut self, S: f32) {
         let vS = XMVectorReplicate(S);
         self.0 = XMVectorDivide(self.0, vS);
+    }
+}
+
+impl std::ops::Neg for XMVector {
+    type Output = XMVector;
+    fn neg(self) -> Self::Output {
+        XMVector(XMVectorNegate(*self))
+    }
+}
+
+impl std::fmt::Debug for XMVector {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.debug_struct("XMVector")
+            .field("x", &XMVectorGetX(**self))
+            .field("y", &XMVectorGetY(**self))
+            .field("z", &XMVectorGetZ(**self))
+            .field("w", &XMVectorGetW(**self))
+            .finish()
     }
 }
