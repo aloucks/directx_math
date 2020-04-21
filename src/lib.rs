@@ -448,7 +448,31 @@ macro_rules! cast_m128 {
                     _mm_castps_pd(self.v)
                 }
             }
+
+            #[cfg(_XM_SSE_INTRINSICS_)]
+            #[allow(dead_code)]
+            #[inline]
+            fn m128(self) -> __m128 {
+                unsafe {
+                    self.v
+                }
+            }
         }
+
+        impl std::ops::Deref for $Name {
+            type Target = XMVECTOR;
+            fn deref(&self) -> &Self::Target {
+                unsafe { mem::transmute(self) }
+            }
+        }
+
+        // Adding Deref is intended to make access to constants
+        // easier. Is there a valid use case for DerefMut?
+        // impl std::ops::DerefMut for $Name {
+        //     fn deref_mut(&mut self) -> &mut Self::Target {
+        //         unsafe { mem::transmute(self) }
+        //     }
+        // }
     }
 }
 
