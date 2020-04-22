@@ -63,3 +63,31 @@ pub fn FunctionName(
         
     }
 }
+
+
+
+
+
+/// Descriptrion
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-FunctionName>
+#[inline]
+pub fn FunctionName(
+    M: FXMMATRIX,
+) -> FXMMATRIX
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        
+    }
+}
