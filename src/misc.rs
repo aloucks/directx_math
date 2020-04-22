@@ -694,7 +694,24 @@ pub fn XMQuaternionRotationAxis(
 
 
 
-// ------------
+/// Determines if two floating-point values are nearly equal.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarNearEqual>
+#[inline]
+pub fn XMScalarNearEqual(
+    S1: f32,
+    S2: f32,
+    Epsilon: f32
+) -> bool
+{
+    let Delta: f32 = S1 - S2;
+    return (fabsf(Delta) <= Epsilon);
+}
+
+// TODO: XMScalarSin
+// TODO: XMScalarSinEst
+// TODO: XMScalarCos
+// TODO: XMScalarCosEst
 
 /// Computes both the sine and cosine of a radian angle.
 ///

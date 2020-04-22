@@ -1,6 +1,29 @@
 use crate::*;
 use std::mem;
 
+// Type defs to allow the translation to look more like the source
+type XM_SWIZZLE_X = SwizzleX;
+type XM_SWIZZLE_Y = SwizzleY;
+type XM_SWIZZLE_Z = SwizzleZ;
+type XM_SWIZZLE_W = SwizzleW;
+
+#[allow(dead_code)]
+type XM_PERMUTE_0X = Permute0X;
+#[allow(dead_code)]
+type XM_PERMUTE_0Y = Permute0Y;
+#[allow(dead_code)]
+type XM_PERMUTE_0Z = Permute0Z;
+#[allow(dead_code)]
+type XM_PERMUTE_0W = Permute0W;
+#[allow(dead_code)]
+type XM_PERMUTE_1X = Permute1X;
+#[allow(dead_code)]
+type XM_PERMUTE_1Y = Permute1Y;
+#[allow(dead_code)]
+type XM_PERMUTE_1Z = Permute1Z;
+#[allow(dead_code)]
+type XM_PERMUTE_1W = Permute1W;
+
 /// Tests whether any of the elements of a matrix are NaN.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixIsNaN>
@@ -909,3 +932,1313 @@ pub fn XMMatrixTranspose(
         return mResult;
     }
 }
+
+/// Computes the inverse of a matrix.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixInverse>
+#[inline]
+pub fn XMMatrixInverse(
+    pDeterminant: &mut XMVECTOR,
+    M: FXMMATRIX,
+) -> FXMMATRIX
+{
+    #[cfg(any(_XM_NO_INTRINSICS_, _XM_ARM_NEON_INTRINSICS_))]
+    unsafe {
+        let MT: XMMATRIX = XMMatrixTranspose(M);
+
+        let mut V0: [XMVECTOR; 4] = mem::MaybeUninit::uninit().assume_init();
+        let mut V1: [XMVECTOR; 4] = mem::MaybeUninit::uninit().assume_init();
+        V0[0] = <(XM_SWIZZLE_X, XM_SWIZZLE_X, XM_SWIZZLE_Y, XM_SWIZZLE_Y)>::XMVectorSwizzle(MT.r[2]);
+        V1[0] = <(XM_SWIZZLE_Z, XM_SWIZZLE_W, XM_SWIZZLE_Z, XM_SWIZZLE_W)>::XMVectorSwizzle(MT.r[3]);
+        V0[1] = <(XM_SWIZZLE_X, XM_SWIZZLE_X, XM_SWIZZLE_Y, XM_SWIZZLE_Y)>::XMVectorSwizzle(MT.r[0]);
+        V1[1] = <(XM_SWIZZLE_Z, XM_SWIZZLE_W, XM_SWIZZLE_Z, XM_SWIZZLE_W)>::XMVectorSwizzle(MT.r[1]);
+        V1[2] = <(XM_PERMUTE_0Y, XM_PERMUTE_0W, XM_PERMUTE_1Y, XM_PERMUTE_1W)>::XMVectorPermute(MT.r[3], MT.r[1]);
+        V0[2] = <(XM_PERMUTE_0X, XM_PERMUTE_0Z, XM_PERMUTE_1X, XM_PERMUTE_1Z)>::XMVectorPermute(MT.r[2], MT.r[0]);
+
+        let mut D0: XMVECTOR = XMVectorMultiply(V0[0], V1[0]);
+        let mut D1: XMVECTOR = XMVectorMultiply(V0[1], V1[1]);
+        let mut D2: XMVECTOR = XMVectorMultiply(V0[2], V1[2]);
+
+        V0[0] = <(XM_SWIZZLE_Z, XM_SWIZZLE_W, XM_SWIZZLE_Z, XM_SWIZZLE_W)>::XMVectorSwizzle(MT.r[2]);
+        V1[0] = <(XM_SWIZZLE_X, XM_SWIZZLE_X, XM_SWIZZLE_Y, XM_SWIZZLE_Y)>::XMVectorSwizzle(MT.r[3]);
+        V0[1] = <(XM_SWIZZLE_Z, XM_SWIZZLE_W, XM_SWIZZLE_Z, XM_SWIZZLE_W)>::XMVectorSwizzle(MT.r[0]);
+        V1[1] = <(XM_SWIZZLE_X, XM_SWIZZLE_X, XM_SWIZZLE_Y, XM_SWIZZLE_Y)>::XMVectorSwizzle(MT.r[1]);
+        V0[2] = <(XM_PERMUTE_0Y, XM_PERMUTE_0W, XM_PERMUTE_1Y, XM_PERMUTE_1W)>::XMVectorPermute(MT.r[2], MT.r[0]);
+        V1[2] = <(XM_PERMUTE_0X, XM_PERMUTE_0Z, XM_PERMUTE_1X, XM_PERMUTE_1Z)>::XMVectorPermute(MT.r[3], MT.r[1]);
+
+        D0 = XMVectorNegativeMultiplySubtract(V0[0], V1[0], D0);
+        D1 = XMVectorNegativeMultiplySubtract(V0[1], V1[1], D1);
+        D2 = XMVectorNegativeMultiplySubtract(V0[2], V1[2], D2);
+
+        V0[0] = <(XM_SWIZZLE_Y, XM_SWIZZLE_Z, XM_SWIZZLE_X, XM_SWIZZLE_Y)>::XMVectorSwizzle(MT.r[1]);
+        V1[0] = <(XM_PERMUTE_1Y, XM_PERMUTE_0Y, XM_PERMUTE_0W, XM_PERMUTE_0X)>::XMVectorPermute(D0, D2);
+        V0[1] = <(XM_SWIZZLE_Z, XM_SWIZZLE_X, XM_SWIZZLE_Y, XM_SWIZZLE_X)>::XMVectorSwizzle(MT.r[0]);
+        V1[1] = <(XM_PERMUTE_0W, XM_PERMUTE_1Y, XM_PERMUTE_0Y, XM_PERMUTE_0Z)>::XMVectorPermute(D0, D2);
+        V0[2] = <(XM_SWIZZLE_Y, XM_SWIZZLE_Z, XM_SWIZZLE_X, XM_SWIZZLE_Y)>::XMVectorSwizzle(MT.r[3]);
+        V1[2] = <(XM_PERMUTE_1W, XM_PERMUTE_0Y, XM_PERMUTE_0W, XM_PERMUTE_0X)>::XMVectorPermute(D1, D2);
+        V0[3] = <(XM_SWIZZLE_Z, XM_SWIZZLE_X, XM_SWIZZLE_Y, XM_SWIZZLE_X)>::XMVectorSwizzle(MT.r[2]);
+        V1[3] = <(XM_PERMUTE_0W, XM_PERMUTE_1W, XM_PERMUTE_0Y, XM_PERMUTE_0Z)>::XMVectorPermute(D1, D2);
+
+        let mut C0: XMVECTOR = XMVectorMultiply(V0[0], V1[0]);
+        let mut C2: XMVECTOR = XMVectorMultiply(V0[1], V1[1]);
+        let mut C4: XMVECTOR = XMVectorMultiply(V0[2], V1[2]);
+        let mut C6: XMVECTOR = XMVectorMultiply(V0[3], V1[3]);
+
+        V0[0] = <(XM_SWIZZLE_Z, XM_SWIZZLE_W, XM_SWIZZLE_Y, XM_SWIZZLE_Z)>::XMVectorSwizzle(MT.r[1]);
+        V1[0] = <(XM_PERMUTE_0W, XM_PERMUTE_0X, XM_PERMUTE_0Y, XM_PERMUTE_1X)>::XMVectorPermute(D0, D2);
+        V0[1] = <(XM_SWIZZLE_W, XM_SWIZZLE_Z, XM_SWIZZLE_W, XM_SWIZZLE_Y)>::XMVectorSwizzle(MT.r[0]);
+        V1[1] = <(XM_PERMUTE_0Z, XM_PERMUTE_0Y, XM_PERMUTE_1X, XM_PERMUTE_0X)>::XMVectorPermute(D0, D2);
+        V0[2] = <(XM_SWIZZLE_Z, XM_SWIZZLE_W, XM_SWIZZLE_Y, XM_SWIZZLE_Z)>::XMVectorSwizzle(MT.r[3]);
+        V1[2] = <(XM_PERMUTE_0W, XM_PERMUTE_0X, XM_PERMUTE_0Y, XM_PERMUTE_1Z)>::XMVectorPermute(D1, D2);
+        V0[3] = <(XM_SWIZZLE_W, XM_SWIZZLE_Z, XM_SWIZZLE_W, XM_SWIZZLE_Y)>::XMVectorSwizzle(MT.r[2]);
+        V1[3] = <(XM_PERMUTE_0Z, XM_PERMUTE_0Y, XM_PERMUTE_1Z, XM_PERMUTE_0X)>::XMVectorPermute(D1, D2);
+
+        C0 = XMVectorNegativeMultiplySubtract(V0[0], V1[0], C0);
+        C2 = XMVectorNegativeMultiplySubtract(V0[1], V1[1], C2);
+        C4 = XMVectorNegativeMultiplySubtract(V0[2], V1[2], C4);
+        C6 = XMVectorNegativeMultiplySubtract(V0[3], V1[3], C6);
+
+        V0[0] = <(XM_SWIZZLE_W, XM_SWIZZLE_X, XM_SWIZZLE_W, XM_SWIZZLE_X)>::XMVectorSwizzle(MT.r[1]);
+        V1[0] = <(XM_PERMUTE_0Z, XM_PERMUTE_1Y, XM_PERMUTE_1X, XM_PERMUTE_0Z)>::XMVectorPermute(D0, D2);
+        V0[1] = <(XM_SWIZZLE_Y, XM_SWIZZLE_W, XM_SWIZZLE_X, XM_SWIZZLE_Z)>::XMVectorSwizzle(MT.r[0]);
+        V1[1] = <(XM_PERMUTE_1Y, XM_PERMUTE_0X, XM_PERMUTE_0W, XM_PERMUTE_1X)>::XMVectorPermute(D0, D2);
+        V0[2] = <(XM_SWIZZLE_W, XM_SWIZZLE_X, XM_SWIZZLE_W, XM_SWIZZLE_X)>::XMVectorSwizzle(MT.r[3]);
+        V1[2] = <(XM_PERMUTE_0Z, XM_PERMUTE_1W, XM_PERMUTE_1Z, XM_PERMUTE_0Z)>::XMVectorPermute(D1, D2);
+        V0[3] = <(XM_SWIZZLE_Y, XM_SWIZZLE_W, XM_SWIZZLE_X, XM_SWIZZLE_Z)>::XMVectorSwizzle(MT.r[2]);
+        V1[3] = <(XM_PERMUTE_1W, XM_PERMUTE_0X, XM_PERMUTE_0W, XM_PERMUTE_1Z)>::XMVectorPermute(D1, D2);
+
+        let C1: XMVECTOR = XMVectorNegativeMultiplySubtract(V0[0], V1[0], C0);
+        C0 = XMVectorMultiplyAdd(V0[0], V1[0], C0);
+        let C3: XMVECTOR = XMVectorMultiplyAdd(V0[1], V1[1], C2);
+        C2 = XMVectorNegativeMultiplySubtract(V0[1], V1[1], C2);
+        let C5: XMVECTOR = XMVectorNegativeMultiplySubtract(V0[2], V1[2], C4);
+        C4 = XMVectorMultiplyAdd(V0[2], V1[2], C4);
+        let C7: XMVECTOR = XMVectorMultiplyAdd(V0[3], V1[3], C6);
+        C6 = XMVectorNegativeMultiplySubtract(V0[3], V1[3], C6);
+
+        let mut R: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        R.r[0] = XMVectorSelect(C0, C1, g_XMSelect0101.v);
+        R.r[1] = XMVectorSelect(C2, C3, g_XMSelect0101.v);
+        R.r[2] = XMVectorSelect(C4, C5, g_XMSelect0101.v);
+        R.r[3] = XMVectorSelect(C6, C7, g_XMSelect0101.v);
+
+        let Determinant: XMVECTOR = XMVector4Dot(R.r[0], MT.r[0]);
+
+        // TODO: The pDeterminant parameter is optionally null. Should this
+        //       take an Option<&mut XMVECTOR> instead?
+
+        // if (pDeterminant != nullptr)
+        //     *pDeterminant = Determinant;
+        *pDeterminant = Determinant;
+
+        let Reciprocal: XMVECTOR = XMVectorReciprocal(Determinant);
+
+        let mut Result: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        Result.r[0] = XMVectorMultiply(R.r[0], Reciprocal);
+        Result.r[1] = XMVectorMultiply(R.r[1], Reciprocal);
+        Result.r[2] = XMVectorMultiply(R.r[2], Reciprocal);
+        Result.r[3] = XMVectorMultiply(R.r[3], Reciprocal);
+        return Result;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        // Transpose matrix
+        let vTemp1: XMVECTOR = _mm_shuffle_ps(M.r[0], M.r[1], _MM_SHUFFLE(1, 0, 1, 0));
+        let vTemp3: XMVECTOR = _mm_shuffle_ps(M.r[0], M.r[1], _MM_SHUFFLE(3, 2, 3, 2));
+        let vTemp2: XMVECTOR = _mm_shuffle_ps(M.r[2], M.r[3], _MM_SHUFFLE(1, 0, 1, 0));
+        let vTemp4: XMVECTOR = _mm_shuffle_ps(M.r[2], M.r[3], _MM_SHUFFLE(3, 2, 3, 2));
+
+        let mut MT: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        MT.r[0] = _mm_shuffle_ps(vTemp1, vTemp2, _MM_SHUFFLE(2, 0, 2, 0));
+        MT.r[1] = _mm_shuffle_ps(vTemp1, vTemp2, _MM_SHUFFLE(3, 1, 3, 1));
+        MT.r[2] = _mm_shuffle_ps(vTemp3, vTemp4, _MM_SHUFFLE(2, 0, 2, 0));
+        MT.r[3] = _mm_shuffle_ps(vTemp3, vTemp4, _MM_SHUFFLE(3, 1, 3, 1));
+
+        let mut V00: XMVECTOR = XM_PERMUTE_PS!(MT.r[2], _MM_SHUFFLE(1, 1, 0, 0));
+        let mut V10: XMVECTOR = XM_PERMUTE_PS!(MT.r[3], _MM_SHUFFLE(3, 2, 3, 2));
+        let mut V01: XMVECTOR = XM_PERMUTE_PS!(MT.r[0], _MM_SHUFFLE(1, 1, 0, 0));
+        let mut V11: XMVECTOR = XM_PERMUTE_PS!(MT.r[1], _MM_SHUFFLE(3, 2, 3, 2));
+        let mut V02: XMVECTOR = _mm_shuffle_ps(MT.r[2], MT.r[0], _MM_SHUFFLE(2, 0, 2, 0));
+        let mut V12: XMVECTOR = _mm_shuffle_ps(MT.r[3], MT.r[1], _MM_SHUFFLE(3, 1, 3, 1));
+
+        let mut D0: XMVECTOR = _mm_mul_ps(V00, V10);
+        let mut D1: XMVECTOR = _mm_mul_ps(V01, V11);
+        let mut D2: XMVECTOR = _mm_mul_ps(V02, V12);
+
+        V00 = XM_PERMUTE_PS!(MT.r[2], _MM_SHUFFLE(3, 2, 3, 2));
+        V10 = XM_PERMUTE_PS!(MT.r[3], _MM_SHUFFLE(1, 1, 0, 0));
+        V01 = XM_PERMUTE_PS!(MT.r[0], _MM_SHUFFLE(3, 2, 3, 2));
+        V11 = XM_PERMUTE_PS!(MT.r[1], _MM_SHUFFLE(1, 1, 0, 0));
+        V02 = _mm_shuffle_ps(MT.r[2], MT.r[0], _MM_SHUFFLE(3, 1, 3, 1));
+        V12 = _mm_shuffle_ps(MT.r[3], MT.r[1], _MM_SHUFFLE(2, 0, 2, 0));
+
+        D0 = XM_FNMADD_PS!(V00, V10, D0);
+        D1 = XM_FNMADD_PS!(V01, V11, D1);
+        D2 = XM_FNMADD_PS!(V02, V12, D2);
+        // V11 = D0Y,D0W,D2Y,D2Y
+        V11 = _mm_shuffle_ps(D0, D2, _MM_SHUFFLE(1, 1, 3, 1));
+        V00 = XM_PERMUTE_PS!(MT.r[1], _MM_SHUFFLE(1, 0, 2, 1));
+        V10 = _mm_shuffle_ps(V11, D0, _MM_SHUFFLE(0, 3, 0, 2));
+        V01 = XM_PERMUTE_PS!(MT.r[0], _MM_SHUFFLE(0, 1, 0, 2));
+        V11 = _mm_shuffle_ps(V11, D0, _MM_SHUFFLE(2, 1, 2, 1));
+        // V13 = D1Y,D1W,D2W,D2W
+        let mut V13: XMVECTOR = _mm_shuffle_ps(D1, D2, _MM_SHUFFLE(3, 3, 3, 1));
+        V02 = XM_PERMUTE_PS!(MT.r[3], _MM_SHUFFLE(1, 0, 2, 1));
+        V12 = _mm_shuffle_ps(V13, D1, _MM_SHUFFLE(0, 3, 0, 2));
+        let mut V03: XMVECTOR = XM_PERMUTE_PS!(MT.r[2], _MM_SHUFFLE(0, 1, 0, 2));
+        V13 = _mm_shuffle_ps(V13, D1, _MM_SHUFFLE(2, 1, 2, 1));
+
+        let mut C0: XMVECTOR = _mm_mul_ps(V00, V10);
+        let mut C2: XMVECTOR = _mm_mul_ps(V01, V11);
+        let mut C4: XMVECTOR = _mm_mul_ps(V02, V12);
+        let mut C6: XMVECTOR = _mm_mul_ps(V03, V13);
+
+        // V11 = D0X,D0Y,D2X,D2X
+        V11 = _mm_shuffle_ps(D0, D2, _MM_SHUFFLE(0, 0, 1, 0));
+        V00 = XM_PERMUTE_PS!(MT.r[1], _MM_SHUFFLE(2, 1, 3, 2));
+        V10 = _mm_shuffle_ps(D0, V11, _MM_SHUFFLE(2, 1, 0, 3));
+        V01 = XM_PERMUTE_PS!(MT.r[0], _MM_SHUFFLE(1, 3, 2, 3));
+        V11 = _mm_shuffle_ps(D0, V11, _MM_SHUFFLE(0, 2, 1, 2));
+        // V13 = D1X,D1Y,D2Z,D2Z
+        V13 = _mm_shuffle_ps(D1, D2, _MM_SHUFFLE(2, 2, 1, 0));
+        V02 = XM_PERMUTE_PS!(MT.r[3], _MM_SHUFFLE(2, 1, 3, 2));
+        V12 = _mm_shuffle_ps(D1, V13, _MM_SHUFFLE(2, 1, 0, 3));
+        V03 = XM_PERMUTE_PS!(MT.r[2], _MM_SHUFFLE(1, 3, 2, 3));
+        V13 = _mm_shuffle_ps(D1, V13, _MM_SHUFFLE(0, 2, 1, 2));
+
+        C0 = XM_FNMADD_PS!(V00, V10, C0);
+        C2 = XM_FNMADD_PS!(V01, V11, C2);
+        C4 = XM_FNMADD_PS!(V02, V12, C4);
+        C6 = XM_FNMADD_PS!(V03, V13, C6);
+
+        V00 = XM_PERMUTE_PS!(MT.r[1], _MM_SHUFFLE(0, 3, 0, 3));
+        // V10 = D0Z,D0Z,D2X,D2Y
+        V10 = _mm_shuffle_ps(D0, D2, _MM_SHUFFLE(1, 0, 2, 2));
+        V10 = XM_PERMUTE_PS!(V10, _MM_SHUFFLE(0, 2, 3, 0));
+        V01 = XM_PERMUTE_PS!(MT.r[0], _MM_SHUFFLE(2, 0, 3, 1));
+        // V11 = D0X,D0W,D2X,D2Y
+        V11 = _mm_shuffle_ps(D0, D2, _MM_SHUFFLE(1, 0, 3, 0));
+        V11 = XM_PERMUTE_PS!(V11, _MM_SHUFFLE(2, 1, 0, 3));
+        V02 = XM_PERMUTE_PS!(MT.r[3], _MM_SHUFFLE(0, 3, 0, 3));
+        // V12 = D1Z,D1Z,D2Z,D2W
+        V12 = _mm_shuffle_ps(D1, D2, _MM_SHUFFLE(3, 2, 2, 2));
+        V12 = XM_PERMUTE_PS!(V12, _MM_SHUFFLE(0, 2, 3, 0));
+        V03 = XM_PERMUTE_PS!(MT.r[2], _MM_SHUFFLE(2, 0, 3, 1));
+        // V13 = D1X,D1W,D2Z,D2W
+        V13 = _mm_shuffle_ps(D1, D2, _MM_SHUFFLE(3, 2, 3, 0));
+        V13 = XM_PERMUTE_PS!(V13, _MM_SHUFFLE(2, 1, 0, 3));
+
+        V00 = _mm_mul_ps(V00, V10);
+        V01 = _mm_mul_ps(V01, V11);
+        V02 = _mm_mul_ps(V02, V12);
+        V03 = _mm_mul_ps(V03, V13);
+        let C1: XMVECTOR = _mm_sub_ps(C0, V00);
+        C0 = _mm_add_ps(C0, V00);
+        let C3: XMVECTOR = _mm_add_ps(C2, V01);
+        C2 = _mm_sub_ps(C2, V01);
+        let C5: XMVECTOR = _mm_sub_ps(C4, V02);
+        C4 = _mm_add_ps(C4, V02);
+        let C7: XMVECTOR = _mm_add_ps(C6, V03);
+        C6 = _mm_sub_ps(C6, V03);
+
+        C0 = _mm_shuffle_ps(C0, C1, _MM_SHUFFLE(3, 1, 2, 0));
+        C2 = _mm_shuffle_ps(C2, C3, _MM_SHUFFLE(3, 1, 2, 0));
+        C4 = _mm_shuffle_ps(C4, C5, _MM_SHUFFLE(3, 1, 2, 0));
+        C6 = _mm_shuffle_ps(C6, C7, _MM_SHUFFLE(3, 1, 2, 0));
+        C0 = XM_PERMUTE_PS!(C0, _MM_SHUFFLE(3, 1, 2, 0));
+        C2 = XM_PERMUTE_PS!(C2, _MM_SHUFFLE(3, 1, 2, 0));
+        C4 = XM_PERMUTE_PS!(C4, _MM_SHUFFLE(3, 1, 2, 0));
+        C6 = XM_PERMUTE_PS!(C6, _MM_SHUFFLE(3, 1, 2, 0));
+        // Get the determinant
+        let mut vTemp: XMVECTOR = XMVector4Dot(C0, MT.r[0]);
+        // TODO: pDeterminant optional?
+        // if (pDeterminant != nullptr)
+        //     *pDeterminant = vTemp;
+        *pDeterminant = vTemp;
+
+        vTemp = _mm_div_ps(g_XMOne.v, vTemp);
+        let mut mResult: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        mResult.r[0] = _mm_mul_ps(C0, vTemp);
+        mResult.r[1] = _mm_mul_ps(C2, vTemp);
+        mResult.r[2] = _mm_mul_ps(C4, vTemp);
+        mResult.r[3] = _mm_mul_ps(C6, vTemp);
+        return mResult;
+    }
+}
+
+/// XMMatrixVectorTensorProduct
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixVectorTensorProduct>
+#[inline]
+pub fn XMMatrixVectorTensorProduct(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR
+) -> FXMMATRIX
+{
+    unsafe {
+        let mut mResult: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        type _0 = XM_SWIZZLE_X;
+        type _1 = XM_SWIZZLE_Y;
+        type _2 = XM_SWIZZLE_Z;
+        type _3 = XM_SWIZZLE_W;
+        mResult.r[0] = XMVectorMultiply(<(_0, _0, _0, _0)>::XMVectorSwizzle(V1), V2);
+        mResult.r[1] = XMVectorMultiply(<(_1, _1, _1, _1)>::XMVectorSwizzle(V1), V2);
+        mResult.r[2] = XMVectorMultiply(<(_2, _2, _2, _2)>::XMVectorSwizzle(V1), V2);
+        mResult.r[3] = XMVectorMultiply(<(_3, _3, _3, _3)>::XMVectorSwizzle(V1), V2);
+        return mResult;
+    }
+}
+
+/// Computes the determinant of a matrix.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixDeterminant>
+#[inline]
+pub fn XMMatrixDeterminant(
+    M: FXMMATRIX,
+) -> FXMVECTOR
+{
+    unsafe {
+        const Sign: XMVECTORF32 = XMVECTORF32 { f: [ 1.0, -1.0, 1.0, -1.0 ] };
+
+        let mut V0: XMVECTOR = <(XM_SWIZZLE_Y, XM_SWIZZLE_X, XM_SWIZZLE_X, XM_SWIZZLE_X)>::XMVectorSwizzle(M.r[2]);
+        let mut V1: XMVECTOR = <(XM_SWIZZLE_Z, XM_SWIZZLE_Z, XM_SWIZZLE_Y, XM_SWIZZLE_Y)>::XMVectorSwizzle(M.r[3]);
+        let mut V2: XMVECTOR = <(XM_SWIZZLE_Y, XM_SWIZZLE_X, XM_SWIZZLE_X, XM_SWIZZLE_X)>::XMVectorSwizzle(M.r[2]);
+        let mut V3: XMVECTOR = <(XM_SWIZZLE_W, XM_SWIZZLE_W, XM_SWIZZLE_W, XM_SWIZZLE_Z)>::XMVectorSwizzle(M.r[3]);
+        let mut V4: XMVECTOR = <(XM_SWIZZLE_Z, XM_SWIZZLE_Z, XM_SWIZZLE_Y, XM_SWIZZLE_Y)>::XMVectorSwizzle(M.r[2]);
+        let mut V5: XMVECTOR = <(XM_SWIZZLE_W, XM_SWIZZLE_W, XM_SWIZZLE_W, XM_SWIZZLE_Z)>::XMVectorSwizzle(M.r[3]);
+
+        let mut P0: XMVECTOR = XMVectorMultiply(V0, V1);
+        let mut P1: XMVECTOR = XMVectorMultiply(V2, V3);
+        let mut P2: XMVECTOR = XMVectorMultiply(V4, V5);
+
+        V0 = <(XM_SWIZZLE_Z, XM_SWIZZLE_Z, XM_SWIZZLE_Y, XM_SWIZZLE_Y)>::XMVectorSwizzle(M.r[2]);
+        V1 = <(XM_SWIZZLE_Y, XM_SWIZZLE_X, XM_SWIZZLE_X, XM_SWIZZLE_X)>::XMVectorSwizzle(M.r[3]);
+        V2 = <(XM_SWIZZLE_W, XM_SWIZZLE_W, XM_SWIZZLE_W, XM_SWIZZLE_Z)>::XMVectorSwizzle(M.r[2]);
+        V3 = <(XM_SWIZZLE_Y, XM_SWIZZLE_X, XM_SWIZZLE_X, XM_SWIZZLE_X)>::XMVectorSwizzle(M.r[3]);
+        V4 = <(XM_SWIZZLE_W, XM_SWIZZLE_W, XM_SWIZZLE_W, XM_SWIZZLE_Z)>::XMVectorSwizzle(M.r[2]);
+        V5 = <(XM_SWIZZLE_Z, XM_SWIZZLE_Z, XM_SWIZZLE_Y, XM_SWIZZLE_Y)>::XMVectorSwizzle(M.r[3]);
+
+        P0 = XMVectorNegativeMultiplySubtract(V0, V1, P0);
+        P1 = XMVectorNegativeMultiplySubtract(V2, V3, P1);
+        P2 = XMVectorNegativeMultiplySubtract(V4, V5, P2);
+
+        V0 = <(XM_SWIZZLE_W, XM_SWIZZLE_W, XM_SWIZZLE_W, XM_SWIZZLE_Z)>::XMVectorSwizzle(M.r[1]);
+        V1 = <(XM_SWIZZLE_Z, XM_SWIZZLE_Z, XM_SWIZZLE_Y, XM_SWIZZLE_Y)>::XMVectorSwizzle(M.r[1]);
+        V2 = <(XM_SWIZZLE_Y, XM_SWIZZLE_X, XM_SWIZZLE_X, XM_SWIZZLE_X)>::XMVectorSwizzle(M.r[1]);
+
+        let S: XMVECTOR = XMVectorMultiply(M.r[0], Sign.v);
+        let mut R: XMVECTOR = XMVectorMultiply(V0, P0);
+        R = XMVectorNegativeMultiplySubtract(V1, P1, R);
+        R = XMVectorMultiplyAdd(V2, P2, R);
+
+        return XMVector4Dot(S, R);
+    }
+}
+
+// TODO: XMMatrixDecompose
+
+/// Builds the identity matrix.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixIdentity>
+#[inline]
+pub fn XMMatrixIdentity() -> FXMMATRIX
+{
+    unsafe {
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        M.r[0] = g_XMIdentityR0.v;
+        M.r[1] = g_XMIdentityR1.v;
+        M.r[2] = g_XMIdentityR2.v;
+        M.r[3] = g_XMIdentityR3.v;
+        return M;
+    }
+}
+
+/// Creates a matrix with float values.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixSet>
+#[inline]
+pub fn XMMatrixSet(
+    m00: f32, m01: f32, m02: f32, m03: f32,
+    m10: f32, m11: f32, m12: f32, m13: f32,
+    m20: f32, m21: f32, m22: f32, m23: f32,
+    m30: f32, m31: f32, m32: f32, m33: f32
+) -> FXMMATRIX
+{
+    let mut M: XMMATRIX = unsafe { mem::MaybeUninit::uninit().assume_init() };
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        M.m[0][0] = m00; M.m[0][1] = m01; M.m[0][2] = m02; M.m[0][3] = m03;
+        M.m[1][0] = m10; M.m[1][1] = m11; M.m[1][2] = m12; M.m[1][3] = m13;
+        M.m[2][0] = m20; M.m[2][1] = m21; M.m[2][2] = m22; M.m[2][3] = m23;
+        M.m[3][0] = m30; M.m[3][1] = m31; M.m[3][2] = m32; M.m[3][3] = m33;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        M.r[0] = XMVectorSet(m00, m01, m02, m03);
+        M.r[1] = XMVectorSet(m10, m11, m12, m13);
+        M.r[2] = XMVectorSet(m20, m21, m22, m23);
+        M.r[3] = XMVectorSet(m30, m31, m32, m33);
+    }
+
+    return M;
+}
+
+/// Builds a translation matrix from the specified offsets.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixTranslation>
+#[inline]
+pub fn XMMatrixTranslation(
+    OffsetX: f32,
+    OffsetY: f32,
+    OffsetZ: f32,
+) -> FXMMATRIX
+{
+    let mut M: XMMATRIX = unsafe { mem::MaybeUninit::uninit().assume_init() };
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        M.m[0][0] = 1.0;
+        M.m[0][1] = 0.0;
+        M.m[0][2] = 0.0;
+        M.m[0][3] = 0.0;
+
+        M.m[1][0] = 0.0;
+        M.m[1][1] = 1.0;
+        M.m[1][2] = 0.0;
+        M.m[1][3] = 0.0;
+
+        M.m[2][0] = 0.0;
+        M.m[2][1] = 0.0;
+        M.m[2][2] = 1.0;
+        M.m[2][3] = 0.0;
+
+        M.m[3][0] = OffsetX;
+        M.m[3][1] = OffsetY;
+        M.m[3][2] = OffsetZ;
+        M.m[3][3] = 1.0;
+    }
+
+    #[cfg(any(_XM_SSE_INTRINSICS_, _XM_ARM_NEON_INTRINSICS_))]
+    unsafe {
+        M.r[0] = g_XMIdentityR0.v;
+        M.r[1] = g_XMIdentityR1.v;
+        M.r[2] = g_XMIdentityR2.v;
+        M.r[3] = XMVectorSet(OffsetX, OffsetY, OffsetZ, 1.0);
+    }
+
+    return M;
+}
+
+/// Builds a translation matrix from a vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixTranslationFromVector>
+#[inline]
+pub fn XMMatrixTranslationFromVector(
+    Offset: XMVECTOR,
+) -> FXMMATRIX
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        M.m[0][0] = 1.0;
+        M.m[0][1] = 0.0;
+        M.m[0][2] = 0.0;
+        M.m[0][3] = 0.0;
+
+        M.m[1][0] = 0.0;
+        M.m[1][1] = 1.0;
+        M.m[1][2] = 0.0;
+        M.m[1][3] = 0.0;
+
+        M.m[2][0] = 0.0;
+        M.m[2][1] = 0.0;
+        M.m[2][2] = 1.0;
+        M.m[2][3] = 0.0;
+
+        M.m[3][0] = Offset.vector4_f32[0];
+        M.m[3][1] = Offset.vector4_f32[1];
+        M.m[3][2] = Offset.vector4_f32[2];
+        M.m[3][3] = 1.0;
+        return M;
+    }
+
+    #[cfg(any(_XM_SSE_INTRINSICS_, _XM_ARM_NEON_INTRINSICS_))]
+    unsafe {
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        M.r[0] = g_XMIdentityR0.v;
+        M.r[1] = g_XMIdentityR1.v;
+        M.r[2] = g_XMIdentityR2.v;
+        M.r[3] = XMVectorSelect(g_XMIdentityR3.v, Offset, g_XMSelect1110.v);
+        return M;
+    }
+}
+
+/// Builds a matrix that scales along the x-axis, y-axis, and z-axis.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixScaling>
+#[inline]
+pub fn XMMatrixScaling(
+    ScaleX: f32,
+    ScaleY: f32,
+    ScaleZ: f32,
+) -> FXMMATRIX
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        M.m[0][0] = ScaleX;
+        M.m[0][1] = 0.0;
+        M.m[0][2] = 0.0;
+        M.m[0][3] = 0.0;
+
+        M.m[1][0] = 0.0;
+        M.m[1][1] = ScaleY;
+        M.m[1][2] = 0.0;
+        M.m[1][3] = 0.0;
+
+        M.m[2][0] = 0.0;
+        M.m[2][1] = 0.0;
+        M.m[2][2] = ScaleZ;
+        M.m[2][3] = 0.0;
+
+        M.m[3][0] = 0.0;
+        M.m[3][1] = 0.0;
+        M.m[3][2] = 0.0;
+        M.m[3][3] = 1.0;
+        return M;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    unsafe {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        M.r[0] = _mm_set_ps(0.0, 0.0, 0.0, ScaleX);
+        M.r[1] = _mm_set_ps(0.0, 0.0, ScaleY, 0.0);
+        M.r[2] = _mm_set_ps(0.0, ScaleZ, 0.0, 0.0);
+        M.r[3] = g_XMIdentityR3.v;
+        return M;
+    }
+}
+
+/// Builds a matrix that scales along the x-axis, y-axis, and z-axis.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixScalingFromVector>
+#[inline]
+pub fn XMMatrixScalingFromVector(
+    Scale: XMVECTOR,
+) -> FXMMATRIX
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        M.m[0][0] = Scale.vector4_f32[0];
+        M.m[0][1] = 0.0;
+        M.m[0][2] = 0.0;
+        M.m[0][3] = 0.0;
+
+        M.m[1][0] = 0.0;
+        M.m[1][1] = Scale.vector4_f32[1];
+        M.m[1][2] = 0.0;
+        M.m[1][3] = 0.0;
+
+        M.m[2][0] = 0.0;
+        M.m[2][1] = 0.0;
+        M.m[2][2] = Scale.vector4_f32[2];
+        M.m[2][3] = 0.0;
+
+        M.m[3][0] = 0.0;
+        M.m[3][1] = 0.0;
+        M.m[3][2] = 0.0;
+        M.m[3][3] = 1.0;
+        return M;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    unsafe {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        M.r[0] = _mm_and_ps(Scale, *g_XMMaskX);
+        M.r[1] = _mm_and_ps(Scale, *g_XMMaskY);
+        M.r[2] = _mm_and_ps(Scale, *g_XMMaskZ);
+        M.r[3] = g_XMIdentityR3.v;
+        return M;
+    }
+}
+
+// TODO: XMMatrixRotationX
+// TODO: XMMatrixRotationY
+// TODO: XMMatrixRotationZ
+// TODO: XMMatrixRotationRollPitchYaw
+// TODO: XMMatrixRotationRollPitchYawFromVector
+// TODO: XMMatrixRotationNormal
+// TODO: XMMatrixRotationAxis
+
+/// Descriptrion
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixRotationQuaternion>
+#[inline]
+pub fn XMMatrixRotationQuaternion(
+    Quaternion: FXMVECTOR ,
+) -> FXMMATRIX
+{
+    #[cfg(any(_XM_NO_INTRINSICS_, _XM_ARM_NEON_INTRINSICS_))]
+    unsafe {
+        // PERFORMANCE: static const
+        const Constant1110: XMVECTORF32 = XMVECTORF32 { f: [ 1.0, 1.0, 1.0, 0.0 ] };
+
+        let Q0: XMVECTOR = XMVectorAdd(Quaternion, Quaternion);
+        let Q1: XMVECTOR = XMVectorMultiply(Quaternion, Q0);
+
+        let mut V0: XMVECTOR = <(XM_PERMUTE_0Y, XM_PERMUTE_0X, XM_PERMUTE_0X, XM_PERMUTE_1W)>::XMVectorPermute(Q1, Constant1110.v);
+        let mut V1: XMVECTOR = <(XM_PERMUTE_0Z, XM_PERMUTE_0Z, XM_PERMUTE_0Y, XM_PERMUTE_1W)>::XMVectorPermute(Q1, Constant1110.v);
+        let mut R0: XMVECTOR = XMVectorSubtract(*Constant1110, V0);
+        R0 = XMVectorSubtract(R0, V1);
+
+        V0 = <(XM_SWIZZLE_X, XM_SWIZZLE_X, XM_SWIZZLE_Y, XM_SWIZZLE_W)>::XMVectorSwizzle(Quaternion);
+        V1 = <(XM_SWIZZLE_Z, XM_SWIZZLE_Y, XM_SWIZZLE_Z, XM_SWIZZLE_W)>::XMVectorSwizzle(Q0);
+        V0 = XMVectorMultiply(V0, V1);
+
+        V1 = XMVectorSplatW(Quaternion);
+        let V2: XMVECTOR = <(XM_SWIZZLE_Y, XM_SWIZZLE_Z, XM_SWIZZLE_X, XM_SWIZZLE_W)>::XMVectorSwizzle(Q0);
+        V1 = XMVectorMultiply(V1, V2);
+
+        let R1: XMVECTOR = XMVectorAdd(V0, V1);
+        let R2: XMVECTOR = XMVectorSubtract(V0, V1);
+
+        V0 = <(XM_PERMUTE_0Y, XM_PERMUTE_1X, XM_PERMUTE_1Y, XM_PERMUTE_0Z)>::XMVectorPermute(R1, R2);
+        V1 = <(XM_PERMUTE_0X, XM_PERMUTE_1Z, XM_PERMUTE_0X, XM_PERMUTE_1Z)>::XMVectorPermute(R1, R2);
+
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        M.r[0] = <(XM_PERMUTE_0X, XM_PERMUTE_1X, XM_PERMUTE_1Y, XM_PERMUTE_0W)>::XMVectorPermute(R0, V0);
+        M.r[1] = <(XM_PERMUTE_1Z, XM_PERMUTE_0Y, XM_PERMUTE_1W, XM_PERMUTE_0W)>::XMVectorPermute(R0, V0);
+        M.r[2] = <(XM_PERMUTE_1X, XM_PERMUTE_1Y, XM_PERMUTE_0Z, XM_PERMUTE_0W)>::XMVectorPermute(R0, V1);
+        M.r[3] = g_XMIdentityR3.v;
+        return M;
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        // PERFORMANCE: static const
+        const Constant1110: XMVECTORF32 = XMVECTORF32 { f: [ 1.0, 1.0, 1.0, 0.0 ] };
+
+        let Q0: XMVECTOR = _mm_add_ps(Quaternion, Quaternion);
+        let mut Q1: XMVECTOR = _mm_mul_ps(Quaternion, Q0);
+
+        let mut V0: XMVECTOR = XM_PERMUTE_PS!(Q1, _MM_SHUFFLE(3, 0, 0, 1));
+        V0 = _mm_and_ps(V0, *g_XMMask3);
+        let mut V1: XMVECTOR = XM_PERMUTE_PS!(Q1, _MM_SHUFFLE(3, 1, 2, 2));
+        V1 = _mm_and_ps(V1, *g_XMMask3);
+        let mut R0: XMVECTOR = _mm_sub_ps(*Constant1110, V0);
+        R0 = _mm_sub_ps(R0, V1);
+
+        V0 = XM_PERMUTE_PS!(Quaternion, _MM_SHUFFLE(3, 1, 0, 0));
+        V1 = XM_PERMUTE_PS!(Q0, _MM_SHUFFLE(3, 2, 1, 2));
+        V0 = _mm_mul_ps(V0, V1);
+
+        V1 = XM_PERMUTE_PS!(Quaternion, _MM_SHUFFLE(3, 3, 3, 3));
+        let V2: XMVECTOR = XM_PERMUTE_PS!(Q0, _MM_SHUFFLE(3, 0, 2, 1));
+        V1 = _mm_mul_ps(V1, V2);
+
+        let R1: XMVECTOR = _mm_add_ps(V0, V1);
+        let R2: XMVECTOR = _mm_sub_ps(V0, V1);
+
+        V0 = _mm_shuffle_ps(R1, R2, _MM_SHUFFLE(1, 0, 2, 1));
+        V0 = XM_PERMUTE_PS!(V0, _MM_SHUFFLE(1, 3, 2, 0));
+        V1 = _mm_shuffle_ps(R1, R2, _MM_SHUFFLE(2, 2, 0, 0));
+        V1 = XM_PERMUTE_PS!(V1, _MM_SHUFFLE(2, 0, 2, 0));
+
+        Q1 = _mm_shuffle_ps(R0, V0, _MM_SHUFFLE(1, 0, 3, 0));
+        Q1 = XM_PERMUTE_PS!(Q1, _MM_SHUFFLE(1, 3, 2, 0));
+
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        M.r[0] = Q1;
+
+        Q1 = _mm_shuffle_ps(R0, V0, _MM_SHUFFLE(3, 2, 3, 1));
+        Q1 = XM_PERMUTE_PS!(Q1, _MM_SHUFFLE(1, 3, 0, 2));
+        M.r[1] = Q1;
+
+        Q1 = _mm_shuffle_ps(V1, R0, _MM_SHUFFLE(3, 2, 1, 0));
+        M.r[2] = Q1;
+        M.r[3] = *g_XMIdentityR3;
+        return M;
+    }
+}
+
+// TODO: XMMatrixTransformation2D
+
+/// Builds a transformation matrix.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixTransformation>
+#[inline]
+pub fn XMMatrixTransformation(
+    ScalingOrigin: FXMVECTOR,
+    ScalingOrientationQuaternion: FXMVECTOR,
+    Scaling: FXMVECTOR,
+    RotationOrigin: GXMVECTOR,
+    RotationQuaternion: HXMVECTOR,
+    Translation: HXMVECTOR
+) -> FXMMATRIX
+{
+    unsafe {
+        // M = Inverse(MScalingOrigin) * Transpose(MScalingOrientation) * MScaling * MScalingOrientation *
+        //         MScalingOrigin * Inverse(MRotationOrigin) * MRotation * MRotationOrigin * MTranslation;
+
+        let VScalingOrigin: XMVECTOR = XMVectorSelect(g_XMSelect1110.v, ScalingOrigin, g_XMSelect1110.v);
+        let NegScalingOrigin: XMVECTOR = XMVectorNegate(ScalingOrigin);
+
+        let MScalingOriginI: XMMATRIX = XMMatrixTranslationFromVector(NegScalingOrigin);
+        let MScalingOrientation: XMMATRIX = XMMatrixRotationQuaternion(ScalingOrientationQuaternion);
+        let MScalingOrientationT: XMMATRIX = XMMatrixTranspose(MScalingOrientation);
+        let MScaling: XMMATRIX = XMMatrixScalingFromVector(Scaling);
+        let VRotationOrigin: XMVECTOR = XMVectorSelect(g_XMSelect1110.v, RotationOrigin, g_XMSelect1110.v);
+        let MRotation: XMMATRIX = XMMatrixRotationQuaternion(RotationQuaternion);
+        let VTranslation: XMVECTOR = XMVectorSelect(g_XMSelect1110.v, Translation, g_XMSelect1110.v);
+
+        let mut M: XMMATRIX;
+        M = XMMatrixMultiply(MScalingOriginI, &MScalingOrientationT);
+        M = XMMatrixMultiply(M, &MScaling);
+        M = XMMatrixMultiply(M, &MScalingOrientation);
+        M.r[3] = XMVectorAdd(M.r[3], VScalingOrigin);
+        M.r[3] = XMVectorSubtract(M.r[3], VRotationOrigin);
+        M = XMMatrixMultiply(M, &MRotation);
+        M.r[3] = XMVectorAdd(M.r[3], VRotationOrigin);
+        M.r[3] = XMVectorAdd(M.r[3], VTranslation);
+        return M;
+    }
+}
+
+// TODO: XMMatrixAffineTransformation2D
+
+/// Builds an affine transformation matrix.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixAffineTransformation>
+#[inline]
+pub fn XMMatrixAffineTransformation(
+    Scaling: FXMVECTOR,
+    RotationOrigin: FXMVECTOR,
+    RotationQuaternion: FXMVECTOR,
+    Translation: GXMVECTOR
+) -> FXMMATRIX
+{
+    unsafe {
+        // M = MScaling * Inverse(MRotationOrigin) * MRotation * MRotationOrigin * MTranslation;
+
+        let MScaling: XMMATRIX = XMMatrixScalingFromVector(Scaling);
+        let VRotationOrigin: XMVECTOR = XMVectorSelect(g_XMSelect1110.v, RotationOrigin, g_XMSelect1110.v);
+        let MRotation: XMMATRIX = XMMatrixRotationQuaternion(RotationQuaternion);
+        let VTranslation: XMVECTOR = XMVectorSelect(g_XMSelect1110.v, Translation, g_XMSelect1110.v);
+
+        let mut M: XMMATRIX;
+        M = MScaling;
+        M.r[3] = XMVectorSubtract(M.r[3], VRotationOrigin);
+        M = XMMatrixMultiply(M, &MRotation);
+        M.r[3] = XMVectorAdd(M.r[3], VRotationOrigin);
+        M.r[3] = XMVectorAdd(M.r[3], VTranslation);
+        return M;
+    }
+}
+
+// TODO: XMMatrixReflect
+// TODO: XMMatrixShadow
+
+/// Builds a view matrix for a left-handed coordinate system using a camera position, an up direction, and a focal point.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixLookAtLH>
+#[inline]
+pub fn XMMatrixLookAtLH(
+    EyePosition: FXMVECTOR,
+    FocusPosition: FXMVECTOR,
+    UpDirection: FXMVECTOR,
+) -> FXMMATRIX
+{
+    let EyeDirection: XMVECTOR = XMVectorSubtract(FocusPosition, EyePosition);
+    return XMMatrixLookToLH(EyePosition, EyeDirection, UpDirection);
+}
+
+/// Builds a view matrix for a right-handed coordinate system using a camera position, an up direction, and a focal point.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixLookAtRH>
+#[inline]
+pub fn XMMatrixLookAtRH(
+    EyePosition: FXMVECTOR,
+    FocusPosition: FXMVECTOR,
+    UpDirection: FXMVECTOR,
+) -> FXMMATRIX
+{
+    let NegEyeDirection: XMVECTOR = XMVectorSubtract(EyePosition, FocusPosition);
+    return XMMatrixLookToLH(EyePosition, NegEyeDirection, UpDirection);
+}
+
+/// Builds a view matrix for a left-handed coordinate system using a camera position, an up direction, and a camera direction.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixLookToLH>
+#[inline]
+pub fn XMMatrixLookToLH(
+    EyePosition: FXMVECTOR,
+    EyeDirection: FXMVECTOR,
+    UpDirection: FXMVECTOR,
+) -> FXMMATRIX
+{
+    unsafe {
+        debug_assert!(!XMVector3Equal(EyeDirection, XMVectorZero()));
+        debug_assert!(!XMVector3IsInfinite(EyeDirection));
+        debug_assert!(!XMVector3Equal(UpDirection, XMVectorZero()));
+        debug_assert!(!XMVector3IsInfinite(UpDirection));
+
+        let R2: XMVECTOR = XMVector3Normalize(EyeDirection);
+
+        let mut R0: XMVECTOR = XMVector3Cross(UpDirection, R2);
+        R0 = XMVector3Normalize(R0);
+
+        let R1: XMVECTOR = XMVector3Cross(R2, R0);
+
+        let NegEyePosition: XMVECTOR = XMVectorNegate(EyePosition);
+
+        let D0: XMVECTOR = XMVector3Dot(R0, NegEyePosition);
+        let D1: XMVECTOR = XMVector3Dot(R1, NegEyePosition);
+        let D2: XMVECTOR = XMVector3Dot(R2, NegEyePosition);
+
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        M.r[0] = XMVectorSelect(D0, R0, g_XMSelect1110.v);
+        M.r[1] = XMVectorSelect(D1, R1, g_XMSelect1110.v);
+        M.r[2] = XMVectorSelect(D2, R2, g_XMSelect1110.v);
+        M.r[3] = g_XMIdentityR3.v;
+
+        M = XMMatrixTranspose(M);
+
+        return M;
+    }
+}
+
+/// Builds a view matrix for a right-handed coordinate system using a camera position, an up direction, and a camera direction.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixLookToRH>
+#[inline]
+pub fn XMMatrixLookToRH(
+    EyePosition: FXMVECTOR,
+    EyeDirection: FXMVECTOR,
+    UpDirection: FXMVECTOR,
+) -> FXMMATRIX
+{
+    let NegEyeDirection: XMVECTOR = XMVectorNegate(EyeDirection);
+    return XMMatrixLookToLH(EyePosition, NegEyeDirection, UpDirection);
+}
+
+/// Builds a left-handed perspective projection matrix.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixPerspectiveLH>
+#[inline]
+pub fn XMMatrixPerspectiveLH(
+    ViewWidth: f32,
+    ViewHeight: f32,
+    NearZ: f32,
+    FarZ: f32
+) -> FXMMATRIX
+{
+    debug_assert!(NearZ > 0.0 && FarZ > 0.0);
+    debug_assert!(!XMScalarNearEqual(ViewWidth, 0.0, 0.00001));
+    debug_assert!(!XMScalarNearEqual(ViewHeight, 0.0, 0.00001));
+    debug_assert!(!XMScalarNearEqual(FarZ, NearZ, 0.00001));
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let TwoNearZ: f32 = NearZ + NearZ;
+        let fRange: f32 = FarZ / (FarZ - NearZ);
+
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        M.m[0][0] = TwoNearZ / ViewWidth;
+        M.m[0][1] = 0.0;
+        M.m[0][2] = 0.0;
+        M.m[0][3] = 0.0;
+
+        M.m[1][0] = 0.0;
+        M.m[1][1] = TwoNearZ / ViewHeight;
+        M.m[1][2] = 0.0;
+        M.m[1][3] = 0.0;
+
+        M.m[2][0] = 0.0;
+        M.m[2][1] = 0.0;
+        M.m[2][2] = fRange;
+        M.m[2][3] = 1.0;
+
+        M.m[3][0] = 0.0;
+        M.m[3][1] = 0.0;
+        M.m[3][2] = -fRange * NearZ;
+        M.m[3][3] = 0.0;
+        return M;
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let TwoNearZ: f32 = NearZ + NearZ;
+        let fRange: f32 = FarZ / (FarZ - NearZ);
+        // Note: This is recorded on the stack
+        let rMem: XMVECTORF32 = XMVECTORF32 { f: [
+            TwoNearZ / ViewWidth,
+            TwoNearZ / ViewHeight,
+            fRange,
+            -fRange * NearZ
+        ]};
+        // Copy from memory to SSE register
+        let mut vValues: XMVECTOR = rMem.v;
+        let mut vTemp: XMVECTOR = _mm_setzero_ps();
+        // Copy x only
+        vTemp = _mm_move_ss(vTemp, vValues);
+        // TwoNearZ / ViewWidth,0,0,0
+        M.r[0] = vTemp;
+        // 0,TwoNearZ / ViewHeight,0,0
+        vTemp = vValues;
+        vTemp = _mm_and_ps(vTemp, *g_XMMaskY);
+        M.r[1] = vTemp;
+        // x=fRange,y=-fRange * NearZ,0,1.0f
+        vValues = _mm_shuffle_ps(vValues, *g_XMIdentityR3, _MM_SHUFFLE(3, 2, 3, 2));
+        // 0,0,fRange,1.0f
+        vTemp = _mm_setzero_ps();
+        vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(3, 0, 0, 0));
+        M.r[2] = vTemp;
+        // 0,0,-fRange * NearZ,0
+        vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(2, 1, 0, 0));
+        M.r[3] = vTemp;
+        return M;
+    }
+}
+
+/// Builds a right-handed perspective projection matrix.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixPerspectiveRH>
+#[inline]
+pub fn XMMatrixPerspectiveRH(
+    ViewWidth: f32,
+    ViewHeight: f32,
+    NearZ: f32,
+    FarZ: f32
+) -> FXMMATRIX
+{
+    debug_assert!(NearZ > 0.0 && FarZ > 0.0);
+    debug_assert!(!XMScalarNearEqual(ViewWidth, 0.0, 0.00001));
+    debug_assert!(!XMScalarNearEqual(ViewHeight, 0.0, 0.00001));
+    debug_assert!(!XMScalarNearEqual(FarZ, NearZ, 0.00001));
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let TwoNearZ: f32 = NearZ + NearZ;
+        let fRange: f32 = FarZ / (NearZ - FarZ);
+
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        M.m[0][0] = TwoNearZ / ViewWidth;
+        M.m[0][1] = 0.0;
+        M.m[0][2] = 0.0;
+        M.m[0][3] = 0.0;
+
+        M.m[1][0] = 0.0;
+        M.m[1][1] = TwoNearZ / ViewHeight;
+        M.m[1][2] = 0.0;
+        M.m[1][3] = 0.0;
+
+        M.m[2][0] = 0.0;
+        M.m[2][1] = 0.0;
+        M.m[2][2] = fRange;
+        M.m[2][3] = -1.0;
+
+        M.m[3][0] = 0.0;
+        M.m[3][1] = 0.0;
+        M.m[3][2] = fRange * NearZ;
+        M.m[3][3] = 0.0;
+        return M;
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let TwoNearZ: f32 = NearZ + NearZ;
+        let fRange: f32 = FarZ / (NearZ - FarZ);
+        // Note: This is recorded on the stack
+        let rMem: XMVECTORF32 = XMVECTORF32 { f: [
+            TwoNearZ / ViewWidth,
+            TwoNearZ / ViewHeight,
+            fRange,
+            fRange * NearZ
+        ]};
+        // Copy from memory to SSE register
+        let mut vValues: XMVECTOR = rMem.v;
+        let mut vTemp: XMVECTOR = _mm_setzero_ps();
+        // Copy x only
+        vTemp = _mm_move_ss(vTemp, vValues);
+        // TwoNearZ / ViewWidth,0,0,0
+        M.r[0] = vTemp;
+        // 0,TwoNearZ / ViewHeight,0,0
+        vTemp = vValues;
+        vTemp = _mm_and_ps(vTemp, *g_XMMaskY);
+        M.r[1] = vTemp;
+        // x=fRange,y=-fRange * NearZ,0,-1.0f
+        vValues = _mm_shuffle_ps(vValues, *g_XMNegIdentityR3, _MM_SHUFFLE(3, 2, 3, 2));
+        // 0,0,fRange,-1.0f
+        vTemp = _mm_setzero_ps();
+        vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(3, 0, 0, 0));
+        M.r[2] = vTemp;
+        // 0,0,-fRange * NearZ,0
+        vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(2, 1, 0, 0));
+        M.r[3] = vTemp;
+        return M;
+    }
+}
+
+/// Builds a left-handed perspective projection matrix based on a field of view.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixPerspectiveFovLH>
+#[inline]
+pub fn XMMatrixPerspectiveFovLH(
+    FovAngleY: f32,
+    AspectRatio: f32,
+    NearZ: f32,
+    FarZ: f32
+) -> FXMMATRIX
+{
+    debug_assert!(NearZ > 0.0 && FarZ > 0.0);
+    debug_assert!(!XMScalarNearEqual(FovAngleY, 0.0, 0.00001 * 2.0));
+    debug_assert!(!XMScalarNearEqual(AspectRatio, 0.0, 0.00001));
+    debug_assert!(!XMScalarNearEqual(FarZ, NearZ, 0.00001));
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut SinFov: f32 = 0.0;
+        let mut CosFov: f32 = 0.0;
+        XMScalarSinCos(&mut SinFov, &mut CosFov, 0.5 * FovAngleY);
+
+        let Height: f32 = CosFov / SinFov;
+        let Width: f32 = Height / AspectRatio;
+        let fRange: f32 = FarZ / (FarZ - NearZ);
+
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        M.m[0][0] = Width;
+        M.m[0][1] = 0.0;
+        M.m[0][2] = 0.0;
+        M.m[0][3] = 0.0;
+
+        M.m[1][0] = 0.0;
+        M.m[1][1] = Height;
+        M.m[1][2] = 0.0;
+        M.m[1][3] = 0.0;
+
+        M.m[2][0] = 0.0;
+        M.m[2][1] = 0.0;
+        M.m[2][2] = fRange;
+        M.m[2][3] = 1.0;
+
+        M.m[3][0] = 0.0;
+        M.m[3][1] = 0.0;
+        M.m[3][2] = -fRange * NearZ;
+        M.m[3][3] = 0.0;
+        return M;
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut SinFov: f32 = 0.0;
+        let mut CosFov: f32 = 0.0;
+        XMScalarSinCos(&mut SinFov, &mut CosFov, 0.5 * FovAngleY);
+
+        let fRange: f32 = FarZ / (FarZ - NearZ);
+        // Note: This is recorded on the stack
+        let Height: f32 = CosFov / SinFov;
+        let rMem: XMVECTORF32 = XMVECTORF32 { f: [
+            Height / AspectRatio,
+            Height,
+            fRange,
+            -fRange * NearZ
+        ]};
+        // Copy from memory to SSE register
+        let mut vValues: XMVECTOR = rMem.v;
+        let mut vTemp: XMVECTOR = _mm_setzero_ps();
+        // Copy x only
+        vTemp = _mm_move_ss(vTemp, vValues);
+        // CosFov / SinFov,0,0,0
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        M.r[0] = vTemp;
+        // 0,Height / AspectRatio,0,0
+        vTemp = vValues;
+        vTemp = _mm_and_ps(vTemp, *g_XMMaskY);
+        M.r[1] = vTemp;
+        // x=fRange,y=-fRange * NearZ,0,1.0f
+        vTemp = _mm_setzero_ps();
+        vValues = _mm_shuffle_ps(vValues, *g_XMIdentityR3, _MM_SHUFFLE(3, 2, 3, 2));
+        // 0,0,fRange,1.0f
+        vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(3, 0, 0, 0));
+        M.r[2] = vTemp;
+        // 0,0,-fRange * NearZ,0.0f
+        vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(2, 1, 0, 0));
+        M.r[3] = vTemp;
+        return M;
+    }
+}
+
+
+/// Builds a right-handed perspective projection matrix based on a field of view.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixPerspectiveFovRH>
+#[inline]
+pub fn XMMatrixPerspectiveFovRH(
+    FovAngleY: f32,
+    AspectRatio: f32,
+    NearZ: f32,
+    FarZ: f32
+) -> FXMMATRIX
+{
+    debug_assert!(NearZ > 0.0 && FarZ > 0.0);
+    debug_assert!(!XMScalarNearEqual(FovAngleY, 0.0, 0.00001 * 2.0));
+    debug_assert!(!XMScalarNearEqual(AspectRatio, 0.0, 0.00001));
+    debug_assert!(!XMScalarNearEqual(FarZ, NearZ, 0.00001));
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut SinFov: f32 = 0.0;
+        let mut CosFov: f32 = 0.0;
+        XMScalarSinCos(&mut SinFov, &mut CosFov, 0.5 * FovAngleY);
+
+        let Height: f32 = CosFov / SinFov;
+        let Width: f32 = Height / AspectRatio;
+        let fRange: f32 = FarZ / (NearZ - FarZ);
+
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        M.m[0][0] = Width;
+        M.m[0][1] = 0.0;
+        M.m[0][2] = 0.0;
+        M.m[0][3] = 0.0;
+
+        M.m[1][0] = 0.0;
+        M.m[1][1] = Height;
+        M.m[1][2] = 0.0;
+        M.m[1][3] = 0.0;
+
+        M.m[2][0] = 0.0;
+        M.m[2][1] = 0.0;
+        M.m[2][2] = fRange;
+        M.m[2][3] = -1.0;
+
+        M.m[3][0] = 0.0;
+        M.m[3][1] = 0.0;
+        M.m[3][2] = fRange * NearZ;
+        M.m[3][3] = 0.0;
+        return M;
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut SinFov: f32 = 0.0;
+        let mut CosFov: f32 = 0.0;
+        XMScalarSinCos(&mut SinFov, &mut CosFov, 0.5 * FovAngleY);
+        let fRange: f32 = FarZ / (NearZ - FarZ);
+        let Height: f32 = CosFov / SinFov;
+        // Note: This is recorded on the stack
+        let rMem: XMVECTORF32 = XMVECTORF32 { f: [
+            Height / AspectRatio,
+            Height,
+            fRange,
+            fRange * NearZ
+        ]};
+        // Copy from memory to SSE register
+        let mut vValues: XMVECTOR = rMem.v;
+        let mut vTemp: XMVECTOR = _mm_setzero_ps();
+        // Copy x only
+        vTemp = _mm_move_ss(vTemp, vValues);
+        // CosFov / SinFov,0,0,0
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        M.r[0] = vTemp;
+        // 0,Height / AspectRatio,0,0
+        vTemp = vValues;
+        vTemp = _mm_and_ps(vTemp, *g_XMMaskY);
+        M.r[1] = vTemp;
+        // x=fRange,y=-fRange * NearZ,0,-1.0f
+        vTemp = _mm_setzero_ps();
+        vValues = _mm_shuffle_ps(vValues, *g_XMNegIdentityR3, _MM_SHUFFLE(3, 2, 3, 2));
+        // 0,0,fRange,-1.0f
+        vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(3, 0, 0, 0));
+        M.r[2] = vTemp;
+        // 0,0,fRange * NearZ,0.0f
+        vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(2, 1, 0, 0));
+        M.r[3] = vTemp;
+        return M;
+    }
+}
+
+// TODO: XMMatrixPerspectiveOffCenterLH
+// TODO: XMMatrixPerspectiveOffCenterRH
+
+/// Builds an orthogonal projection matrix for a left-handed coordinate system.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixOrthographicLH>
+#[inline]
+pub fn XMMatrixOrthographicLH(
+    ViewWidth: f32,
+    ViewHeight: f32,
+    NearZ: f32,
+    FarZ: f32
+) -> FXMMATRIX
+{
+    debug_assert!(!XMScalarNearEqual(ViewWidth, 0.0, 0.00001));
+    debug_assert!(!XMScalarNearEqual(ViewHeight, 0.0, 0.00001));
+    debug_assert!(!XMScalarNearEqual(FarZ, NearZ, 0.00001));
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let fRange: f32 = 1.0 / (FarZ - NearZ);
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        M.m[0][0] = 2.0 / ViewWidth;
+        M.m[0][1] = 0.0;
+        M.m[0][2] = 0.0;
+        M.m[0][3] = 0.0;
+
+        M.m[1][0] = 0.0;
+        M.m[1][1] = 2.0 / ViewHeight;
+        M.m[1][2] = 0.0;
+        M.m[1][3] = 0.0;
+
+        M.m[2][0] = 0.0;
+        M.m[2][1] = 0.0;
+        M.m[2][2] = fRange;
+        M.m[2][3] = 0.0;
+
+        M.m[3][0] = 0.0;
+        M.m[3][1] = 0.0;
+        M.m[3][2] = -fRange * NearZ;
+        M.m[3][3] = 1.0;
+        return M;
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let fRange: f32 = 1.0 / (FarZ - NearZ);
+        // Note: This is recorded on the stack
+        let rMem: XMVECTORF32 = XMVECTORF32 { f: [
+            2.0 / ViewWidth,
+            2.0 / ViewHeight,
+            fRange,
+            -fRange * NearZ
+        ]};
+        // Copy from memory to SSE register
+        let mut vValues: XMVECTOR = rMem.v;
+        let mut vTemp: XMVECTOR = _mm_setzero_ps();
+        // Copy x only
+        vTemp = _mm_move_ss(vTemp, vValues);
+        // 2.0f / ViewWidth,0,0,0
+        M.r[0] = vTemp;
+        // 0,2.0f / ViewHeight,0,0
+        vTemp = vValues;
+        vTemp = _mm_and_ps(vTemp, *g_XMMaskY);
+        M.r[1] = vTemp;
+        // x=fRange,y=-fRange * NearZ,0,1.0f
+        vTemp = _mm_setzero_ps();
+        vValues = _mm_shuffle_ps(vValues, *g_XMIdentityR3, _MM_SHUFFLE(3, 2, 3, 2));
+        // 0,0,fRange,0.0f
+        vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(2, 0, 0, 0));
+        M.r[2] = vTemp;
+        // 0,0,-fRange * NearZ,1.0f
+        vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(3, 1, 0, 0));
+        M.r[3] = vTemp;
+        return M;
+    }
+}
+
+/// Builds an orthogonal projection matrix for a right-handed coordinate system.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixOrthographicRH>
+#[inline]
+pub fn XMMatrixOrthographicRH(
+    ViewWidth: f32,
+    ViewHeight: f32,
+    NearZ: f32,
+    FarZ: f32
+) -> FXMMATRIX
+{
+    debug_assert!(!XMScalarNearEqual(ViewWidth, 0.0, 0.00001));
+    debug_assert!(!XMScalarNearEqual(ViewHeight, 0.0, 0.00001));
+    debug_assert!(!XMScalarNearEqual(FarZ, NearZ, 0.00001));
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let fRange: f32 = 1.0 / (NearZ - FarZ);
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        M.m[0][0] = 2.0 / ViewWidth;
+        M.m[0][1] = 0.0;
+        M.m[0][2] = 0.0;
+        M.m[0][3] = 0.0;
+
+        M.m[1][0] = 0.0;
+        M.m[1][1] = 2.0 / ViewHeight;
+        M.m[1][2] = 0.0;
+        M.m[1][3] = 0.0;
+
+        M.m[2][0] = 0.0;
+        M.m[2][1] = 0.0;
+        M.m[2][2] = fRange;
+        M.m[2][3] = 0.0;
+
+        M.m[3][0] = 0.0;
+        M.m[3][1] = 0.0;
+        M.m[3][2] = fRange * NearZ;
+        M.m[3][3] = 1.0;
+        return M;
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let fRange: f32 = 1.0 / (NearZ - FarZ);
+        // Note: This is recorded on the stack
+        let rMem: XMVECTORF32 = XMVECTORF32 { f: [
+            2.0 / ViewWidth,
+            2.0 / ViewHeight,
+            fRange,
+            fRange * NearZ
+        ]};
+        // Copy from memory to SSE register
+        let mut vValues: XMVECTOR = rMem.v;
+        let mut vTemp: XMVECTOR = _mm_setzero_ps();
+        // Copy x only
+        vTemp = _mm_move_ss(vTemp, vValues);
+        // 2.0f / ViewWidth,0,0,0
+        M.r[0] = vTemp;
+        // 0,2.0f / ViewHeight,0,0
+        vTemp = vValues;
+        vTemp = _mm_and_ps(vTemp, *g_XMMaskY);
+        M.r[1] = vTemp;
+        // x=fRange,y=fRange * NearZ,0,1.0f
+        vTemp = _mm_setzero_ps();
+        vValues = _mm_shuffle_ps(vValues, *g_XMIdentityR3, _MM_SHUFFLE(3, 2, 3, 2));
+        // 0,0,fRange,0.0f
+        vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(2, 0, 0, 0));
+        M.r[2] = vTemp;
+        // 0,0,fRange * NearZ,1.0f
+        vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(3, 1, 0, 0));
+        M.r[3] = vTemp;
+        return M;
+    }
+}
+
+// TODO: XMMatrixOrthographicOffCenterLH
+// TODO: XMMatrixOrthographicOffCenterRH
+
+// TODO: Operator overloads / constructors

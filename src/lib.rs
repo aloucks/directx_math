@@ -42,7 +42,6 @@ pub(crate) const fn _MM_SHUFFLE(z: u32, y: u32, x: u32, w: u32) -> i32 {
 }
 
 #[inline(always)]
-#[cfg(_XM_NO_INTRINSICS_)]
 pub(crate) fn fabsf(x: f32) -> f32 {
     x.abs()
 }
@@ -746,7 +745,7 @@ impl<X: Permute, Y: Permute, Z: Permute, W: Permute> XMVectorPermute for (X, Y, 
     const WhichW: bool = W::PERMUTE > 3;
     const Shuffle: i32 = _MM_SHUFFLE(W::PERMUTE & 3, Z::PERMUTE & 3, Y::PERMUTE & 3, X::PERMUTE & 3);
 
-    #[inline(always)]
+    #[inline]
     fn XMVectorPermute(V1: XMVECTOR, V2: XMVECTOR) -> XMVECTOR {
         #[cfg(any(_XM_SSE_INTRINSICS_, _XM_AVX_INTRINSICS_))]
         unsafe {
@@ -1051,6 +1050,7 @@ fn test_XMVectorSwizzleTrait() {
 /// assert_eq!(XMVectorGetW(b), XMVectorGetW(c));
 /// ```
 impl XMVectorSwizzle for &(SwizzleX, SwizzleY, SwizzleX, SwizzleY) {
+    #[inline(always)]
     fn XMVectorSwizzle(V: XMVECTOR) -> XMVECTOR {
         #[cfg(any(_XM_SSE_INTRINSICS_, _XM_AVX_INTRINSICS_))]
         unsafe {
@@ -1087,6 +1087,7 @@ impl XMVectorSwizzle for &(SwizzleX, SwizzleY, SwizzleX, SwizzleY) {
 /// assert_eq!(XMVectorGetW(b), XMVectorGetW(c));
 /// ```
 impl XMVectorSwizzle for &(SwizzleZ, SwizzleW, SwizzleZ, SwizzleW) {
+    #[inline(always)]
     fn XMVectorSwizzle(V: XMVECTOR) -> XMVECTOR {
         #[cfg(any(_XM_SSE_INTRINSICS_, _XM_AVX_INTRINSICS_))]
         unsafe {
@@ -1123,6 +1124,7 @@ impl XMVectorSwizzle for &(SwizzleZ, SwizzleW, SwizzleZ, SwizzleW) {
 /// assert_eq!(XMVectorGetW(b), XMVectorGetW(c));
 /// ```
 impl XMVectorSwizzle for &(SwizzleX, SwizzleX, SwizzleY, SwizzleY) {
+    #[inline(always)]
     fn XMVectorSwizzle(V: XMVECTOR) -> XMVECTOR {
         #[cfg(any(_XM_SSE_INTRINSICS_, _XM_AVX_INTRINSICS_))]
         unsafe {
@@ -1159,6 +1161,7 @@ impl XMVectorSwizzle for &(SwizzleX, SwizzleX, SwizzleY, SwizzleY) {
 /// assert_eq!(XMVectorGetW(b), XMVectorGetW(c));
 /// ```
 impl XMVectorSwizzle for &(SwizzleZ, SwizzleZ, SwizzleW, SwizzleW) {
+    #[inline(always)]
     fn XMVectorSwizzle(V: XMVECTOR) -> XMVECTOR {
         #[cfg(any(_XM_SSE_INTRINSICS_, _XM_AVX_INTRINSICS_))]
         unsafe {
