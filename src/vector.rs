@@ -6089,7 +6089,7 @@ pub fn XMVector3Orthogonal(
     // let YZYY: XMVECTOR = XMVectorSwizzle(V, XM_SWIZZLE_Y, XM_SWIZZLE_Z, XM_SWIZZLE_Y, XM_SWIZZLE_Y);
 
     // TODO: Delete note above after benchmarking
-    let YZYY: XMVECTOR = <(SwizzleY, SwizzleZ, SwizzleY, SwizzleY)>::XMVectorSwizzle(V);
+    let YZYY: XMVECTOR = <(XM_SWIZZLE_Y, XM_SWIZZLE_Z, XM_SWIZZLE_Y, XM_SWIZZLE_Y)>::XMVectorSwizzle(V);
 
     let NegativeV: XMVECTOR = XMVectorSubtract(Zero, V);
 
@@ -6106,8 +6106,8 @@ pub fn XMVector3Orthogonal(
     // let R1: XMVECTOR = XMVectorPermute(V, D, XM_PERMUTE_1X, XM_PERMUTE_0X, XM_PERMUTE_0X, XM_PERMUTE_0X);
 
     // TODO: Delete note above after benchmarking
-    let R0: XMVECTOR = <(Permute1X, Permute0X, Permute0X, Permute0X)>::XMVectorPermute(NegativeV, S);
-    let R1: XMVECTOR = <(Permute1X, Permute0X, Permute0X, Permute0X)>::XMVectorPermute(V, D);
+    let R0: XMVECTOR = <(XM_PERMUTE_1X, XM_PERMUTE_0X, XM_PERMUTE_0X, XM_PERMUTE_0X)>::XMVectorPermute(NegativeV, S);
+    let R1: XMVECTOR = <(XM_PERMUTE_1X, XM_PERMUTE_0X, XM_PERMUTE_0X, XM_PERMUTE_0X)>::XMVectorPermute(V, D);
 
     return XMVectorSelect(R1, R0, Select);
 }

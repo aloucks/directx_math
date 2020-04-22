@@ -596,12 +596,12 @@ pub fn XMQuaternionRotationRollPitchYawFromVector(
         // let R1: XMVECTOR = XMVectorPermute(CosAngles, SinAngles, XM_PERMUTE_1Z, XM_PERMUTE_1Z, XM_PERMUTE_0Z, XM_PERMUTE_1Z);
 
         // TODO: Delete note above after benchmarking
-        let P0: XMVECTOR = <(Permute0X, Permute1X, Permute1X, Permute1X)>::XMVectorPermute(SinAngles, CosAngles);
-        let Y0: XMVECTOR = <(Permute1Y, Permute0Y, Permute1Y, Permute1Y)>::XMVectorPermute(SinAngles, CosAngles);
-        let R0: XMVECTOR = <(Permute1Z, Permute1Z, Permute0Z, Permute1Z)>::XMVectorPermute(SinAngles, CosAngles);
-        let P1: XMVECTOR = <(Permute0X, Permute1X, Permute1X, Permute1X)>::XMVectorPermute(CosAngles, SinAngles);
-        let Y1: XMVECTOR = <(Permute1Y, Permute0Y, Permute1Y, Permute1Y)>::XMVectorPermute(CosAngles, SinAngles);
-        let R1: XMVECTOR = <(Permute1Z, Permute1Z, Permute0Z, Permute1Z)>::XMVectorPermute(CosAngles, SinAngles);
+        let P0: XMVECTOR = <(XM_PERMUTE_0X, XM_PERMUTE_1X, XM_PERMUTE_1X, XM_PERMUTE_1X)>::XMVectorPermute(SinAngles, CosAngles);
+        let Y0: XMVECTOR = <(XM_PERMUTE_1Y, XM_PERMUTE_0Y, XM_PERMUTE_1Y, XM_PERMUTE_1Y)>::XMVectorPermute(SinAngles, CosAngles);
+        let R0: XMVECTOR = <(XM_PERMUTE_1Z, XM_PERMUTE_1Z, XM_PERMUTE_0Z, XM_PERMUTE_1Z)>::XMVectorPermute(SinAngles, CosAngles);
+        let P1: XMVECTOR = <(XM_PERMUTE_0X, XM_PERMUTE_1X, XM_PERMUTE_1X, XM_PERMUTE_1X)>::XMVectorPermute(CosAngles, SinAngles);
+        let Y1: XMVECTOR = <(XM_PERMUTE_1Y, XM_PERMUTE_0Y, XM_PERMUTE_1Y, XM_PERMUTE_1Y)>::XMVectorPermute(CosAngles, SinAngles);
+        let R1: XMVECTOR = <(XM_PERMUTE_1Z, XM_PERMUTE_1Z, XM_PERMUTE_0Z, XM_PERMUTE_1Z)>::XMVectorPermute(CosAngles, SinAngles);
 
         let mut Q1: XMVECTOR = XMVectorMultiply(P1, Sign.v);
         let mut Q0: XMVECTOR = XMVectorMultiply(P0, Y0);

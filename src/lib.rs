@@ -340,6 +340,23 @@ pub const XM_CRMASK_CR6BOUNDS: u32 = XM_CRMASK_CR6FALSE;
 
 pub const XM_CACHE_LINE_SIZE: u32 = 64;
 
+// Type defs to allow the XMVectorSwizzle and XMVectorPermute translation
+// to look more like the source
+
+pub type XM_SWIZZLE_X = SwizzleX;
+pub type XM_SWIZZLE_Y = SwizzleY;
+pub type XM_SWIZZLE_Z = SwizzleZ;
+pub type XM_SWIZZLE_W = SwizzleW;
+
+pub type XM_PERMUTE_0X = Permute0X;
+pub type XM_PERMUTE_0Y = Permute0Y;
+pub type XM_PERMUTE_0Z = Permute0Z;
+pub type XM_PERMUTE_0W = Permute0W;
+pub type XM_PERMUTE_1X = Permute1X;
+pub type XM_PERMUTE_1Y = Permute1Y;
+pub type XM_PERMUTE_1Z = Permute1Z;
+pub type XM_PERMUTE_1W = Permute1W;
+
 /// Converts an angle measured in degrees into one measured in radians.
 ///
 /// https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMConvertToRadians

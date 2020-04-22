@@ -1,29 +1,6 @@
 use crate::*;
 use std::mem;
 
-// Type defs to allow the translation to look more like the source
-type XM_SWIZZLE_X = SwizzleX;
-type XM_SWIZZLE_Y = SwizzleY;
-type XM_SWIZZLE_Z = SwizzleZ;
-type XM_SWIZZLE_W = SwizzleW;
-
-#[allow(dead_code)]
-type XM_PERMUTE_0X = Permute0X;
-#[allow(dead_code)]
-type XM_PERMUTE_0Y = Permute0Y;
-#[allow(dead_code)]
-type XM_PERMUTE_0Z = Permute0Z;
-#[allow(dead_code)]
-type XM_PERMUTE_0W = Permute0W;
-#[allow(dead_code)]
-type XM_PERMUTE_1X = Permute1X;
-#[allow(dead_code)]
-type XM_PERMUTE_1Y = Permute1Y;
-#[allow(dead_code)]
-type XM_PERMUTE_1Z = Permute1Z;
-#[allow(dead_code)]
-type XM_PERMUTE_1W = Permute1W;
-
 /// Tests whether any of the elements of a matrix are NaN.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixIsNaN>
