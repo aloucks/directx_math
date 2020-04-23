@@ -7382,12 +7382,14 @@ pub fn XMVector4Normalize(
 
 impl std::ops::Deref for XMVector {
     type Target = XMVECTOR;
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
 impl std::ops::DerefMut for XMVector {
+    #[inline(always)]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
@@ -7395,12 +7397,14 @@ impl std::ops::DerefMut for XMVector {
 
 impl std::ops::Add for XMVector {
     type Output = XMVector;
+    #[inline]
     fn add(self, V2: XMVector) -> Self::Output {
         XMVector(XMVectorAdd(self.0, V2.0))
     }
 }
 
 impl std::ops::AddAssign for XMVector {
+    #[inline]
     fn add_assign(&mut self, V2: XMVector) {
         self.0 = XMVectorAdd(self.0, V2.0);
     }
@@ -7408,12 +7412,14 @@ impl std::ops::AddAssign for XMVector {
 
 impl std::ops::Sub for XMVector {
     type Output = XMVector;
+    #[inline]
     fn sub(self, V2: XMVector) -> Self::Output {
         XMVector(XMVectorSubtract(self.0, V2.0))
     }
 }
 
 impl std::ops::SubAssign for XMVector {
+    #[inline]
     fn sub_assign(&mut self, V2: XMVector) {
         self.0 = XMVectorSubtract(self.0, V2.0);
     }
@@ -7421,12 +7427,14 @@ impl std::ops::SubAssign for XMVector {
 
 impl std::ops::Mul for XMVector {
     type Output = XMVector;
+    #[inline]
     fn mul(self, V2: XMVector) -> Self::Output {
         XMVector(XMVectorMultiply(self.0, V2.0))
     }
 }
 
 impl std::ops::MulAssign for XMVector {
+    #[inline]
     fn mul_assign(&mut self, V2: XMVector) {
         self.0 = XMVectorMultiply(self.0, V2.0);
     }
@@ -7434,12 +7442,14 @@ impl std::ops::MulAssign for XMVector {
 
 impl std::ops::Div for XMVector {
     type Output = XMVector;
+    #[inline]
     fn div(self, V2: XMVector) -> Self::Output {
         XMVector(XMVectorDivide(self.0, V2.0))
     }
 }
 
 impl std::ops::DivAssign for XMVector {
+    #[inline]
     fn div_assign(&mut self, V2: XMVector) {
         self.0 = XMVectorDivide(self.0, V2.0);
     }
@@ -7447,12 +7457,14 @@ impl std::ops::DivAssign for XMVector {
 
 impl std::ops::Mul<f32> for XMVector {
     type Output = XMVector;
+    #[inline]
     fn mul(self, S: f32) -> Self::Output {
         XMVector(XMVectorScale(self.0, S))
     }
 }
 
 impl std::ops::MulAssign<f32> for XMVector {
+    #[inline]
     fn mul_assign(&mut self, S: f32) {
         self.0 = XMVectorScale(self.0, S);
     }
@@ -7460,6 +7472,7 @@ impl std::ops::MulAssign<f32> for XMVector {
 
 impl std::ops::Div<f32> for XMVector {
     type Output = XMVector;
+    #[inline]
     fn div(self, S: f32) -> Self::Output {
         let vS = XMVectorReplicate(S);
         XMVector(XMVectorDivide(self.0, vS))
@@ -7467,6 +7480,7 @@ impl std::ops::Div<f32> for XMVector {
 }
 
 impl std::ops::DivAssign<f32> for XMVector {
+    #[inline]
     fn div_assign(&mut self, S: f32) {
         let vS = XMVectorReplicate(S);
         self.0 = XMVectorDivide(self.0, vS);
@@ -7475,6 +7489,7 @@ impl std::ops::DivAssign<f32> for XMVector {
 
 impl std::ops::Neg for XMVector {
     type Output = XMVector;
+    #[inline]
     fn neg(self) -> Self::Output {
         XMVector(XMVectorNegate(*self))
     }

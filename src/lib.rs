@@ -1,3 +1,68 @@
+//! # DirectX Math for Rust
+//! 
+//! <https://github.com/microsoft/DirectXMath>
+//! 
+//! <https://github.com/aloucks/directx_math>
+//! 
+//! ## Conversion Functions
+//! 
+//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-conversion>
+//! 
+//! ## Matrix Functions
+//! 
+//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-matrix>
+//! 
+//! ## Plane Functions
+//! 
+//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-plane>
+//! 
+//! ## Quaternion Functions
+//! 
+//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-quaternion>
+//! 
+//! ## Scalar Functions
+//! 
+//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-scalar>
+//! 
+//! ## Vector Functions
+//! 
+//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector>
+//! 
+//! ## 2D Vector Functions
+//! 
+//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector2>
+//! 
+//! ## 3D Vector Functions
+//! 
+//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector3>
+//! 
+//! ## 4D Vector Functions
+//! 
+//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector4>
+//! 
+//! ## Template Functions
+//! 
+//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-templates>
+//! 
+//! ## Triangle Test Functions
+//! 
+//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-triangletests>
+//! 
+//! ## Utility Functions
+//! 
+//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-utilities>
+//! 
+//! ## Vector Accessor Functions
+//! 
+//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-accessors>
+//! 
+//! ## Vector Load Functions
+//! 
+//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-load>
+//! 
+//! ## Vector Store Functions
+//! 
+//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-store>
 
 #![allow(non_snake_case)]
 #![allow(non_camel_case_types)]
@@ -538,7 +603,7 @@ pub struct XMVector(pub XMVECTOR);
 #[cfg(_XM_NO_INTRINSICS_)]
 #[derive(Copy, Clone, Debug)]
 #[doc(hidden)]
-pub struct mm {
+struct mm {
     pub _11: f32,
     pub _12: f32,
     pub _13: f32,
@@ -557,46 +622,240 @@ pub struct mm {
     pub _44: f32,
 }
 
-#[cfg(_XM_NO_INTRINSICS_)]
-#[derive(Copy, Clone)]
-#[repr(C, align(16))]
-pub union XMMATRIX {
-    pub r: [XMVECTOR; 4],
-    #[doc(hidden)]
-    pub m: [[f32; 4]; 4],
-    #[doc(hidden)]
-    pub mm: mm,
-}
+// #[cfg(_XM_NO_INTRINSICS_)]
+// #[derive(Copy, Clone)]
+// #[repr(C, align(16))]
+// pub union XMMATRIX {
+//     pub r: [XMVECTOR; 4],
+//     #[doc(hidden)]
+//     pub m: [[f32; 4]; 4],
+//     #[doc(hidden)]
+//     pub mm: mm,
+// }
 
-#[cfg(not(_XM_NO_INTRINSICS_))]
+//#[cfg(not(_XM_NO_INTRINSICS_))]
 #[derive(Copy, Clone)]
 #[repr(C, align(16))]
 pub union XMMATRIX {
     pub r: [XMVECTOR; 4],
+    #[cfg(_XM_NO_INTRINSICS_)]
+    m: [[f32; 4]; 4],
+    #[cfg(_XM_NO_INTRINSICS_)]
+    mm: mm,
 }
 
 pub type FXMMATRIX = XMMATRIX;
 pub type CXMMATRIX<'a> = &'a XMMATRIX;
 
-// TODO: XMFLOAT2
-// TODO: XMFLOAT2A 
-// TODO: XMINT2
-// TODO: XMUINT2
-// TODO: XMFLOAT3
-// TODO: XMFLOAT3A 
-// TODO: XMFLOAT3A 
-// TODO: XMINT3
-// TODO: XMUINT3
-// TODO: XMFLOAT4
-// TODO: XMFLOAT4A
-// TODO: XMINT4
-// TODO: XMUINT4
-// TODO: XMFLOAT3X3
+
+macro_rules! xm_struct {
+    ($Name:ident, $type:ty, $length:expr, $($field:ident),*) => {
+        #[derive(Copy, Clone, Debug, Default)]
+        #[repr(C)]
+        pub struct $Name {
+            $(
+                pub $field: $type,
+            )*
+        }
+
+        impl From<[$type; $length]> for $Name {
+            fn from(a: [$type; $length]) -> $Name {
+                unsafe { std::mem::transmute(a) }
+            }
+        }
+
+        impl Into<[$type; $length]> for $Name {
+            fn into(self) -> [$type; $length] {
+                unsafe { std::mem::transmute(self) }
+            }
+        }
+
+        impl<'a> From<&'a [$type; $length]> for &'a $Name {
+            fn from(a: &'a [$type; $length]) -> &'a $Name {
+                unsafe { std::mem::transmute(a) }
+            }
+        }
+
+        impl<'a> Into<&'a [$type; $length]> for &'a $Name {
+            fn into(self) -> &'a [$type; $length] {
+                unsafe { std::mem::transmute(self) }
+            }
+        }
+    };
+}
+
+
+xm_struct!(XMINT2, i32, 2, x, y);
+xm_struct!(XMINT3, i32, 3, x, y, z);
+xm_struct!(XMINT4, i32, 4, x, y, z, w);
+
+xm_struct!(XMUINT2, u32, 2, x, y);
+xm_struct!(XMUINT3, u32, 3, x, y, z);
+xm_struct!(XMUINT4, u32, 4, x, y, z, w);
+
+xm_struct!(XMFLOAT2, f32, 2, x, y);
+xm_struct!(XMFLOAT3, f32, 3, x, y, z);
+xm_struct!(XMFLOAT4, f32, 4, x, y, z, w);
+
+// #[derive(Copy, Clone, Debug, Default)]
+// #[repr(C, align(16))]
+// pub struct XMFLOAT2A {
+//     pub x: f32,
+//     pub y: f32,
+// }
+
+// impl From<[f32; 2]> for XMFLOAT2A {
+//     fn from(a: [f32; 2]) -> XMFLOAT2A {
+//         XMFLOAT2A {
+//             x: a[0],
+//             y: a[1],
+//         }
+//     }
+// }
+
+// impl Into<[f32; 2]> for XMFLOAT2A {
+//     fn into(self) -> [f32; 2] {
+//         [self.x, self.y]
+//     }
+// }
+
+// #[derive(Copy, Clone, Debug, Default)]
+// #[repr(C, align(16))]
+// pub struct XMFLOAT3A {
+//     pub x: f32,
+//     pub y: f32,
+//     pub z: f32,
+// }
+
+// impl From<[f32; 3]> for XMFLOAT3A {
+//     fn from(a: [f32; 3]) -> XMFLOAT3A {
+//         XMFLOAT3A {
+//             x: a[0],
+//             y: a[1],
+//             z: a[2],
+//         }
+//     }
+// }
+
+// impl Into<[f32; 3]> for XMFLOAT3A {
+//     fn into(self) -> [f32; 3] {
+//         [self.x, self.y, self.z]
+//     }
+// }
+
+// #[derive(Copy, Clone, Debug, Default)]
+// #[repr(C, align(16))]
+// pub struct XMFLOAT4A {
+//     pub x: f32,
+//     pub y: f32,
+//     pub z: f32,
+//     pub w: f32,
+// }
+
+// impl From<[f32; 4]> for XMFLOAT4A {
+//     fn from(a: [f32; 4]) -> XMFLOAT4A {
+//         XMFLOAT4A {
+//             x: a[0],
+//             y: a[1],
+//             z: a[2],
+//             w: a[3],
+//         }
+//     }
+// }
+
+// impl Into<[f32; 4]> for XMFLOAT4A {
+//     fn into(self) -> [f32; 4] {
+//         [self.x, self.y, self.z, self.w]
+//     }
+// }
+
 // TODO: XMFLOAT4X3
 // TODO: XMFLOAT4X3A 
 // TODO: XMFLOAT3X4
-// TODO: XMFLOAT4X4
-// TODO: XMFLOAT4X4A
+// TODO: XMFLOAT3X4A
+
+#[derive(Copy, Clone, Debug, Default)]
+#[repr(C)]
+pub struct XMFLOAT4X4 {
+    pub m: [[f32; 4]; 4],
+}
+
+// [f32; 16]
+
+impl From<[f32; 16]> for XMFLOAT4X4 {
+    fn from(a: [f32; 16]) -> XMFLOAT4X4 {
+        unsafe { std::mem::transmute(a) }
+    }
+}
+
+impl Into<[f32; 16]> for XMFLOAT4X4 {
+    fn into(self) -> [f32; 16] {
+        unsafe { std::mem::transmute(self) }
+    }
+}
+
+impl<'a> From<&'a [f32; 16]> for &'a XMFLOAT4X4 {
+    fn from(a: &'a [f32; 16]) -> &'a XMFLOAT4X4 {
+        unsafe { std::mem::transmute(a) }
+    }
+}
+
+impl<'a> Into<&'a [f32; 16]> for &'a XMFLOAT4X4 {
+    fn into(self) -> &'a [f32; 16] {
+        unsafe { std::mem::transmute(self) }
+    }
+}
+
+// [[f32; 4]; 4]
+
+impl From<[[f32; 4]; 4]> for XMFLOAT4X4 {
+    fn from(a: [[f32; 4]; 4]) -> XMFLOAT4X4 {
+        unsafe { std::mem::transmute(a) }
+    }
+}
+
+impl Into<[[f32; 4]; 4]> for XMFLOAT4X4 {
+    fn into(self) -> [[f32; 4]; 4] {
+        unsafe { std::mem::transmute(self) }
+    }
+}
+
+impl<'a> From<&'a [[f32; 4]; 4]> for &'a XMFLOAT4X4 {
+    fn from(a: &'a [[f32; 4]; 4]) -> &'a XMFLOAT4X4 {
+        unsafe { std::mem::transmute(a) }
+    }
+}
+
+impl<'a> Into<&'a [[f32; 4]; 4]> for &'a XMFLOAT4X4 {
+    fn into(self) -> &'a [[f32; 4]; 4] {
+        unsafe { std::mem::transmute(self) }
+    }
+}
+
+// #[derive(Copy, Clone, Debug, Default)]
+// #[repr(C, align(16))]
+// pub struct XMFLOAT4X4A {
+//     pub m: [[f32; 4]; 4],
+// }
+
+// TODO: XMFLOAT4X4A From/Into
+
+#[derive(Copy, Clone, Debug, Default)]
+#[repr(C)]
+pub struct XMFLOAT3X3 {
+    pub m: [[f32; 3]; 3],
+}
+
+// TODO: XMFLOAT3X3 From/Into
+
+// #[derive(Copy, Clone, Debug, Default)]
+// #[repr(C, align(16))]
+// pub struct XMFLOAT3X3A {
+//     pub m: [[f32; 3]; 3],
+// }
+
+// TODO: XMFLOAT3X3A From/Into
+
 
 /// Compares two numeric data type instances, or two instances of an object
 /// which supports an overload of `<`, and returns the smaller one of the two
