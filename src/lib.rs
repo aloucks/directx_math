@@ -1,67 +1,67 @@
 //! # DirectX Math for Rust
-//! 
+//!
 //! <https://github.com/microsoft/DirectXMath>
-//! 
+//!
 //! <https://github.com/aloucks/directx_math>
-//! 
+//!
 //! ## Conversion Functions
-//! 
+//!
 //! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-conversion>
-//! 
+//!
 //! ## Matrix Functions
-//! 
+//!
 //! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-matrix>
-//! 
+//!
 //! ## Plane Functions
-//! 
+//!
 //! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-plane>
-//! 
+//!
 //! ## Quaternion Functions
-//! 
+//!
 //! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-quaternion>
-//! 
+//!
 //! ## Scalar Functions
-//! 
+//!
 //! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-scalar>
-//! 
+//!
 //! ## Vector Functions
-//! 
+//!
 //! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector>
-//! 
+//!
 //! ## 2D Vector Functions
-//! 
+//!
 //! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector2>
-//! 
+//!
 //! ## 3D Vector Functions
-//! 
+//!
 //! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector3>
-//! 
+//!
 //! ## 4D Vector Functions
-//! 
+//!
 //! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector4>
-//! 
+//!
 //! ## Template Functions
-//! 
+//!
 //! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-templates>
-//! 
+//!
 //! ## Triangle Test Functions
-//! 
+//!
 //! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-triangletests>
-//! 
+//!
 //! ## Utility Functions
-//! 
+//!
 //! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-utilities>
-//! 
+//!
 //! ## Vector Accessor Functions
-//! 
+//!
 //! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-accessors>
-//! 
+//!
 //! ## Vector Load Functions
-//! 
+//!
 //! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-load>
-//! 
+//!
 //! ## Vector Store Functions
-//! 
+//!
 //! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-store>
 
 #![allow(non_snake_case)]
@@ -453,7 +453,7 @@ pub fn XMComparisonAnyTrue(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6FALSE) 
 pub fn XMComparisonAllFalse(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6FALSE) == XM_CRMASK_CR6FALSE); }
 
 /// Tests the comparison value to determine if any of the compared components are false.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMComparisonAnyFalse>
 #[inline]
 pub fn XMComparisonAnyFalse(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6TRUE) != XM_CRMASK_CR6TRUE); }
@@ -465,7 +465,7 @@ pub fn XMComparisonAnyFalse(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6TRUE) 
 pub fn XMComparisonMixed(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6) == 0); }
 
 /// Tests the comparison value to determine if all of the compared components are within set bounds.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMComparisonAllInBounds>
 #[inline]
 pub fn XMComparisonAllInBounds(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6BOUNDS) == XM_CRMASK_CR6BOUNDS); }
@@ -594,7 +594,7 @@ pub union XMVECTORU32 {
 cast_m128!(XMVECTORU32);
 
 /// Unit struct for [`XMVECTOR`] operator overloads.
-/// 
+///
 /// [`XMVECTOR`]: type.XMVECTOR.html
 #[derive(Copy, Clone)]
 #[repr(transparent)]
@@ -770,7 +770,7 @@ xm_struct!(XMFLOAT4, f32, 4, x, y, z, w);
 // }
 
 // TODO: XMFLOAT4X3
-// TODO: XMFLOAT4X3A 
+// TODO: XMFLOAT4X3A
 // TODO: XMFLOAT3X4
 // TODO: XMFLOAT3X4A
 
@@ -863,7 +863,7 @@ pub struct XMFLOAT3X3 {
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/xmmin-template>
 #[inline]
-pub fn XMMin<T: PartialOrd>(a: T, b: T) -> T { 
+pub fn XMMin<T: PartialOrd>(a: T, b: T) -> T {
     if a < b {
         a
     } else {
@@ -877,7 +877,7 @@ pub fn XMMin<T: PartialOrd>(a: T, b: T) -> T {
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/xmmax-template>
 #[inline]
-pub fn XMMax<T: PartialOrd>(a: T, b: T) -> T { 
+pub fn XMMax<T: PartialOrd>(a: T, b: T) -> T {
     if a > b {
         a
     } else {
@@ -1487,7 +1487,7 @@ pub fn XMVectorSetBinaryConstant(C0: u32, C1: u32, C2: u32, C3: u32) -> XMVECTOR
     #[cfg(_XM_ARM_NEON_INTRINSICS_)]
     {
         unimplemented!()
-    } 
+    }
 
     #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {

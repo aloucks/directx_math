@@ -462,9 +462,9 @@ fn test_XMMatrixMultiply() {
             XMVectorSet( 1.0,  2.0,  3.0,  4.0),
         ]
     };
-    
+
     let c = XMMatrixMultiply(a, &b);
-    
+
     let d = XMMATRIX {
         r: [
             XMVectorSet( 50.0,  60.0,  70.0,  80.0),

@@ -17,4 +17,9 @@ no_sse3 = []
 no_intrinsics = ["no_avx", "no_avx2", "no_fma3", "no_sse4", "no_sse3"]
 favor_intel = []
 
-[dependencies]
+# [dev-dependencies]
+# criterion = "0.3"
+
+# [[bench]]
+# name = "quaternion"
+# harness = false

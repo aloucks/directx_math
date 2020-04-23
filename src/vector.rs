@@ -5,14 +5,14 @@ use crate::*;
 #[cfg(_XM_NO_INTRINSICS_)]
 macro_rules! XMISNAN {
     ($x:expr) => {
-       $x.is_nan() 
+       $x.is_nan()
     }
 }
 
 #[cfg(_XM_NO_INTRINSICS_)]
 macro_rules! XMISINF {
     ($x:expr) => {
-       $x.is_infinite() 
+       $x.is_infinite()
     }
 }
 
@@ -1022,7 +1022,7 @@ pub fn XMVectorSetIntW(V: XMVECTOR, w: u32) -> XMVECTOR {
 // TODO: XMVectorSetIntWPtr
 
 /// Swizzles a vector.
-/// 
+///
 /// For the case of constant indices (E0, E1, E2, E3), it is much more efficent to use the template form of [`XMVectorSwizzle`].
 ///
 /// [`XMVectorSwizzle`]: ../trait.XMVectorSwizzle.html
@@ -1067,9 +1067,9 @@ pub fn XMVectorSwizzle(
     #[cfg(all(not(_XM_AVX_INTRINSICS_), _XM_SSE_INTRINSICS_))]
     unsafe {
         let aPtr = mem::transmute::<_, *const u32>(&V);
-        
+
         let mut Result: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
-        
+
         let pWork = mem::transmute::<_, *mut u32>(&mut Result);
 
         idx!(mut pWork[0]) = idx!(aPtr[E0]);
@@ -1147,7 +1147,7 @@ pub fn XMVectorPermute(
             mem::transmute(&V1),
             mem::transmute(&V2),
         ];
-        
+
         let mut Result: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
 
         let pWork = mem::transmute::<_, *mut u32>(&mut Result);
@@ -1195,7 +1195,7 @@ fn test_XMVectorPermute() {
 }
 
 /// Defines a control vector for use in XMVectorSelect.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSelectControl>
 #[inline]
 pub fn XMVectorSelectControl(
@@ -1237,7 +1237,7 @@ pub fn XMVectorSelectControl(
 }
 
 /// Performs a per-component selection between two input vectors and returns the resulting vector.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSelect>
 #[inline]
 pub fn XMVectorSelect(
@@ -1273,7 +1273,7 @@ pub fn XMVectorSelect(
 }
 
 /// Creates a new vector by combining the x and y-components of two vectors.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorMergeXY>
 #[inline]
 pub fn XMVectorMergeXY(
@@ -1306,7 +1306,7 @@ pub fn XMVectorMergeXY(
 }
 
 /// Creates a new vector by combining the z and w-components of two vectors.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorMergeZW>
 #[inline]
 pub fn XMVectorMergeZW(
@@ -1339,7 +1339,7 @@ pub fn XMVectorMergeZW(
 }
 
 /// Shifts a vector left by a given number of 32-bit elements, filling the vacated elements with elements from a second vector.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorShiftLeft>
 #[inline]
 pub fn XMVectorShiftLeft(V1: FXMVECTOR, V2: FXMVECTOR, Elements: u32) -> XMVECTOR {
@@ -1348,7 +1348,7 @@ pub fn XMVectorShiftLeft(V1: FXMVECTOR, V2: FXMVECTOR, Elements: u32) -> XMVECTO
 }
 
 /// Rotates the vector left by a given number of 32-bit elements.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorRotateLeft>
 #[inline]
 pub fn XMVectorRotateLeft(V: FXMVECTOR, Elements: u32) -> XMVECTOR {
@@ -1357,7 +1357,7 @@ pub fn XMVectorRotateLeft(V: FXMVECTOR, Elements: u32) -> XMVECTOR {
 }
 
 /// Rotates the vector right by a given number of 32-bit elements.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorRotateRight>
 #[inline]
 pub fn XMVectorRotateRight(V: FXMVECTOR, Elements: u32) -> XMVECTOR {
@@ -1366,7 +1366,7 @@ pub fn XMVectorRotateRight(V: FXMVECTOR, Elements: u32) -> XMVECTOR {
 }
 
 /// Rotates a vector left by a given number of 32-bit components and insert selected elements of that result into another vector.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorInsert>
 #[inline]
 pub fn XMVectorInsert(
@@ -1383,7 +1383,7 @@ pub fn XMVectorInsert(
 }
 
 /// Performs a per-component test for equality of two vectors.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorEqual>
 #[inline]
 pub fn XMVectorEqual(
@@ -1415,7 +1415,7 @@ pub fn XMVectorEqual(
 }
 
 /// Performs a per-component test for equality of two vectors and sets a comparison value that can be examined using functions such as XMComparisonAllTrue.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorEqualR>
 #[inline]
 pub fn XMVectorEqualR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
@@ -1488,7 +1488,7 @@ fn test_XMVectorEqualR() {
 }
 
 /// Performs a per-component test for the equality of two vectors, treating each component as an unsigned integer.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorEqualInt>
 #[inline]
 pub fn XMVectorEqualInt(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
@@ -1517,10 +1517,10 @@ pub fn XMVectorEqualInt(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
     }
 }
 
-/// Performs a per-component test for equality of two vectors, treating each 
-/// component as an unsigned integer. In addition, this function sets a 
+/// Performs a per-component test for equality of two vectors, treating each
+/// component as an unsigned integer. In addition, this function sets a
 /// comparison value that can be examined using functions such as XMComparisonAllTrue.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorEqualIntR>
 #[inline]
 pub fn XMVectorEqualIntR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
@@ -1566,7 +1566,7 @@ pub fn XMVectorEqualIntR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTO
 }
 
 /// Performs a per-component test for equality of two vectors within a given threshold.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorNearEqual>
 #[inline]
 pub fn XMVectorNearEqual(V1: FXMVECTOR, V2: FXMVECTOR, Epsilon: FXMVECTOR) -> XMVECTOR {
@@ -1612,7 +1612,7 @@ pub fn XMVectorNearEqual(V1: FXMVECTOR, V2: FXMVECTOR, Epsilon: FXMVECTOR) -> XM
 }
 
 /// Performs a per-component test for the inequality of two vectors.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorNotEqual>
 #[inline]
 pub fn XMVectorNotEqual(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
@@ -1641,7 +1641,7 @@ pub fn XMVectorNotEqual(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
 }
 
 /// Performs a per-component test for the inequality of two vectors, treating each component as an unsigned integer.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorNotEqualInt>
 #[inline]
 pub fn XMVectorNotEqualInt(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
@@ -1671,7 +1671,7 @@ pub fn XMVectorNotEqualInt(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
 }
 
 /// Performs a per-component test for greater-than between two vectors.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGreater>
 #[inline]
 pub fn XMVectorGreater(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
@@ -1700,7 +1700,7 @@ pub fn XMVectorGreater(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
 }
 
 /// Performs a per-component test for greater-than between two vectors and sets a comparison value that can be examined using functions such as XMComparisonAllTrue.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGreaterR>
 #[inline]
 pub fn XMVectorGreaterR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
@@ -1750,7 +1750,7 @@ pub fn XMVectorGreaterR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR
 }
 
 /// Performs a per-component test for greater-than-or-equal between two vectors.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGreaterOrEqual>
 #[inline]
 pub fn XMVectorGreaterOrEqual(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
@@ -1779,7 +1779,7 @@ pub fn XMVectorGreaterOrEqual(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
 }
 
 /// Performs a per-component test for greater-than-or-equal between two vectors and sets a comparison value that can be examined using functions such as XMComparisonAllTrue.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGreaterOrEqualR>
 #[inline]
 pub fn XMVectorGreaterOrEqualR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
@@ -1829,7 +1829,7 @@ pub fn XMVectorGreaterOrEqualR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> X
 }
 
 /// Performs a per-component test for less-than between two vectors.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorLess>
 #[inline]
 pub fn XMVectorLess(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
@@ -1858,7 +1858,7 @@ pub fn XMVectorLess(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
 }
 
 /// Performs a per-component test for less-than-or-equal between two vectors.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorLessOrEqual>
 #[inline]
 pub fn XMVectorLessOrEqual(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
@@ -1887,7 +1887,7 @@ pub fn XMVectorLessOrEqual(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
 }
 
 /// Tests whether the components of a given vector are within set bounds.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorInBounds>
 #[inline]
 pub fn XMVectorInBounds(V: FXMVECTOR, Bounds: FXMVECTOR) -> XMVECTOR {
@@ -1924,7 +1924,7 @@ pub fn XMVectorInBounds(V: FXMVECTOR, Bounds: FXMVECTOR) -> XMVECTOR {
 }
 
 /// Tests whether the components of a given vector are within certain bounds and sets a comparison value that can be examined using functions such as XMComparisonAllTrue.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorInBoundsR>
 #[inline]
 pub fn XMVectorInBoundsR(pCR: &mut u32, V: FXMVECTOR, Bounds: FXMVECTOR) -> XMVECTOR {
@@ -2038,7 +2038,7 @@ pub fn XMVectorIsInfinite(V: FXMVECTOR) -> XMVECTOR {
 }
 
 /// Makes a per-component comparison between two vectors, and returns a vector containing the smallest components.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorMin>
 #[inline]
 pub fn XMVectorMin(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
@@ -2067,7 +2067,7 @@ pub fn XMVectorMin(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
 }
 
 /// Makes a per-component comparison between two vectors, and returns a vector containing the largest components.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorMax>
 #[inline]
 pub fn XMVectorMax(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
@@ -2128,7 +2128,7 @@ fn test_round_to_nearest() {
 }
 
 /// Rounds each component of a vector to the nearest even integer (known as "Bankers Rounding").
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorRound>
 #[inline]
 pub fn XMVectorRound(V: FXMVECTOR) -> XMVECTOR {
@@ -2171,14 +2171,14 @@ pub fn XMVectorRound(V: FXMVECTOR) -> XMVECTOR {
 }
 
 /// Rounds each component of a vector to the nearest integer value in the direction of zero.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorTruncate>
 #[inline]
 pub fn XMVectorTruncate(V: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
         let mut Result: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
-        
+
         for i in 0..4 {
             if (XMISNAN!(V.vector4_f32[i]))
             {
@@ -2228,7 +2228,7 @@ pub fn XMVectorTruncate(V: FXMVECTOR) -> XMVECTOR {
 }
 
 /// Computes the floor of each component of an XMVECTOR.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorFloor>
 #[inline]
 pub fn XMVectorFloor(V: FXMVECTOR) -> XMVECTOR {
@@ -2277,7 +2277,7 @@ pub fn XMVectorFloor(V: FXMVECTOR) -> XMVECTOR {
 }
 
 /// Computes the ceiling of each component of an XMVECTOR.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorCeiling>
 #[inline]
 pub fn XMVectorCeiling(V: FXMVECTOR) -> XMVECTOR {
@@ -2326,7 +2326,7 @@ pub fn XMVectorCeiling(V: FXMVECTOR) -> XMVECTOR {
 }
 
 /// Clamps the components of a vector to a specified minimum and maximum range.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorClamp>
 #[inline]
 pub fn XMVectorClamp(
@@ -2360,7 +2360,7 @@ pub fn XMVectorClamp(
 }
 
 /// Saturates each component of a vector to the range 0.0f to 1.0f.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSaturate>
 #[inline]
 pub fn XMVectorSaturate(
@@ -2388,7 +2388,7 @@ pub fn XMVectorSaturate(
 }
 
 /// Computes the logical AND of two vectors, treating each component as an unsigned integer.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorAndInt>
 #[inline]
 pub fn XMVectorAndInt(
@@ -2489,7 +2489,7 @@ pub fn XMVectorOrInt(
 }
 
 /// Computes the logical NOR of two vectors, treating each component as an unsigned integer.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorNorInt>
 #[inline]
 pub fn XMVectorNorInt(
@@ -2525,7 +2525,7 @@ pub fn XMVectorNorInt(
 }
 
 /// Computes the logical XOR of two vectors, treating each component as an unsigned integer.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorXorInt>
 #[inline]
 pub fn XMVectorXorInt(
@@ -2559,7 +2559,7 @@ pub fn XMVectorXorInt(
 }
 
 /// Computes the negation of a vector.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorNegate>
 #[inline]
 pub fn XMVectorNegate(
@@ -2595,7 +2595,7 @@ pub fn XMVectorNegate(
 }
 
 /// Computes the sum of two vectors.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorAdd>
 #[inline]
 pub fn XMVectorAdd(
@@ -2721,7 +2721,7 @@ pub fn XMVectorAddAngles(
 }
 
 /// Computes the difference of two vectors.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSubtract>
 #[inline]
 pub fn XMVectorSubtract(
@@ -2754,7 +2754,7 @@ pub fn XMVectorSubtract(
 }
 
 /// Adds two vectors representing angles.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSubtractAngles>
 #[inline]
 pub fn XMVectorSubtractAngles(
@@ -2809,7 +2809,7 @@ pub fn XMVectorSubtractAngles(
 
 
 /// Computes the per-component product of two vectors.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorMultiply>
 #[inline]
 pub fn XMVectorMultiply(
@@ -2842,7 +2842,7 @@ pub fn XMVectorMultiply(
 }
 
 /// Computes the product of the first two vectors added to the third vector.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorMultiplyAdd>
 #[inline]
 pub fn XMVectorMultiplyAdd(
@@ -2876,7 +2876,7 @@ pub fn XMVectorMultiplyAdd(
 }
 
 /// Divides one instance of XMVECTOR by a second instance, returning the result in a third instance.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorDivide>
 #[inline]
 pub fn XMVectorDivide(
@@ -2909,7 +2909,7 @@ pub fn XMVectorDivide(
 }
 
 /// Computes the difference of a third vector and the product of the first two vectors.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorNegativeMultiplySubtract>
 #[inline]
 pub fn XMVectorNegativeMultiplySubtract(
@@ -2943,7 +2943,7 @@ pub fn XMVectorNegativeMultiplySubtract(
 }
 
 /// Scalar multiplies a vector by a floating-point value.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorScale>
 #[inline]
 pub fn XMVectorScale(
@@ -2977,7 +2977,7 @@ pub fn XMVectorScale(
 }
 
 /// Estimates the per-component reciprocal of a vector.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorReciprocalEst>
 #[inline]
 pub fn XMVectorReciprocalEst(
@@ -3009,7 +3009,7 @@ pub fn XMVectorReciprocalEst(
 }
 
 /// Estimates the per-component reciprocal of a vector.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorReciprocal>
 #[inline]
 pub fn XMVectorReciprocal(
@@ -3041,7 +3041,7 @@ pub fn XMVectorReciprocal(
 }
 
 /// Estimates the per-component square root of a vector.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSqrtEst>
 #[inline]
 pub fn XMVectorSqrtEst(
@@ -3073,7 +3073,7 @@ pub fn XMVectorSqrtEst(
 }
 
 /// Computes the per-component square root of a vector.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSqrt>
 #[inline]
 pub fn XMVectorSqrt(
@@ -3105,7 +3105,7 @@ pub fn XMVectorSqrt(
 }
 
 /// Estimates the per-component reciprocal square root of a vector.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorReciprocalSqrtEst>
 #[inline]
 pub fn XMVectorReciprocalSqrtEst(
@@ -3137,7 +3137,7 @@ pub fn XMVectorReciprocalSqrtEst(
 }
 
 /// Computes  the per-component reciprocal square root of a vector.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorReciprocalSqrt>
 #[inline]
 pub fn XMVectorReciprocalSqrt(
@@ -3225,7 +3225,7 @@ pub fn XMVectorPow(
 }
 
 /// Computes the absolute value of each component of an XMVECTOR.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorAbs>
 #[inline]
 pub fn XMVectorAbs(
@@ -3260,7 +3260,7 @@ pub fn XMVectorAbs(
 }
 
 /// Computes the per-component floating-point remainder of the quotient of two vectors.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorMod>
 #[inline]
 pub fn XMVectorMod(
@@ -3292,7 +3292,7 @@ pub fn XMVectorMod(
 }
 
 /// Computes the per-component angle modulo 2PI.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorModAngles>
 #[inline]
 pub fn XMVectorModAngles(
@@ -3305,7 +3305,7 @@ pub fn XMVectorModAngles(
     unsafe {
         let mut V: XMVECTOR;
         let Result: XMVECTOR;
-    
+
         // Modulo the range of the given angles such that -XM_PI <= Angles < XM_PI
         V = XMVectorMultiply(Angles, g_XMReciprocalTwoPi.v);
         V = XMVectorRound(V);
@@ -3329,7 +3329,7 @@ pub fn XMVectorModAngles(
 }
 
 /// Computes the sine of each component of an XMVECTOR.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSin>
 #[inline]
 pub fn XMVectorSin(
@@ -3409,7 +3409,7 @@ fn test_XMVectorSin() {
 }
 
 /// Computes the cosine of each component of an XMVECTOR.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorCos>
 #[inline]
 pub fn XMVectorCos(
@@ -3492,7 +3492,7 @@ fn test_XMVectorCos() {
 }
 
 /// Computes the sine and cosine of each component of an XMVECTOR.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSinCos>
 #[inline]
 pub fn XMVectorSinCos(
@@ -3593,7 +3593,7 @@ pub fn XMVectorSinCos(
 }
 
 /// Computes the tangent of each component of an XMVECTOR.
-/// 
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorTan>
 #[inline]
 pub fn XMVectorTan(
@@ -6335,11 +6335,11 @@ pub fn XMVector3TransformNormal(
         let Z: XMVECTOR = XMVectorSplatZ(V);
         let Y: XMVECTOR = XMVectorSplatY(V);
         let X: XMVECTOR = XMVectorSplatX(V);
-    
+
         let mut Result: XMVECTOR = XMVectorMultiply(Z, M.r[2]);
         Result = XMVectorMultiplyAdd(Y, M.r[1], Result);
         Result = XMVectorMultiplyAdd(X, M.r[0], Result);
-    
+
         return Result;
     }
 
