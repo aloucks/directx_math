@@ -2219,3 +2219,240 @@ pub fn XMMatrixOrthographicRH(
 // TODO: XMMatrixOrthographicOffCenterRH
 
 // TODO: Operator overloads / constructors
+
+impl std::ops::Deref for XMMatrix {
+    type Target = XMMATRIX;
+    #[inline(always)]
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::ops::DerefMut for XMMatrix {
+    #[inline(always)]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl XMMatrix {
+    #[inline]
+    pub fn new(
+        m00: f32, m01: f32, m02: f32, m03: f32,
+        m10: f32, m11: f32, m12: f32, m13: f32,
+        m20: f32, m21: f32, m22: f32, m23: f32,
+        m30: f32, m31: f32, m32: f32, m33: f32,
+    ) -> XMMatrix
+    {
+        XMMatrix(XMMATRIX {
+            r: [
+                XMVectorSet(m00, m01, m02, m03),
+                XMVectorSet(m10, m11, m12, m13),
+                XMVectorSet(m20, m21, m22, m23),
+                XMVectorSet(m30, m31, m32, m33),
+            ]
+        })
+    }
+}
+
+impl From<&[f32; 16]> for XMMatrix {
+    #[inline]
+    fn from(m: &[f32; 16]) -> XMMatrix {
+        XMMatrix(XMLoadFloat4x4(m.into()))
+    }
+}
+
+impl From<&[[f32; 4]; 4]> for XMMatrix {
+    #[inline]
+    fn from(m: &[[f32; 4]; 4]) -> XMMatrix {
+        XMMatrix(XMLoadFloat4x4(m.into()))
+    }
+}
+
+impl std::ops::Add for XMMatrix {
+    type Output = XMMatrix;
+    #[inline]
+    fn add(self, M: XMMatrix) -> Self::Output {
+        unsafe {
+            XMMatrix(XMMATRIX { r: [
+                XMVectorAdd(self.r[0], M.r[0]),
+                XMVectorAdd(self.r[1], M.r[1]),
+                XMVectorAdd(self.r[2], M.r[2]),
+                XMVectorAdd(self.r[3], M.r[3]),
+            ]})
+        }
+    }
+}
+
+impl std::ops::AddAssign for XMMatrix {
+    #[inline]
+    fn add_assign(&mut self, M: XMMatrix) {
+        unsafe {
+            self.r[0] = XMVectorAdd(self.r[0], M.r[0]);
+            self.r[0] = XMVectorAdd(self.r[1], M.r[1]);
+            self.r[0] = XMVectorAdd(self.r[2], M.r[2]);
+            self.r[0] = XMVectorAdd(self.r[3], M.r[3]);
+        }
+    }
+}
+
+impl std::ops::Sub for XMMatrix {
+    type Output = XMMatrix;
+    #[inline]
+    fn sub(self, M: XMMatrix) -> XMMatrix{
+        unsafe {
+            XMMatrix(XMMATRIX { r: [
+                XMVectorSubtract(self.r[0], M.r[0]),
+                XMVectorSubtract(self.r[1], M.r[1]),
+                XMVectorSubtract(self.r[2], M.r[2]),
+                XMVectorSubtract(self.r[3], M.r[3]),
+            ]})
+        }
+    }
+}
+
+impl std::ops::SubAssign for XMMatrix {
+    #[inline]
+    fn sub_assign(&mut self, M: XMMatrix) {
+        unsafe {
+            self.r[0] = XMVectorSubtract(self.r[0], M.r[0]);
+            self.r[0] = XMVectorSubtract(self.r[1], M.r[1]);
+            self.r[0] = XMVectorSubtract(self.r[2], M.r[2]);
+            self.r[0] = XMVectorSubtract(self.r[3], M.r[3]);
+        }
+    }
+}
+
+impl std::ops::Mul for XMMatrix {
+    type Output = XMMatrix;
+    #[inline]
+    fn mul(self, M: XMMatrix) -> XMMatrix{
+        XMMatrix(XMMatrixMultiply(self.0, &M))
+    }
+}
+
+impl std::ops::MulAssign for XMMatrix {
+    #[inline]
+    fn mul_assign(&mut self, M: XMMatrix) {
+        self.0 = XMMatrixMultiply(self.0, &M)
+    }
+}
+
+impl std::ops::Mul<XMMatrix> for f32 {
+    type Output = XMMatrix;
+    #[inline]
+    fn mul(self, M: XMMatrix) -> XMMatrix {
+        unsafe {
+            let S = self;
+            let mut R: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+            R.r[0] = XMVectorScale(M.r[0], S);
+            R.r[1] = XMVectorScale(M.r[1], S);
+            R.r[2] = XMVectorScale(M.r[2], S);
+            R.r[3] = XMVectorScale(M.r[3], S);
+            return XMMatrix(R);
+        }
+    }
+}
+
+impl std::ops::Mul<f32> for XMMatrix {
+    type Output = XMMatrix;
+    #[inline]
+    fn mul(self, S: f32) -> XMMatrix {
+        unsafe {
+            let mut R: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+            R.r[0] = XMVectorScale(self.r[0], S);
+            R.r[1] = XMVectorScale(self.r[1], S);
+            R.r[2] = XMVectorScale(self.r[2], S);
+            R.r[3] = XMVectorScale(self.r[3], S);
+            return XMMatrix(R);
+        }
+    }
+}
+
+impl std::ops::MulAssign<f32> for XMMatrix {
+    #[inline]
+    fn mul_assign(&mut self, S: f32) {
+        unsafe {
+            self.r[0] = XMVectorScale(self.r[0], S);
+            self.r[1] = XMVectorScale(self.r[1], S);
+            self.r[2] = XMVectorScale(self.r[2], S);
+            self.r[3] = XMVectorScale(self.r[3], S);
+        }
+    }
+}
+
+impl std::ops::Div<f32> for XMMatrix {
+    type Output = XMMatrix;
+    #[inline]
+    fn div(self, S: f32) -> XMMatrix {
+        #[cfg(_XM_NO_INTRINSICS_)]
+        unsafe {
+            let vS: XMVECTOR = XMVectorReplicate(S);
+            let mut R: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+            R.r[0] = XMVectorDivide(self.r[0], vS);
+            R.r[1] = XMVectorDivide(self.r[1], vS);
+            R.r[2] = XMVectorDivide(self.r[2], vS);
+            R.r[3] = XMVectorDivide(self.r[3], vS);
+            return XMMatrix(R);
+        }
+
+        #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+        {
+            unimplemented!()
+        }
+
+        #[cfg(_XM_SSE_INTRINSICS_)]
+        unsafe {
+            let vS: __m128 = _mm_set_ps1(S);
+            let mut R: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+            R.r[0] = _mm_div_ps(self.r[0], vS);
+            R.r[1] = _mm_div_ps(self.r[1], vS);
+            R.r[2] = _mm_div_ps(self.r[2], vS);
+            R.r[3] = _mm_div_ps(self.r[3], vS);
+            return XMMatrix(R);
+        }
+    }
+}
+
+impl std::ops::DivAssign<f32> for XMMatrix {
+    #[inline]
+    fn div_assign(&mut self, S: f32) {
+        #[cfg(_XM_NO_INTRINSICS_)]
+        unsafe {
+            let vS: XMVECTOR = XMVectorReplicate(S);
+            self.r[0] = XMVectorDivide(self.r[0], vS);
+            self.r[1] = XMVectorDivide(self.r[1], vS);
+            self.r[2] = XMVectorDivide(self.r[2], vS);
+            self.r[3] = XMVectorDivide(self.r[3], vS);
+        }
+
+        #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+        {
+            unimplemented!()
+        }
+
+        #[cfg(_XM_SSE_INTRINSICS_)]
+        unsafe {
+            let vS: __m128 = _mm_set_ps1(S);
+            self.r[0] = _mm_div_ps(self.r[0], vS);
+            self.r[1] = _mm_div_ps(self.r[1], vS);
+            self.r[2] = _mm_div_ps(self.r[2], vS);
+            self.r[3] = _mm_div_ps(self.r[3], vS);
+        }
+    }
+}
+
+impl std::ops::Neg for XMMatrix {
+    type Output = XMMatrix;
+    #[inline]
+    fn neg(self) -> Self::Output {
+        unsafe {
+            let mut R: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+            R.r[0] = XMVectorNegate(self.r[0]);
+            R.r[1] = XMVectorNegate(self.r[1]);
+            R.r[2] = XMVectorNegate(self.r[2]);
+            R.r[3] = XMVectorNegate(self.r[3]);
+            XMMatrix(R)
+        }
+    }
+}

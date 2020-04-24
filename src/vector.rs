@@ -7395,6 +7395,13 @@ impl std::ops::DerefMut for XMVector {
     }
 }
 
+impl XMVector {
+    #[inline(always)]
+    pub fn new(x: f32, y: f32, z: f32, w: f32) -> XMVector {
+        XMVector(XMVectorSet(x, y, z, w))
+    }
+}
+
 impl std::ops::Add for XMVector {
     type Output = XMVector;
     #[inline]
@@ -7452,6 +7459,15 @@ impl std::ops::DivAssign for XMVector {
     #[inline]
     fn div_assign(&mut self, V2: XMVector) {
         self.0 = XMVectorDivide(self.0, V2.0);
+    }
+}
+
+impl std::ops::Mul<XMVector> for f32 {
+    type Output = XMVector;
+    #[inline]
+    fn mul(self, V: XMVector) -> Self::Output {
+        let S = self;
+        XMVector(XMVectorScale(V.0, S))
     }
 }
 

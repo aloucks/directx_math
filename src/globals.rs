@@ -1,3 +1,4 @@
+#![allow(unused)]
 use crate::{XMVECTORF32, XMVECTORU32, XMVECTORI32, XM_SELECT_0, XM_SELECT_1, XM_PI, XM_2PI, XM_1DIVPI, XM_1DIV2PI, XM_PIDIV2};
 
 const fn float(u: u32) -> f32 {

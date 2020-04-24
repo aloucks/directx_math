@@ -231,12 +231,14 @@ struct Align16<T>(T);
 
 impl<T> std::ops::Deref for Align16<T> {
     type Target = T;
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
 impl<T> std::ops::DerefMut for Align16<T> {
+    #[inline(always)]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
@@ -364,13 +366,13 @@ macro_rules! XM_PREFETCH {
 
 pub mod vector;
 pub mod convert;
-pub mod globals;
+mod globals;
 pub mod misc;
 pub mod matrix;
 
 pub use vector::*;
 pub use convert::*;
-pub use globals::*;
+use globals::*;
 pub use misc::*;
 pub use matrix::*;
 
@@ -546,6 +548,7 @@ macro_rules! cast_m128 {
 
         impl std::ops::Deref for $Name {
             type Target = XMVECTOR;
+            #[inline(always)]
             fn deref(&self) -> &Self::Target {
                 unsafe { mem::transmute(self) }
             }
@@ -647,6 +650,13 @@ pub union XMMATRIX {
 pub type FXMMATRIX = XMMATRIX;
 pub type CXMMATRIX<'a> = &'a XMMATRIX;
 
+/// Unit struct for [`XMMATRIX`] operator overloads.
+///
+/// [`XMMATRIX`]: union.XMMATRIX.html
+#[derive(Copy, Clone)]
+#[repr(transparent)]
+pub struct XMMatrix(pub XMMATRIX);
+
 
 macro_rules! xm_struct {
     ($Name:ident, $type:ty, $length:expr, $($field:ident),*) => {
@@ -681,6 +691,24 @@ macro_rules! xm_struct {
                 unsafe { std::mem::transmute(self) }
             }
         }
+
+        // impl<'a> $Name {
+        //     pub fn from_raw_slice(a: &'a [[$type; $length]]) -> &'a [$Name] {
+        //         unsafe { std::mem::transmute(a) }
+        //     }
+
+        //     pub fn from_raw_slice_mut(a: &'a mut [[$type; $length]]) -> &'a mut [$Name] {
+        //         unsafe { std::mem::transmute(a) }
+        //     }
+
+        //     pub fn into_raw_slice(a: &'a [$Name]) -> &'a [[$type; $length]] {
+        //         unsafe { std::mem::transmute(a) }
+        //     }
+
+        //     pub fn into_raw_slice_mut(a: &'a mut [$Name]) -> &'a mut [[$type; $length]] {
+        //         unsafe { std::mem::transmute(a) }
+        //     }
+        // }
     };
 }
 

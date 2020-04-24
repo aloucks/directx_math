@@ -207,24 +207,302 @@ pub fn XMConvertVectorFloatToUInt(
     }
 }
 
-// TODO: LoadInt
-// TODO: LoadFloat
+// TODO: XMLoadInt
+// TODO: XMLoadFloat
+// TODO: XMLoadInt2
+// TODO: XMLoadInt2A
+// TODO: XMLoadFloat2
+// TODO: XMLoadFloat2A
+// TODO: XMLoadSInt2
+// TODO: XMLoadUInt2
+// TODO: XMLoadInt3
+// TODO: XMLoadInt3A
 
-// TODO: LoadFloat2
-// TODO: LoadSInt2
-// TODO: LoadUInt2
+/// Loads an XMFLOAT3 into an XMVECTOR.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMLoadFloat3>
+#[inline]
+pub fn XMLoadFloat3(
+    pSource: &XMFLOAT3,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut V: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        V.vector4_f32[0] = pSource.x;
+        V.vector4_f32[1] = pSource.y;
+        V.vector4_f32[2] = pSource.z;
+        V.vector4_f32[3] = 0.0;
+        return V;
+    }
 
-// TODO: LoadFloat3
-// TODO: LoadSInt3
-// TODO: LoadUInt3
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
 
-// TODO: LoadFloat4
-// TODO: LoadSInt4
-// TODO: LoadUInt4
+    #[cfg(_XM_SSE4_INTRINSICS_)]
+    unsafe {
+        let xy: __m128 = _mm_castpd_ps(_mm_load_sd(mem::transmute::<_, *const f64>(pSource)));
+        let z: __m128 = _mm_load_ss(&pSource.z);
+        return _mm_insert_ps(xy, z, 0x20);
+    }
 
-// TODO: XMLoadFloat3x3
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        let xy: __m128 = _mm_castpd_ps(_mm_load_sd(mem::transmute::<_, *const f64>(pSource)));
+        let z: __m128 = _mm_load_ss(&pSource.z);
+        return _mm_movelh_ps(xy, z);
+    }
+}
+
+#[test]
+fn test_XMLoadFloat3() {
+    let a = XMLoadFloat3(&XMFLOAT3 { x: 1.0, y: 2.0, z: 3.0 });
+    assert_eq!(1.0, XMVectorGetX(a));
+    assert_eq!(2.0, XMVectorGetY(a));
+    assert_eq!(3.0, XMVectorGetZ(a));
+    assert_eq!(0.0, XMVectorGetW(a));
+}
+
+// TODO: XMLoadFloat3A
+
+// TODO: XMLoadSInt3
+
+// /// Loads signed integer data into the x, y, and z components of an XMVECTOR.
+// ///
+// /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMLoadSInt3>
+// #[inline]
+// pub fn XMLoadSInt3(
+//     pSource: &XMINT3,
+// ) -> FXMVECTOR
+// {
+//     #[cfg(_XM_NO_INTRINSICS_)]
+//     unsafe {
+//         let mut V: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+//         V.vector4_f32[0] = (pSource.x as f32);
+//         V.vector4_f32[1] = (pSource.y as f32);
+//         V.vector4_f32[2] = (pSource.z as f32);
+//         V.vector4_f32[3] = 0.0;
+//         return V;
+//     }
+
+//     #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+//     {
+//         unimplemented!()
+//     }
+
+//     #[cfg(_XM_SSE_INTRINSICS_)]
+//     unsafe {
+//         let xy: __m128 = _mm_castpd_ps(_mm_load_sd(mem::transmute::<_, *const f64>(pSource)));
+//         let z: __m128 = _mm_load_ss(mem::transmute::<_, *const f32>(&pSource.z));
+//         let V: __m128 = _mm_movelh_ps(xy, z);
+//         return _mm_cvtepi32_ps(_mm_castps_si128(V));
+//     }
+// }
+
+// #[test]
+// fn test_XMLoadSInt3() {
+//     let a = XMLoadSInt3(&XMINT3 { x: 1, y: 2, z: 3 });
+//     assert_eq!(1.0, XMVectorGetX(a));
+//     assert_eq!(2.0, XMVectorGetY(a));
+//     assert_eq!(3.0, XMVectorGetZ(a));
+//     assert_eq!(0.0, XMVectorGetW(a));
+
+//     let a = XMLoadSInt3(&XMINT3 { x: -1, y: -2, z: -3 });
+//     assert_eq!(-1.0, XMVectorGetX(a));
+//     assert_eq!(-2.0, XMVectorGetY(a));
+//     assert_eq!(-3.0, XMVectorGetZ(a));
+//     assert_eq!(0.0, XMVectorGetW(a));
+// }
+
+
+// TODO: XMLoadUInt3
+// TODO: XMLoadInt4
+// TODO: XMLoadInt4A
+
+/// Loads an XMFLOAT4 into an XMVECTOR.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMLoadFloat4>
+#[inline]
+pub fn XMLoadFloat4(
+    pSource: &XMFLOAT4,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut V: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        V.vector4_f32[0] = pSource.x;
+        V.vector4_f32[1] = pSource.y;
+        V.vector4_f32[2] = pSource.z;
+        V.vector4_f32[3] = pSource.w;
+        return V;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        return _mm_loadu_ps(&pSource.x);
+    }
+}
+
+#[test]
+fn test_XMLoadFloat4() {
+    let a = XMLoadFloat4(&XMFLOAT4 { x: 1.0, y: 2.0, z: 3.0, w: 4.0 });
+    assert_eq!(1.0, XMVectorGetX(a));
+    assert_eq!(2.0, XMVectorGetY(a));
+    assert_eq!(3.0, XMVectorGetZ(a));
+    assert_eq!(4.0, XMVectorGetW(a));
+}
+
+// TODO: XMLoadFloat4A
+// TODO: XMLoadSInt4
+// TODO: XMLoadUInt4
+
+/// Loads an XMFLOAT3X3 into an MATRIX.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMLoadFloat3x3>
+#[inline]
+pub fn XMLoadFloat3x3(
+    pSource: &XMFLOAT3X3,
+) -> XMMATRIX
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut M: XMMATRIX  = mem::MaybeUninit::uninit().assume_init();
+        M.r[0].vector4_f32[0] = pSource.m[0][0];
+        M.r[0].vector4_f32[1] = pSource.m[0][1];
+        M.r[0].vector4_f32[2] = pSource.m[0][2];
+        M.r[0].vector4_f32[3] = 0.0;
+
+        M.r[1].vector4_f32[0] = pSource.m[1][0];
+        M.r[1].vector4_f32[1] = pSource.m[1][1];
+        M.r[1].vector4_f32[2] = pSource.m[1][2];
+        M.r[1].vector4_f32[3] = 0.0;
+
+        M.r[2].vector4_f32[0] = pSource.m[2][0];
+        M.r[2].vector4_f32[1] = pSource.m[2][1];
+        M.r[2].vector4_f32[2] = pSource.m[2][2];
+        M.r[2].vector4_f32[3] = 0.0;
+        M.r[3].vector4_f32[0] = 0.0;
+        M.r[3].vector4_f32[1] = 0.0;
+        M.r[3].vector4_f32[2] = 0.0;
+        M.r[3].vector4_f32[3] = 1.0;
+        return M;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let Z: __m128 = _mm_setzero_ps();
+
+        let V1: __m128 = _mm_loadu_ps(&pSource.m[0][0]);
+        let V2: __m128 = _mm_loadu_ps(&pSource.m[1][1]);
+        let V3: __m128 = _mm_load_ss(&pSource.m[2][2]);
+
+        let T1: __m128 = _mm_unpackhi_ps(V1, Z);
+        let T2: __m128 = _mm_unpacklo_ps(V2, Z);
+        let T3: __m128 = _mm_shuffle_ps(V3, T2, _MM_SHUFFLE(0, 1, 0, 0));
+        let T4: __m128 = _mm_movehl_ps(T2, T3);
+        let T5: __m128 = _mm_movehl_ps(Z, T1);
+
+        let mut M: XMMATRIX  = mem::MaybeUninit::uninit().assume_init();
+        M.r[0] = _mm_movelh_ps(V1, T1);
+        M.r[1] = _mm_add_ps(T4, T5);
+        M.r[2] = _mm_shuffle_ps(V2, V3, _MM_SHUFFLE(1, 0, 3, 2));
+        M.r[3] = *g_XMIdentityR3;
+        return M;
+    }
+}
+
 // TODO: XMLoadFloat4x3
+// TODO: XMLoadFloat4x3A
 // TODO: XMLoadFloat3x4
-// TODO: XMLoadFloat4x4
+// TODO: XMLoadFloat3x4A
 
+/// Loads an XMFLOAT4X4 into an MATRIX.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMLoadFloat4x4>
+#[inline]
+pub fn XMLoadFloat4x4(
+    pSource: &XMFLOAT4X4,
+) -> XMMATRIX
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut M: XMMATRIX  = mem::MaybeUninit::uninit().assume_init();
+        M.r[0].vector4_f32[0] = pSource.m[0][0];
+        M.r[0].vector4_f32[1] = pSource.m[0][1];
+        M.r[0].vector4_f32[2] = pSource.m[0][2];
+        M.r[0].vector4_f32[3] = pSource.m[0][3];
+
+        M.r[1].vector4_f32[0] = pSource.m[1][0];
+        M.r[1].vector4_f32[1] = pSource.m[1][1];
+        M.r[1].vector4_f32[2] = pSource.m[1][2];
+        M.r[1].vector4_f32[3] = pSource.m[1][3];
+
+        M.r[2].vector4_f32[0] = pSource.m[2][0];
+        M.r[2].vector4_f32[1] = pSource.m[2][1];
+        M.r[2].vector4_f32[2] = pSource.m[2][2];
+        M.r[2].vector4_f32[3] = pSource.m[2][3];
+
+        M.r[3].vector4_f32[0] = pSource.m[3][0];
+        M.r[3].vector4_f32[1] = pSource.m[3][1];
+        M.r[3].vector4_f32[2] = pSource.m[3][2];
+        M.r[3].vector4_f32[3] = pSource.m[3][3];
+        return M;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut M: XMMATRIX  = mem::MaybeUninit::uninit().assume_init();
+        M.r[0] = _mm_loadu_ps(&pSource.m[0][0]); // _11
+        M.r[1] = _mm_loadu_ps(&pSource.m[1][0]); // _21
+        M.r[2] = _mm_loadu_ps(&pSource.m[2][0]); // _31
+        M.r[3] = _mm_loadu_ps(&pSource.m[3][0]); // _41
+        return M;
+    }
+}
+
+// TODO: XMLoadFloat4x4A
+// TODO: XMStoreInt
+// TODO: XMStoreFloat
+// TODO: XMStoreInt2
+// TODO: XMStoreInt2A
 // TODO: XMStoreFloat2
+// TODO: XMStoreFloat2A
+// TODO: XMStoreSInt2
+// TODO: XMStoreUInt2
+// TODO: XMStoreInt3
+// TODO: XMStoreInt3A
+// TODO: XMStoreFloat3
+// TODO: XMStoreFloat3A
+// TODO: XMStoreSInt3
+// TODO: XMStoreUInt3
+// TODO: XMStoreInt4
+// TODO: XMStoreInt4A
+// TODO: XMStoreFloat4
+// TODO: XMStoreFloat4A
+// TODO: XMStoreSInt4
+// TODO: XMStoreUInt4
+// TODO: XMStoreFloat3x3
+// TODO: XMStoreFloat4x3
+// TODO: XMStoreFloat4x3A
+// TODO: XMStoreFloat3x4
+// TODO: XMStoreFloat3x4A
+// TODO: XMStoreFloat4x4
+// TODO: XMStoreFloat4x4A
+
