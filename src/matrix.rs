@@ -2218,8 +2218,6 @@ pub fn XMMatrixOrthographicRH(
 // TODO: XMMatrixOrthographicOffCenterLH
 // TODO: XMMatrixOrthographicOffCenterRH
 
-// TODO: Operator overloads / constructors
-
 impl std::ops::Deref for XMMatrix {
     type Target = XMMATRIX;
     #[inline(always)]
@@ -2455,4 +2453,53 @@ impl std::ops::Neg for XMMatrix {
             XMMatrix(R)
         }
     }
+}
+
+impl std::fmt::Debug for XMMatrix {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let rows = unsafe {
+            &[
+                [
+                    XMVectorGetX(self.r[0]),
+                    XMVectorGetY(self.r[0]),
+                    XMVectorGetZ(self.r[0]),
+                    XMVectorGetW(self.r[0]),
+                ],
+                [
+                    XMVectorGetX(self.r[1]),
+                    XMVectorGetY(self.r[1]),
+                    XMVectorGetZ(self.r[1]),
+                    XMVectorGetW(self.r[1]),
+                ],
+                [
+                    XMVectorGetX(self.r[2]),
+                    XMVectorGetY(self.r[2]),
+                    XMVectorGetZ(self.r[2]),
+                    XMVectorGetW(self.r[2]),
+                ],
+                [
+                    XMVectorGetX(self.r[3]),
+                    XMVectorGetY(self.r[3]),
+                    XMVectorGetZ(self.r[3]),
+                    XMVectorGetW(self.r[3]),
+                ],
+            ]
+        };
+        f.debug_list()
+            .entries(rows)
+            .finish()
+    }
+}
+
+#[test]
+fn test_debug() {
+    #[rustfmt::skip]
+    let m = XMMatrix::from(&[
+        [ 1.0,  2.0,  3.0,  4.0],
+        [ 5.0,  6.0,  7.0,  8.0],
+        [ 9.0, 10.0, 11.0, 12.0],
+        [13.0, 14.0, 15.0, 16.0],
+    ]);
+    let s = format!("{:?}", m);
+    assert_eq!("[[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0], [9.0, 10.0, 11.0, 12.0], [13.0, 14.0, 15.0, 16.0]]", s);
 }

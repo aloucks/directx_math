@@ -7380,6 +7380,13 @@ pub fn XMVector4Normalize(
 // TODO: XMVector4Transform
 // TODO: XMVector4TransformStream
 
+impl From<&[f32; 4]> for XMVector {
+    #[inline]
+    fn from(v: &[f32; 4]) -> XMVector {
+        XMVector(XMLoadFloat4(v.into()))
+    }
+}
+
 impl std::ops::Deref for XMVector {
     type Target = XMVECTOR;
     #[inline(always)]
@@ -7513,11 +7520,20 @@ impl std::ops::Neg for XMVector {
 
 impl std::fmt::Debug for XMVector {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.debug_struct("XMVector")
-            .field("x", &XMVectorGetX(**self))
-            .field("y", &XMVectorGetY(**self))
-            .field("z", &XMVectorGetZ(**self))
-            .field("w", &XMVectorGetW(**self))
+        f.debug_list()
+            .entry(&XMVectorGetX(self.0))
+            .entry(&XMVectorGetY(self.0))
+            .entry(&XMVectorGetZ(self.0))
+            .entry(&XMVectorGetW(self.0))
             .finish()
     }
+}
+
+
+#[test]
+fn test_debug() {
+    #[rustfmt::skip]
+    let m = XMVector::from(&[1.0, 2.0, 3.0, 4.0]);
+    let s = format!("{:?}", m);
+    assert_eq!("[1.0, 2.0, 3.0, 4.0]", s);
 }
