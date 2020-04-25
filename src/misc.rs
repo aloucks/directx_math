@@ -843,31 +843,51 @@ pub fn XMQuaternionToAxisAngle(
 // TODO: XMPlaneNearEqual
 // TODO: XMPlaneNotEqual
 // TODO: XMPlaneIsNaN
-// TODO: 
+// TODO: XMPlaneIsInfinite
 
+// TODO: XMPlaneDot
+// TODO: XMPlaneDotCoord
+// TODO: XMPlaneDotNormal
+// TODO: XMPlaneNormalizeEst
+// TODO: XMPlaneNormalize
+// TODO: XMPlaneIntersectLine
+// TODO: XMPlaneIntersectPlane
+// TODO: XMPlaneTransform
+// TODO: XMPlaneTransformStream
+// TODO: XMPlaneFromPointNormal
+// TODO: XMPlaneFromPoints
 
+// TODO: XMColorEqual
+// TODO: XMColorNotEqual
+// TODO: XMColorGreater
+// TODO: XMColorGreaterOrEqual
+// TODO: XMColorLess
+// TODO: XMColorLessOrEqual
+// TODO: XMColorIsNaN
+// TODO: XMColorIsInfinite
+// TODO: XMColorNegative
+// TODO: XMColorModulate
+// TODO: XMColorAdjustSaturation
+// TODO: XMColorAdjustContrast
+// TODO: XMColorRGBToHSL
+// TODO: XMColorHue2Clr
+// TODO: XMColorHSLToRGB
+// TODO: XMColorRGBToHSV
+// TODO: XMColorHSVToRGB
+// TODO: XMColorRGBToYUV
+// TODO: XMColorYUVToRGB
+// TODO: XMColorRGBToYUV_HD
+// TODO: XMColorYUVToRGB_HD
+// TODO: XMColorRGBToXYZ
+// TODO: XMColorXYZToRGB
+// TODO: XMColorXYZToSRGB
+// TODO: XMColorSRGBToXYZ
+// TODO: XMColorRGBToSRGB
+// TODO: XMColorSRGBToRGB
 
+// TODO: XMVerifyCPUSupport (NOTE: __cpuid)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// TODO: XMFresnelTerm
 
 /// Determines if two floating-point values are nearly equal.
 ///
@@ -883,12 +903,183 @@ pub fn XMScalarNearEqual(
     return (fabsf(Delta) <= Epsilon);
 }
 
-// TODO: XMScalarSin
-// TODO: XMScalarSinEst
-// TODO: XMScalarCos
-// TODO: XMScalarCosEst
+/// Computes the sine of a radian angle.
+///
+/// # Remarks
+///
+/// This function uses a 11-degree minimax approximation.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarSin>
+#[inline]
+pub fn XMScalarSin(
+    Value: f32
+) -> f32
+{
+    // Map Value to y in [-pi,pi], x = 2*pi*quotient + remainder.
+    let mut quotient: f32 = XM_1DIV2PI * Value;
+    if (Value >= 0.0)
+    {
+        quotient = ((quotient + 0.5) as i32) as f32;
+    }
+    else
+    {
+        quotient = ((quotient - 0.5) as i32) as f32;
+    }
+    let mut y: f32 = Value - XM_2PI * quotient;
+
+    // Map y to [-pi/2,pi/2] with sin(y) = sin(Value).
+    if (y > XM_PIDIV2)
+    {
+        y = XM_PI - y;
+    }
+    else if (y < -XM_PIDIV2)
+    {
+        y = -XM_PI - y;
+    }
+
+    // 11-degree minimax approximation
+    let y2: f32 = y * y;
+    return (((((-2.3889859e-08 * y2 + 2.7525562e-06) * y2 - 0.00019840874) * y2 + 0.0083333310) * y2 - 0.16666667) * y2 + 1.0) * y;
+}
+
+/// Estimates the sine of a radian angle.
+///
+/// # Remarks
+///
+/// This function uses a 7-degree minimax approximation.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarSinEst>
+#[inline]
+pub fn XMScalarSinEst(
+    Value: f32
+) -> f32
+{
+    // Map Value to y in [-pi,pi], x = 2*pi*quotient + remainder.
+    let mut quotient: f32 = XM_1DIV2PI * Value;
+    if (Value >= 0.0)
+    {
+        quotient = ((quotient + 0.5) as i32) as f32;
+    }
+    else
+    {
+        quotient = ((quotient - 0.5) as i32) as f32;
+    }
+    let mut y: f32 = Value - XM_2PI * quotient;
+
+    // Map y to [-pi/2,pi/2] with sin(y) = sin(Value).
+    if (y > XM_PIDIV2)
+    {
+        y = XM_PI - y;
+    }
+    else if (y < -XM_PIDIV2)
+    {
+        y = -XM_PI - y;
+    }
+
+    // 7-degree minimax approximation
+    let y2: f32 = y * y;
+    return (((-0.00018524670 * y2 + 0.0083139502) * y2 - 0.16665852) * y2 + 1.0) * y;
+}
+
+/// Computes the cosine of a radian angle.
+///
+/// # Remarks
+///
+/// This function uses a 10-degree minimax approximation.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarCos>
+#[inline]
+pub fn XMScalarCos(
+    Value: f32
+) -> f32
+{
+    // Map Value to y in [-pi,pi], x = 2*pi*quotient + remainder.
+    let mut quotient: f32 = XM_1DIV2PI * Value;
+    if (Value >= 0.0)
+    {
+        quotient = ((quotient + 0.5) as i32) as f32;
+    }
+    else
+    {
+        quotient = ((quotient - 0.5) as i32) as f32;
+    }
+    let mut y: f32 = Value - XM_2PI * quotient;
+
+    // Map y to [-pi/2,pi/2] with cos(y) = sign*cos(x).
+    let sign: f32;
+    if (y > XM_PIDIV2)
+    {
+        y = XM_PI - y;
+        sign = -1.0;
+    }
+    else if (y < -XM_PIDIV2)
+    {
+        y = -XM_PI - y;
+        sign = -1.0;
+    }
+    else
+    {
+        sign =  1.0;
+    }
+
+    // 10-degree minimax approximation
+    let y2: f32 = y * y;
+    let p: f32 = ((((-2.6051615e-07 * y2 + 2.4760495e-05) * y2 - 0.0013888378) * y2 + 0.041666638) * y2 - 0.5) * y2 + 1.0;
+    return sign * p;
+}
+
+/// Estimates the cosine of a radian angle.
+///
+/// # Remarks
+///
+/// This function uses a 6-degree minimax approximation.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarCosEst>
+#[inline]
+pub fn XMScalarCosEst(
+    Value: f32
+) -> f32
+{
+    // Map Value to y in [-pi,pi], x = 2*pi*quotient + remainder.
+    let mut quotient: f32 = XM_1DIV2PI * Value;
+    if (Value >= 0.0)
+    {
+        quotient = ((quotient + 0.5) as i32) as f32;
+    }
+    else
+    {
+        quotient = ((quotient - 0.5) as i32) as f32;
+    }
+    let mut y: f32 = Value - XM_2PI * quotient;
+
+    // Map y to [-pi/2,pi/2] with cos(y) = sign*cos(x).
+    let sign: f32;
+    if (y > XM_PIDIV2)
+    {
+        y = XM_PI - y;
+        sign = -1.0;
+    }
+    else if (y < -XM_PIDIV2)
+    {
+        y = -XM_PI - y;
+        sign = -1.0;
+    }
+    else
+    {
+        sign =  1.0;
+    }
+
+    // 6-degree minimax approximation
+    let y2: f32 = y * y;
+    let p: f32 = ((-0.0012712436 * y2 + 0.041493919) * y2 - 0.49992746) * y2 + 1.0;
+    return sign * p;
+}
 
 /// Computes both the sine and cosine of a radian angle.
+///
+/// # Remarks
+///
+/// This function uses a 11-degree minimax approximation for sine; 10-degree for cosine.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarSinCos>
 #[inline]
@@ -940,11 +1131,129 @@ pub fn XMScalarSinCos(
     *pCos = sign * p;
 }
 
-// TODO: XMScalarSinCosEst
-// TODO: XMScalarASin
-// TODO: XMScalarASinEst
+/// Estimates both the sine and cosine of a radian angle.
+///
+/// # Remarks
+///
+/// This function uses a 7-degree minimax approximation for sine; 6-degree for cosine.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarSinCosEst>
+#[inline]
+pub fn XMScalarSinCosEst(
+    pSin: &mut f32,
+    pCos: &mut f32,
+    Value: f32,
+)
+{
+    // assert(pSin);
+    // assert(pCos);
 
-/// Descriptrion
+    // Map Value to y in [-pi,pi], x = 2*pi*quotient + remainder.
+    let mut quotient: f32 = XM_1DIV2PI * Value;
+    if (Value >= 0.0)
+    {
+        quotient = ((quotient + 0.5) as i32) as f32;
+    }
+    else
+    {
+        quotient = ((quotient - 0.5) as i32) as f32;
+    }
+    let mut y: f32 = Value - XM_2PI * quotient;
+
+    // Map y to [-pi/2,pi/2] with sin(y) = sin(Value).
+    let sign: f32;
+    if (y > XM_PIDIV2)
+    {
+        y = XM_PI - y;
+        sign = -1.0;
+    }
+    else if (y < -XM_PIDIV2)
+    {
+        y = -XM_PI - y;
+        sign = -1.0;
+    }
+    else
+    {
+        sign =  1.0;
+    }
+
+    let y2: f32 = y * y;
+
+    // 7-degree minimax approximation
+    *pSin = (((-0.00018524670 * y2 + 0.0083139502) * y2 - 0.16665852) * y2 + 1.0) * y;
+
+    // 6-degree minimax approximation
+    let p: f32 = ((-0.0012712436 * y2 + 0.041493919) * y2 - 0.49992746) * y2 + 1.0;
+    *pCos = sign * p;
+}
+
+/// Computes the arcsine of a floating-point number.
+///
+/// # Remarks
+///
+/// This function uses a 7-degree minimax approximation.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarASin>
+#[inline]
+pub fn XMScalarASin(
+    Value: f32,
+) -> f32
+{
+    // Clamp input to [-1,1].
+    let nonnegative: bool = (Value >= 0.0);
+    let x: f32 = fabsf(Value);
+    let mut omx: f32 = 1.0 - x;
+    if (omx < 0.0)
+    {
+        omx = 0.0;
+    }
+    let root: f32 = sqrtf(omx);
+
+    // 7-degree minimax approximation
+    let mut result: f32 = ((((((-0.0012624911 * x + 0.0066700901) * x - 0.0170881256) * x + 0.0308918810) * x - 0.0501743046) * x + 0.0889789874) * x - 0.2145988016) * x + 1.5707963050;
+    result *= root;  // acos(|x|)
+
+    // acos(x) = pi - acos(-x) when x < 0, asin(x) = pi/2 - acos(x)
+    return (if nonnegative { XM_PIDIV2 - result } else { result - XM_PIDIV2 });
+}
+
+
+/// Estimates the arcsine of a floating-point number.
+///
+/// # Remarks
+///
+/// This function uses a 3-degree minimax approximation.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarASinEst>
+#[inline]
+pub fn XMScalarASinEst(
+    Value: f32,
+) -> f32
+{
+    // Clamp input to [-1,1].
+    let nonnegative: bool = (Value >= 0.0);
+    let x: f32 = fabsf(Value);
+    let mut omx: f32 = 1.0 - x;
+    if (omx < 0.0)
+    {
+        omx = 0.0;
+    }
+    let root: f32 = sqrtf(omx);
+
+    // 3-degree minimax approximation
+    let mut result: f32 = ((-0.0187293 * x + 0.0742610) * x - 0.2121144) * x + 1.5707288;
+    result *= root;  // acos(|x|)
+
+    // acos(x) = pi - acos(-x) when x < 0, asin(x) = pi/2 - acos(x)
+    return (if nonnegative { XM_PIDIV2 - result } else { result - XM_PIDIV2 });
+}
+
+
+/// Computes the arccosine of a floating-point number.
+///
+/// # Remarks
+///
+/// This function uses a 7-degree minimax approximation.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarACos>
 #[inline]
@@ -970,4 +1279,32 @@ pub fn XMScalarACos(
     return (if nonnegative { result } else { XM_PI - result });
 }
 
-// TODO: XMScalarACosEst
+/// Estimates the arccosine of a floating-point number.
+///
+/// # Remarks
+///
+/// This function uses a 3-degree minimax approximation.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarACosEst>
+#[inline]
+pub fn XMScalarACosEst(
+    Value: f32,
+) -> f32
+{
+    // Clamp input to [-1,1].
+    let nonnegative: bool = (Value >= 0.0);
+    let x: f32 = fabsf(Value);
+    let mut omx: f32 = 1.0 - x;
+    if (omx < 0.0)
+    {
+        omx = 0.0;
+    }
+    let root: f32 = sqrtf(omx);
+
+    // 3-degree minimax approximation
+    let mut result: f32 = ((-0.0187293 * x + 0.0742610) * x - 0.2121144) * x + 1.5707288;
+    result *= root;
+
+    // acos(x) = pi - acos(-x) when x < 0
+    return (if nonnegative { result } else { XM_PI - result });
+}
