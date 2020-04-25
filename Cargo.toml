@@ -17,9 +17,19 @@ no_sse3 = []
 no_intrinsics = ["no_avx", "no_avx2", "no_fma3", "no_sse4", "no_sse3"]
 favor_intel = []
 
-# [dev-dependencies]
-# criterion = "0.3"
+benchmarks = ["criterion", "pcg", "rand_core"]
 
-# [[bench]]
-# name = "quaternion"
-# harness = false
+[dependencies]
+# NOTE: Cargo does not support optional dev-dependencies. We specify these
+#       here as regular, but optional, dependencies; and they are only used
+#       for benchmarks. This allows tests to run without compiling all of
+#       the dependencies for criterion.
+#
+#       cargo --bench --features benchmarks 
+criterion = { version = "0.3", optional = true }
+pcg = { version = "3.0", optional = true }
+rand_core = { version = "0.5", optional = true }
+
+[[bench]]
+name = "quaternion"
+harness = false
