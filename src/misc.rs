@@ -668,7 +668,182 @@ pub fn XMQuaternionRotationAxis(
 }
 
 
+/// Computes a rotation quaternion from a rotation matrix.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionRotationMatrix>
+#[inline]
+pub fn XMQuaternionRotationMatrix(
+    M: XMMATRIX,
+) -> FXMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut q: XMVECTORF32 = mem::MaybeUninit::uninit().assume_init();
+        let r22: f32 = M.m[2][2];
+        if (r22 <= 0.0)  // x^2 + y^2 >= z^2 + w^2
+        {
+            let dif10: f32 = M.m[1][1] - M.m[0][0];
+            let omr22: f32 = 1.0 - r22;
+            if (dif10 <= 0.0)  // x^2 >= y^2
+            {
+                let fourXSqr: f32 = omr22 - dif10;
+                let inv4x: f32 = 0.5 / sqrtf(fourXSqr);
+                q.f[0] = fourXSqr * inv4x;
+                q.f[1] = (M.m[0][1] + M.m[1][0]) * inv4x;
+                q.f[2] = (M.m[0][2] + M.m[2][0]) * inv4x;
+                q.f[3] = (M.m[1][2] - M.m[2][1]) * inv4x;
+            }
+            else  // y^2 >= x^2
+            {
+                let fourYSqr: f32 = omr22 + dif10;
+                let inv4y: f32 = 0.5 / sqrtf(fourYSqr);
+                q.f[0] = (M.m[0][1] + M.m[1][0]) * inv4y;
+                q.f[1] = fourYSqr * inv4y;
+                q.f[2] = (M.m[1][2] + M.m[2][1]) * inv4y;
+                q.f[3] = (M.m[2][0] - M.m[0][2]) * inv4y;
+            }
+        }
+        else  // z^2 + w^2 >= x^2 + y^2
+        {
+            let sum10: f32 = M.m[1][1] + M.m[0][0];
+            let opr22: f32 = 1.0 + r22;
+            if (sum10 <= 0.0)  // z^2 >= w^2
+            {
+                let fourZSqr: f32 = opr22 - sum10;
+                let inv4z: f32 = 0.5 / sqrtf(fourZSqr);
+                q.f[0] = (M.m[0][2] + M.m[2][0]) * inv4z;
+                q.f[1] = (M.m[1][2] + M.m[2][1]) * inv4z;
+                q.f[2] = fourZSqr * inv4z;
+                q.f[3] = (M.m[0][1] - M.m[1][0]) * inv4z;
+            }
+            else  // w^2 >= z^2
+            {
+                let fourWSqr: f32 = opr22 + sum10;
+                let inv4w: f32 = 0.5 / sqrtf(fourWSqr);
+                q.f[0] = (M.m[1][2] - M.m[2][1]) * inv4w;
+                q.f[1] = (M.m[2][0] - M.m[0][2]) * inv4w;
+                q.f[2] = (M.m[0][1] - M.m[1][0]) * inv4w;
+                q.f[3] = fourWSqr * inv4w;
+            }
+        }
+        return q.v;
+    }
 
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        const XMPMMP: XMVECTORF32 = { XMVECTORF32 { f: [  1.0, -1.0, -1.0,  1.0 ] } };
+        const XMMPMP: XMVECTORF32 = { XMVECTORF32 { f: [ -1.0,  1.0, -1.0,  1.0 ] } };
+        const XMMMPP: XMVECTORF32 = { XMVECTORF32 { f: [ -1.0, -1.0,  1.0,  1.0 ] } };
+
+        let r0: XMVECTOR = M.r[0];  // (r00, r01, r02, 0)
+        let r1: XMVECTOR = M.r[1];  // (r10, r11, r12, 0)
+        let r2: XMVECTOR = M.r[2];  // (r20, r21, r22, 0)
+
+        // (r00, r00, r00, r00)
+        let r00: XMVECTOR = XM_PERMUTE_PS!(r0, _MM_SHUFFLE(0, 0, 0, 0));
+        // (r11, r11, r11, r11)
+        let r11: XMVECTOR = XM_PERMUTE_PS!(r1, _MM_SHUFFLE(1, 1, 1, 1));
+        // (r22, r22, r22, r22)
+        let r22: XMVECTOR = XM_PERMUTE_PS!(r2, _MM_SHUFFLE(2, 2, 2, 2));
+
+        // x^2 >= y^2 equivalent to r11 - r00 <= 0
+        // (r11 - r00, r11 - r00, r11 - r00, r11 - r00)
+        let r11mr00: XMVECTOR = _mm_sub_ps(r11, r00);
+        let x2gey2: XMVECTOR = _mm_cmple_ps(r11mr00, g_XMZero.v);
+
+        // z^2 >= w^2 equivalent to r11 + r00 <= 0
+        // (r11 + r00, r11 + r00, r11 + r00, r11 + r00)
+        let r11pr00: XMVECTOR = _mm_add_ps(r11, r00);
+        let z2gew2: XMVECTOR = _mm_cmple_ps(r11pr00, g_XMZero.v);
+
+        // x^2 + y^2 >= z^2 + w^2 equivalent to r22 <= 0
+        let x2py2gez2pw2: XMVECTOR = _mm_cmple_ps(r22, g_XMZero.v);
+
+        // (4*x^2, 4*y^2, 4*z^2, 4*w^2)
+        let mut t0: XMVECTOR = XM_FMADD_PS!(XMPMMP.v, r00, g_XMOne.v);
+        let mut t1: XMVECTOR = _mm_mul_ps(XMMPMP.v, r11);
+        let mut t2: XMVECTOR = XM_FMADD_PS!(XMMMPP.v, r22, t0);
+        let x2y2z2w2: XMVECTOR = _mm_add_ps(t1, t2);
+
+        // (r01, r02, r12, r11)
+        t0 = _mm_shuffle_ps(r0, r1, _MM_SHUFFLE(1, 2, 2, 1));
+        // (r10, r10, r20, r21)
+        t1 = _mm_shuffle_ps(r1, r2, _MM_SHUFFLE(1, 0, 0, 0));
+        // (r10, r20, r21, r10)
+        t1 = XM_PERMUTE_PS!(t1, _MM_SHUFFLE(1, 3, 2, 0));
+        // (4*x*y, 4*x*z, 4*y*z, unused)
+        let xyxzyz: XMVECTOR = _mm_add_ps(t0, t1);
+
+        // (r21, r20, r10, r10)
+        t0 = _mm_shuffle_ps(r2, r1, _MM_SHUFFLE(0, 0, 0, 1));
+        // (r12, r12, r02, r01)
+        t1 = _mm_shuffle_ps(r1, r0, _MM_SHUFFLE(1, 2, 2, 2));
+        // (r12, r02, r01, r12)
+        t1 = XM_PERMUTE_PS!(t1, _MM_SHUFFLE(1, 3, 2, 0));
+        // (4*x*w, 4*y*w, 4*z*w, unused)
+        let mut xwywzw: XMVECTOR = _mm_sub_ps(t0, t1);
+        xwywzw = _mm_mul_ps(XMMPMP.v, xwywzw);
+
+        // (4*x^2, 4*y^2, 4*x*y, unused)
+        t0 = _mm_shuffle_ps(x2y2z2w2, xyxzyz, _MM_SHUFFLE(0, 0, 1, 0));
+        // (4*z^2, 4*w^2, 4*z*w, unused)
+        t1 = _mm_shuffle_ps(x2y2z2w2, xwywzw, _MM_SHUFFLE(0, 2, 3, 2));
+        // (4*x*z, 4*y*z, 4*x*w, 4*y*w)
+        t2 = _mm_shuffle_ps(xyxzyz, xwywzw, _MM_SHUFFLE(1, 0, 2, 1));
+
+        // (4*x*x, 4*x*y, 4*x*z, 4*x*w)
+        let tensor0: XMVECTOR = _mm_shuffle_ps(t0, t2, _MM_SHUFFLE(2, 0, 2, 0));
+        // (4*y*x, 4*y*y, 4*y*z, 4*y*w)
+        let tensor1: XMVECTOR = _mm_shuffle_ps(t0, t2, _MM_SHUFFLE(3, 1, 1, 2));
+        // (4*z*x, 4*z*y, 4*z*z, 4*z*w)
+        let tensor2: XMVECTOR = _mm_shuffle_ps(t2, t1, _MM_SHUFFLE(2, 0, 1, 0));
+        // (4*w*x, 4*w*y, 4*w*z, 4*w*w)
+        let tensor3: XMVECTOR = _mm_shuffle_ps(t2, t1, _MM_SHUFFLE(1, 2, 3, 2));
+
+        // Select the row of the tensor-product matrix that has the largest
+        // magnitude.
+        t0 = _mm_and_ps(x2gey2, tensor0);
+        t1 = _mm_andnot_ps(x2gey2, tensor1);
+        t0 = _mm_or_ps(t0, t1);
+        t1 = _mm_and_ps(z2gew2, tensor2);
+        t2 = _mm_andnot_ps(z2gew2, tensor3);
+        t1 = _mm_or_ps(t1, t2);
+        t0 = _mm_and_ps(x2py2gez2pw2, t0);
+        t1 = _mm_andnot_ps(x2py2gez2pw2, t1);
+        t2 = _mm_or_ps(t0, t1);
+
+        // Normalize the row.  No division by zero is possible because the
+        // quaternion is unit-length (and the row is a nonzero multiple of
+        // the quaternion).
+        t0 = XMVector4Length(t2);
+        return _mm_div_ps(t2, t0);
+    }
+}
+
+/// Computes an axis and angle of rotation about that axis for a given quaternion.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionToAxisAngle>
+#[inline]
+pub fn XMQuaternionToAxisAngle(
+    pAxis: &mut FXMVECTOR,
+    pAngle: &mut f32,
+    Q: FXMVECTOR,
+)
+{
+    *pAxis = Q;
+    *pAngle = 2.0 * XMScalarACos(XMVectorGetW(Q));
+}
+
+// TODO: XMPlaneEqual
+// TODO: XMPlaneNearEqual
+// TODO: XMPlaneNotEqual
+// TODO: XMPlaneIsNaN
+// TODO: 
 
 
 
@@ -764,3 +939,35 @@ pub fn XMScalarSinCos(
     let p: f32 = ((((-2.6051615e-07 * y2 + 2.4760495e-05) * y2 - 0.0013888378) * y2 + 0.041666638) * y2 - 0.5) * y2 + 1.0;
     *pCos = sign * p;
 }
+
+// TODO: XMScalarSinCosEst
+// TODO: XMScalarASin
+// TODO: XMScalarASinEst
+
+/// Descriptrion
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarACos>
+#[inline]
+pub fn XMScalarACos(
+    Value: f32,
+) -> f32
+{
+    // Clamp input to [-1,1].
+    let nonnegative: bool = (Value >= 0.0);
+    let x: f32 = fabsf(Value);
+    let mut omx: f32 = 1.0 - x;
+    if (omx < 0.0)
+    {
+        omx = 0.0;
+    }
+    let root: f32 = sqrtf(omx);
+
+    // 7-degree minimax approximation
+    let mut result: f32 = ((((((-0.0012624911 * x + 0.0066700901) * x - 0.0170881256) * x + 0.0308918810) * x - 0.0501743046) * x + 0.0889789874) * x - 0.2145988016) * x + 1.5707963050;
+    result *= root;
+
+    // acos(x) = pi - acos(-x) when x < 0
+    return (if nonnegative { result } else { XM_PI - result });
+}
+
+// TODO: XMScalarACosEst

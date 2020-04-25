@@ -488,13 +488,97 @@ pub fn XMLoadFloat4x4(
 // TODO: XMStoreUInt2
 // TODO: XMStoreInt3
 // TODO: XMStoreInt3A
-// TODO: XMStoreFloat3
+
+/// Stores an XMVECTOR in an XMFLOAT3.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMStoreFloat3>
+#[inline]
+pub fn XMStoreFloat3(
+    pDestination: &mut XMFLOAT3,
+    V: FXMVECTOR,
+)
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        pDestination.x = V.vector4_f32[0];
+        pDestination.y = V.vector4_f32[1];
+        pDestination.z = V.vector4_f32[2];
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE4_INTRINSICS_)]
+    unsafe {
+        *mem::transmute::<_, *mut i32>(&mut pDestination.x) = _mm_extract_ps(V, 0);
+        *mem::transmute::<_, *mut i32>(&mut pDestination.y) = _mm_extract_ps(V, 1);
+        *mem::transmute::<_, *mut i32>(&mut pDestination.z) = _mm_extract_ps(V, 2);
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        let pDestination: *mut XMFLOAT3 = mem::transmute(pDestination);
+        _mm_store_sd(mem::transmute::<_, *mut f64>(pDestination), _mm_castps_pd(V));
+        let z: __m128 = XM_PERMUTE_PS!(V, _MM_SHUFFLE(2, 2, 2, 2));
+        _mm_store_ss(&mut (*pDestination).z, z);
+    }
+}
+
+#[test]
+fn test_XMStoreFloat3() {
+    let mut a = XMFLOAT3 { x: 0.0, y: 0.0, z: 0.0 };
+    XMStoreFloat3(&mut a, XMVectorSet(1.0, 2.0, 3.0, 0.0));
+    assert_eq!(1.0, a.x);
+    assert_eq!(2.0, a.y);
+    assert_eq!(3.0, a.z);
+}
+
 // TODO: XMStoreFloat3A
 // TODO: XMStoreSInt3
 // TODO: XMStoreUInt3
 // TODO: XMStoreInt4
 // TODO: XMStoreInt4A
-// TODO: XMStoreFloat4
+
+/// Stores an XMVECTOR in an XMFLOAT4.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMStoreFloat4>
+#[inline]
+pub fn XMStoreFloat4(
+    pDestination: &mut XMFLOAT4,
+    V: FXMVECTOR,
+)
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        pDestination.x = V.vector4_f32[0];
+        pDestination.y = V.vector4_f32[1];
+        pDestination.z = V.vector4_f32[2];
+        pDestination.w = V.vector4_f32[3];
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        _mm_storeu_ps(&mut pDestination.x, V);
+    }
+}
+
+#[test]
+fn test_XMStoreFloat4() {
+    let mut a = XMFLOAT4 { x: 0.0, y: 0.0, z: 0.0, w: 0.0 };
+    XMStoreFloat4(&mut a, XMVectorSet(1.0, 2.0, 3.0, 4.0));
+    assert_eq!(1.0, a.x);
+    assert_eq!(2.0, a.y);
+    assert_eq!(3.0, a.z);
+    assert_eq!(4.0, a.w);
+}
+
 // TODO: XMStoreFloat4A
 // TODO: XMStoreSInt4
 // TODO: XMStoreUInt4
@@ -503,6 +587,52 @@ pub fn XMLoadFloat4x4(
 // TODO: XMStoreFloat4x3A
 // TODO: XMStoreFloat3x4
 // TODO: XMStoreFloat3x4A
-// TODO: XMStoreFloat4x4
+
+/// Descriptrion
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMStoreFloat4x4>
+#[inline]
+pub fn XMStoreFloat4x4(
+    pDestination: &mut XMFLOAT4X4,
+    M: FXMMATRIX,
+)
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        pDestination.m[0][0] = M.r[0].vector4_f32[0];
+        pDestination.m[0][1] = M.r[0].vector4_f32[1];
+        pDestination.m[0][2] = M.r[0].vector4_f32[2];
+        pDestination.m[0][3] = M.r[0].vector4_f32[3];
+
+        pDestination.m[1][0] = M.r[1].vector4_f32[0];
+        pDestination.m[1][1] = M.r[1].vector4_f32[1];
+        pDestination.m[1][2] = M.r[1].vector4_f32[2];
+        pDestination.m[1][3] = M.r[1].vector4_f32[3];
+
+        pDestination.m[2][0] = M.r[2].vector4_f32[0];
+        pDestination.m[2][1] = M.r[2].vector4_f32[1];
+        pDestination.m[2][2] = M.r[2].vector4_f32[2];
+        pDestination.m[2][3] = M.r[2].vector4_f32[3];
+
+        pDestination.m[3][0] = M.r[3].vector4_f32[0];
+        pDestination.m[3][1] = M.r[3].vector4_f32[1];
+        pDestination.m[3][2] = M.r[3].vector4_f32[2];
+        pDestination.m[3][3] = M.r[3].vector4_f32[3];
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        _mm_storeu_ps(&mut pDestination.m[0][0], M.r[0]); // _11
+        _mm_storeu_ps(&mut pDestination.m[1][0], M.r[1]); // _21
+        _mm_storeu_ps(&mut pDestination.m[2][0], M.r[2]); // _31
+        _mm_storeu_ps(&mut pDestination.m[3][0], M.r[3]); // _41
+    }
+}
+
 // TODO: XMStoreFloat4x4A
 

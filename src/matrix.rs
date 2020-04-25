@@ -209,7 +209,7 @@ pub fn XMMatrixIsIdentity(
 pub fn XMMatrixMultiply(
     M1: FXMMATRIX,
     M2: CXMMATRIX,
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -497,7 +497,7 @@ fn test_XMMatrixMultiply() {
 pub fn XMMatrixMultiplyTranspose(
     M1: FXMMATRIX,
     M2: CXMMATRIX,
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -832,7 +832,7 @@ fn test_XMMatrixMultiplyTranspose() {
 #[inline]
 pub fn XMMatrixTranspose(
     M: FXMMATRIX,
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -917,7 +917,7 @@ pub fn XMMatrixTranspose(
 pub fn XMMatrixInverse(
     pDeterminant: &mut XMVECTOR,
     M: FXMMATRIX,
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     #[cfg(any(_XM_NO_INTRINSICS_, _XM_ARM_NEON_INTRINSICS_))]
     unsafe {
@@ -1156,7 +1156,7 @@ pub fn XMMatrixInverse(
 pub fn XMMatrixVectorTensorProduct(
     V1: FXMVECTOR,
     V2: FXMVECTOR
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     unsafe {
         let mut mResult: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
@@ -1218,13 +1218,157 @@ pub fn XMMatrixDeterminant(
     }
 }
 
-// TODO: XMMatrixDecompose
+/// Breaks down a general 3D transformation matrix into its scalar, rotational, and translational components.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixDecompose>
+#[inline]
+pub fn XMMatrixDecompose(
+    outScale: &mut XMVECTOR,
+    outRotQuat: &mut XMVECTOR,
+    outTrans: &mut XMVECTOR,
+    M: FXMMATRIX,
+) -> bool
+{
+    macro_rules! XM3RANKDECOMPOSE {
+        ($a:expr, $b:expr, $c:expr, $x:expr, $y:expr, $z:expr) => {
+            if $x < $y {
+                if $y < $z {
+                    $a = 2;
+                    $b = 1;
+                    $c = 0;
+                } else {
+                    $a = 1;
+
+                    if $x < $z {
+                        $b = 2;
+                        $c = 0;
+                    } else {
+                        $b = 0;
+                        $c = 2;
+                    }
+                }
+            } else {
+                if $x < $z {
+                    $a = 2;
+                    $b = 0;
+                    $c = 1;
+                } else {
+                    $a = 0;
+
+                    if $y < $z {
+                        $b = 2;
+                        $c = 1;
+                    } else {
+                        $b = 1;
+                        $c = 2;
+                    }
+                }
+            }
+        }
+    }
+
+    const XM3_DECOMP_EPSILON: f32 = 0.0001;
+
+    unsafe {
+        // PERFORMANCE: We're using a static here insteads of const due to the references
+        static pvCanonicalBasis: [&XMVECTOR; 3] = unsafe {[
+            &g_XMIdentityR0.v,
+            &g_XMIdentityR2.v,
+            &g_XMIdentityR3.v,
+        ]};
+
+        // Get the translation
+        *outTrans = M.r[3];
+
+        let mut ppvBasis: [*mut XMVECTOR; 3] = mem::MaybeUninit::uninit().assume_init();
+        let mut matTemp: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        ppvBasis[0] = &mut matTemp.r[0];
+        ppvBasis[1] = &mut matTemp.r[1];
+        ppvBasis[2] = &mut matTemp.r[2];
+
+        matTemp.r[0] = M.r[0];
+        matTemp.r[1] = M.r[1];
+        matTemp.r[2] = M.r[2];
+        matTemp.r[3] = g_XMIdentityR3.v;
+
+        let pfScales = mem::transmute::<_, *mut f32>(outScale);
+        XMVectorGetXPtr(&mut *pfScales.add(0), XMVector3Length(*ppvBasis[0]));
+        XMVectorGetXPtr(&mut *pfScales.add(1), XMVector3Length(*ppvBasis[1]));
+        XMVectorGetXPtr(&mut *pfScales.add(2), XMVector3Length(*ppvBasis[2]));
+        *pfScales.add(3) = 0.0;
+
+        let a: usize;
+        let b: usize;
+        let c: usize;
+
+        let x = *pfScales.add(0);
+        let y = *pfScales.add(1);
+        let z = *pfScales.add(2);
+        XM3RANKDECOMPOSE!(a, b, c, x, y, z);
+
+        if (*pfScales.add(a) < XM3_DECOMP_EPSILON)
+        {
+            *ppvBasis[a] = *pvCanonicalBasis[a];
+        }
+
+        *ppvBasis[a] = XMVector3Normalize(*ppvBasis[a]);
+
+        if (*pfScales.add(b) < XM3_DECOMP_EPSILON)
+        {
+            let _aa: usize;
+            let _bb: usize;
+            let cc: usize;
+
+            let fAbsX = fabsf(XMVectorGetX(*ppvBasis[a]));
+            let fAbsY = fabsf(XMVectorGetY(*ppvBasis[a]));
+            let fAbsZ = fabsf(XMVectorGetZ(*ppvBasis[a]));
+
+            XM3RANKDECOMPOSE!(_aa, _bb, cc, fAbsX, fAbsY, fAbsZ);
+
+            *ppvBasis[b] = XMVector3Cross(*ppvBasis[a], *pvCanonicalBasis[cc]);
+        }
+
+        *ppvBasis[b] = XMVector3Normalize(*ppvBasis[b]);
+
+        if (*pfScales.add(c) < XM3_DECOMP_EPSILON)
+        {
+            *ppvBasis[c] = XMVector3Cross(*ppvBasis[a], *ppvBasis[b]);
+        }
+
+        *ppvBasis[c] = XMVector3Normalize(*ppvBasis[c]);
+
+        let mut fDet: f32 = XMVectorGetX(XMMatrixDeterminant(matTemp));
+
+        // use Kramer's rule to check for handedness of coordinate system
+        if (fDet < 0.0)
+        {
+            // switch coordinate system by negating the scale and inverting the basis vector on the x-axis
+            *pfScales.add(a) = -(*pfScales.add(a));
+            *ppvBasis[a] = XMVectorNegate(*ppvBasis[a]);
+
+            fDet = -fDet;
+        }
+
+        fDet -= 1.0;
+        fDet *= fDet;
+
+        if (XM3_DECOMP_EPSILON < fDet)
+        {
+            // Non-SRT matrix encountered
+            return false;
+        }
+
+        // generate the quaternion from the matrix
+        *outRotQuat = XMQuaternionRotationMatrix(matTemp);
+        return true;
+    }
+}
 
 /// Builds the identity matrix.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixIdentity>
 #[inline]
-pub fn XMMatrixIdentity() -> FXMMATRIX
+pub fn XMMatrixIdentity() -> XMMATRIX
 {
     unsafe {
         let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
@@ -1245,7 +1389,7 @@ pub fn XMMatrixSet(
     m10: f32, m11: f32, m12: f32, m13: f32,
     m20: f32, m21: f32, m22: f32, m23: f32,
     m30: f32, m31: f32, m32: f32, m33: f32
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     let mut M: XMMATRIX = unsafe { mem::MaybeUninit::uninit().assume_init() };
 
@@ -1281,7 +1425,7 @@ pub fn XMMatrixTranslation(
     OffsetX: f32,
     OffsetY: f32,
     OffsetZ: f32,
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     let mut M: XMMATRIX = unsafe { mem::MaybeUninit::uninit().assume_init() };
 
@@ -1325,7 +1469,7 @@ pub fn XMMatrixTranslation(
 #[inline]
 pub fn XMMatrixTranslationFromVector(
     Offset: XMVECTOR,
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -1371,7 +1515,7 @@ pub fn XMMatrixScaling(
     ScaleX: f32,
     ScaleY: f32,
     ScaleZ: f32,
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -1420,7 +1564,7 @@ pub fn XMMatrixScaling(
 #[inline]
 pub fn XMMatrixScalingFromVector(
     Scale: XMVECTOR,
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -1477,7 +1621,7 @@ pub fn XMMatrixScalingFromVector(
 #[inline]
 pub fn XMMatrixRotationQuaternion(
     Quaternion: FXMVECTOR ,
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     #[cfg(any(_XM_NO_INTRINSICS_, _XM_ARM_NEON_INTRINSICS_))]
     unsafe {
@@ -1575,7 +1719,7 @@ pub fn XMMatrixTransformation(
     RotationOrigin: GXMVECTOR,
     RotationQuaternion: HXMVECTOR,
     Translation: HXMVECTOR
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     unsafe {
         // M = Inverse(MScalingOrigin) * Transpose(MScalingOrientation) * MScaling * MScalingOrientation *
@@ -1616,7 +1760,7 @@ pub fn XMMatrixAffineTransformation(
     RotationOrigin: FXMVECTOR,
     RotationQuaternion: FXMVECTOR,
     Translation: GXMVECTOR
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     unsafe {
         // M = MScaling * Inverse(MRotationOrigin) * MRotation * MRotationOrigin * MTranslation;
@@ -1647,7 +1791,7 @@ pub fn XMMatrixLookAtLH(
     EyePosition: FXMVECTOR,
     FocusPosition: FXMVECTOR,
     UpDirection: FXMVECTOR,
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     let EyeDirection: XMVECTOR = XMVectorSubtract(FocusPosition, EyePosition);
     return XMMatrixLookToLH(EyePosition, EyeDirection, UpDirection);
@@ -1661,7 +1805,7 @@ pub fn XMMatrixLookAtRH(
     EyePosition: FXMVECTOR,
     FocusPosition: FXMVECTOR,
     UpDirection: FXMVECTOR,
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     let NegEyeDirection: XMVECTOR = XMVectorSubtract(EyePosition, FocusPosition);
     return XMMatrixLookToLH(EyePosition, NegEyeDirection, UpDirection);
@@ -1675,7 +1819,7 @@ pub fn XMMatrixLookToLH(
     EyePosition: FXMVECTOR,
     EyeDirection: FXMVECTOR,
     UpDirection: FXMVECTOR,
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     unsafe {
         debug_assert!(!XMVector3Equal(EyeDirection, XMVectorZero()));
@@ -1716,7 +1860,7 @@ pub fn XMMatrixLookToRH(
     EyePosition: FXMVECTOR,
     EyeDirection: FXMVECTOR,
     UpDirection: FXMVECTOR,
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     let NegEyeDirection: XMVECTOR = XMVectorNegate(EyeDirection);
     return XMMatrixLookToLH(EyePosition, NegEyeDirection, UpDirection);
@@ -1731,7 +1875,7 @@ pub fn XMMatrixPerspectiveLH(
     ViewHeight: f32,
     NearZ: f32,
     FarZ: f32
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     debug_assert!(NearZ > 0.0 && FarZ > 0.0);
     debug_assert!(!XMScalarNearEqual(ViewWidth, 0.0, 0.00001));
@@ -1811,7 +1955,7 @@ pub fn XMMatrixPerspectiveRH(
     ViewHeight: f32,
     NearZ: f32,
     FarZ: f32
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     debug_assert!(NearZ > 0.0 && FarZ > 0.0);
     debug_assert!(!XMScalarNearEqual(ViewWidth, 0.0, 0.00001));
@@ -1891,7 +2035,7 @@ pub fn XMMatrixPerspectiveFovLH(
     AspectRatio: f32,
     NearZ: f32,
     FarZ: f32
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     debug_assert!(NearZ > 0.0 && FarZ > 0.0);
     debug_assert!(!XMScalarNearEqual(FovAngleY, 0.0, 0.00001 * 2.0));
@@ -1981,7 +2125,7 @@ pub fn XMMatrixPerspectiveFovRH(
     AspectRatio: f32,
     NearZ: f32,
     FarZ: f32
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     debug_assert!(NearZ > 0.0 && FarZ > 0.0);
     debug_assert!(!XMScalarNearEqual(FovAngleY, 0.0, 0.00001 * 2.0));
@@ -2072,7 +2216,7 @@ pub fn XMMatrixOrthographicLH(
     ViewHeight: f32,
     NearZ: f32,
     FarZ: f32
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     debug_assert!(!XMScalarNearEqual(ViewWidth, 0.0, 0.00001));
     debug_assert!(!XMScalarNearEqual(ViewHeight, 0.0, 0.00001));
@@ -2148,7 +2292,7 @@ pub fn XMMatrixOrthographicRH(
     ViewHeight: f32,
     NearZ: f32,
     FarZ: f32
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     debug_assert!(!XMScalarNearEqual(ViewWidth, 0.0, 0.00001));
     debug_assert!(!XMScalarNearEqual(ViewHeight, 0.0, 0.00001));
@@ -2242,14 +2386,12 @@ impl XMMatrix {
         m30: f32, m31: f32, m32: f32, m33: f32,
     ) -> XMMatrix
     {
-        XMMatrix(XMMATRIX {
-            r: [
-                XMVectorSet(m00, m01, m02, m03),
-                XMVectorSet(m10, m11, m12, m13),
-                XMVectorSet(m20, m21, m22, m23),
-                XMVectorSet(m30, m31, m32, m33),
-            ]
-        })
+        XMMatrix(XMMatrixSet(
+            m00, m01, m02, m03,
+            m10, m11, m12, m13,
+            m20, m21, m22, m23,
+            m30, m31, m32, m33,
+        ))
     }
 }
 
@@ -2264,6 +2406,28 @@ impl From<&[[f32; 4]; 4]> for XMMatrix {
     #[inline]
     fn from(m: &[[f32; 4]; 4]) -> XMMatrix {
         XMMatrix(XMLoadFloat4x4(m.into()))
+    }
+}
+
+impl Into<[f32; 16]> for XMMatrix {
+    #[inline]
+    fn into(self) -> [f32; 16] {
+        unsafe {
+            let mut R: XMFLOAT4X4 = mem::MaybeUninit::uninit().assume_init();
+            XMStoreFloat4x4(&mut R, self.0);
+            mem::transmute(R)
+        }
+    }
+}
+
+impl Into<[[f32; 4]; 4]> for XMMatrix {
+    #[inline]
+    fn into(self) -> [[f32; 4]; 4] {
+        unsafe {
+            let mut R: XMFLOAT4X4 = mem::MaybeUninit::uninit().assume_init();
+            XMStoreFloat4x4(&mut R, self.0);
+            mem::transmute(R)
+        }
     }
 }
 

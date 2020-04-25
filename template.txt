@@ -74,7 +74,7 @@ pub fn FunctionName(
 #[inline]
 pub fn FunctionName(
     M: FXMMATRIX,
-) -> FXMMATRIX
+) -> XMMATRIX
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {

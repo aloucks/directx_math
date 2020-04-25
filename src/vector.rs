@@ -541,10 +541,128 @@ pub fn XMVectorGetW(V: XMVECTOR) -> f32 {
 }
 
 // TODO: XMVectorGetByIndexPtr
-// TODO: XMVectorGetXPtr
-// TODO: XMVectorGetYPtr
-// TODO: XMVectorGetZPtr
-// TODO: XMVectorGetWPtr
+
+/// Retrieve the `x` component of an XMVECTOR Data Type containing floating-point data, and storing that
+/// component's value in an instance of float referred to by a pointer.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetXPtr>
+#[inline]
+pub fn XMVectorGetXPtr(
+    x: &mut f32,
+    V: FXMVECTOR,
+)
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        *x = V.vector4_f32[0];
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        _mm_store_ss(x, V);
+    }
+}
+
+/// Retrieve the `y` component of an XMVECTOR Data Type containing floating-point data, and storing that
+/// component's value in an instance of float referred to by a pointer.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetYPtr>
+#[inline]
+pub fn XMVectorGetYPtr(
+    y: &mut f32,
+    V: FXMVECTOR,
+)
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        *y = V.vector4_f32[1];
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE4_INTRINSICS_)]
+    unsafe {
+        *mem::transmute::<_, *mut i32>(y) = _mm_extract_ps(V, 1);
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        let vResult: XMVECTOR = XM_PERMUTE_PS!(V, _MM_SHUFFLE(1, 1, 1, 1));
+        _mm_store_ss(y, vResult);
+    }
+}
+
+/// Retrieve the `z` component of an XMVECTOR Data Type containing floating-point data, and storing that
+/// component's value in an instance of float referred to by a pointer.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetZPtr>
+#[inline]
+pub fn XMVectorGetZPtr(
+    z: &mut f32,
+    V: FXMVECTOR,
+)
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        *z = V.vector4_f32[2];
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE4_INTRINSICS_)]
+    unsafe {
+        *mem::transmute::<_, *mut i32>(z) = _mm_extract_ps(V, 2);
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        let vResult: XMVECTOR = XM_PERMUTE_PS!(V, _MM_SHUFFLE(2, 2, 2, 2));
+        _mm_store_ss(z, vResult);
+    }
+}
+
+/// Retrieve the `w` component of an XMVECTOR Data Type containing floating-point data, and storing that
+/// component's value in an instance of float referred to by a pointer.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetWPtr>
+#[inline]
+pub fn XMVectorGetWPtr(
+    w: &mut f32,
+    V: FXMVECTOR,
+)
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        *w = V.vector4_f32[3];
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE4_INTRINSICS_)]
+    unsafe {
+        *mem::transmute::<_, *mut i32>(w) = _mm_extract_ps(V, 3);
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        let vResult: XMVECTOR = XM_PERMUTE_PS!(V, _MM_SHUFFLE(3, 3, 3, 3));
+        _mm_store_ss(w, vResult);
+    }
+}
 
 /// Return an integer value via an index. This is not a recommended
 /// function to use due to performance loss.

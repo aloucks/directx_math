@@ -124,7 +124,6 @@ pub(crate) fn ceilf(x: f32) -> f32 {
 }
 
 #[inline(always)]
-#[cfg(_XM_NO_INTRINSICS_)]
 pub(crate) fn sqrtf(x: f32) -> f32 {
     x.sqrt()
 }
