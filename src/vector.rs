@@ -4392,8 +4392,6 @@ pub fn XMVectorTanEst(
     }
 }
 
-// TODO: XMVectorASinEst
-
 /// Estimates the arcsine of each component of an XMVECTOR.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorASinEst>
@@ -7522,7 +7520,7 @@ impl std::ops::DerefMut for XMVector {
 
 impl XMVector {
     #[inline(always)]
-    pub fn new(x: f32, y: f32, z: f32, w: f32) -> XMVector {
+    pub fn set(x: f32, y: f32, z: f32, w: f32) -> XMVector {
         XMVector(XMVectorSet(x, y, z, w))
     }
 }
