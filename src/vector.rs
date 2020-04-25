@@ -441,7 +441,7 @@ pub fn XMVectorSplatSignMask() -> XMVECTOR {
 /// function to use due to performance loss.
 #[inline]
 pub fn XMVectorGetByIndex(V: XMVECTOR, i: usize) -> f32 {
-    // debug_assert!(i < 4);
+    debug_assert!(i < 4);
 
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -668,7 +668,7 @@ pub fn XMVectorGetWPtr(
 /// function to use due to performance loss.
 #[inline]
 pub fn XMVectorGetIntByIndex(V: XMVECTOR, i: usize) -> u32 {
-    // debug_assert!(i < 4);
+    debug_assert!(i < 4);
 
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -794,7 +794,7 @@ pub fn XMVectorGetIntW(V: XMVECTOR) -> u32 {
 /// Set a single indexed floating point component
 #[inline]
 pub fn XMVectorSetByIndex(V: XMVECTOR, f: f32, i: usize) -> XMVECTOR {
-    // debug_assert!(i < 4);
+    debug_assert!(i < 4);
 
     unsafe {
         let mut U: XMVECTORF32 = mem::MaybeUninit::uninit().assume_init();
@@ -1233,7 +1233,7 @@ pub fn XMVectorPermute(
     PermuteW: u32
 ) -> XMVECTOR
 {
-    // debug_assert!(PermuteX <= 7 && PermuteY <= 7 && PermuteZ <= 7 && PermuteW <= 7);
+    debug_assert!(PermuteX <= 7 && PermuteY <= 7 && PermuteZ <= 7 && PermuteW <= 7);
 
     #[cfg(_XM_ARM_NEON_INTRINSICS_)]
     {
@@ -2453,7 +2453,7 @@ pub fn XMVectorClamp(
     Max: FXMVECTOR
 ) -> XMVECTOR
 {
-    // debug_assert!(XMVector4LessOrEqual(Min, Max));
+    debug_assert!(XMVector4LessOrEqual(Min, Max));
 
     #[cfg(_XM_NO_INTRINSICS_)]
     {
