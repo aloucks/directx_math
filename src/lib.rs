@@ -77,6 +77,7 @@
 #![deny(unused_unsafe)]
 #![deny(dead_code)]
 #![deny(unused_mut)]
+#![deny(unused_assignments)]
 
 #[allow(unused_imports)]
 use std::mem;
@@ -104,6 +105,12 @@ use arch::*;
 #[allow(dead_code)]
 pub(crate) const fn _MM_SHUFFLE(z: u32, y: u32, x: u32, w: u32) -> i32 {
     ((z << 6) | (y << 4) | (x << 2) | w) as i32
+}
+
+#[inline(always)]
+#[allow(dead_code)]
+pub(crate) unsafe fn uninitialized<T>() -> T {
+    mem::MaybeUninit::uninit().assume_init()
 }
 
 #[inline(always)]

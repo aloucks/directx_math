@@ -4933,43 +4933,844 @@ pub fn XMVector2EqualInt(
 }
 
 // TODO: XMVector2EqualIntR
-// TODO: XMVector2NearEqual
-// TODO: XMVector2NotEqual
-// TODO: XMVector2NotEqualInt
-// TODO: XMVector2Greater
+
+/// Tests whether one 2D vector is near another 2D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2NearEqual>
+#[inline]
+pub fn XMVector2NearEqual(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+    Epsilon: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let dx: f32 = fabsf(V1.vector4_f32[0] - V2.vector4_f32[0]);
+        let dy: f32 = fabsf(V1.vector4_f32[1] - V2.vector4_f32[1]);
+        return ((dx <= Epsilon.vector4_f32[0]) &&
+            (dy <= Epsilon.vector4_f32[1]));
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        // Get the difference
+        let vDelta: XMVECTOR = _mm_sub_ps(V1, V2);
+        // Get the absolute value of the difference
+        let mut vTemp: XMVECTOR = _mm_setzero_ps();
+        vTemp = _mm_sub_ps(vTemp, vDelta);
+        vTemp = _mm_max_ps(vTemp, vDelta);
+        vTemp = _mm_cmple_ps(vTemp, Epsilon);
+        // z and w are don't care
+        return (((_mm_movemask_ps(vTemp) & 3) == 0x3) != false);
+    }
+}
+
+
+/// Tests whether two 2D vectors are not equal.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2NotEqual>
+#[inline]
+pub fn XMVector2NotEqual(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (((V1.vector4_f32[0] != V2.vector4_f32[0]) || (V1.vector4_f32[1] != V2.vector4_f32[1])) != false);
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_cmpeq_ps(V1, V2);
+        // z and w are don't care
+        return (((_mm_movemask_ps(vTemp) & 3) != 3) != false);
+    }
+}
+
+/// Test whether two vectors are not equal, treating each component as an unsigned integer.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2NotEqualInt>
+#[inline]
+pub fn XMVector2NotEqualInt(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (((V1.vector4_u32[0] != V2.vector4_u32[0]) || (V1.vector4_u32[1] != V2.vector4_u32[1])) != false);
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        let vTemp: __m128i = _mm_cmpeq_epi32(_mm_castps_si128(V1), _mm_castps_si128(V2));
+        return (((_mm_movemask_ps(_mm_castsi128_ps(vTemp)) & 3) != 3) != false);
+    }
+}
+
+/// Tests whether one 2D vector is greater than another 2D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2Greater>
+#[inline]
+pub fn XMVector2Greater(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (((V1.vector4_f32[0] > V2.vector4_f32[0]) && (V1.vector4_f32[1] > V2.vector4_f32[1])) != false);
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_cmpgt_ps(V1, V2);
+        // z and w are don't care
+        return (((_mm_movemask_ps(vTemp) & 3) == 3) != false);
+    }
+}
+
 // TODO: XMVector2GreaterR
-// TODO: XMVector2GreaterOrEqual
+
+/// Tests whether one 2D vector is greater-than-or-equal-to another 2D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2GreaterOrEqual>
+#[inline]
+pub fn XMVector2GreaterOrEqual(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (((V1.vector4_f32[0] >= V2.vector4_f32[0]) && (V1.vector4_f32[1] >= V2.vector4_f32[1])) != false);
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_cmpge_ps(V1, V2);
+        return (((_mm_movemask_ps(vTemp) & 3) == 3) != false);
+    }
+}
+
 // TODO: XMVector2GreaterOrEqualR
-// TODO: XMVector2Less
-// TODO: XMVector2LessOrEqual
-// TODO: XMVector2InBounds
+
+/// Tests whether one 2D vector is less than another 2D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2Less>
+#[inline]
+pub fn XMVector2Less(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (((V1.vector4_f32[0] < V2.vector4_f32[0]) && (V1.vector4_f32[1] < V2.vector4_f32[1])) != false);
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_cmplt_ps(V1, V2);
+        return (((_mm_movemask_ps(vTemp) & 3) == 3) != false);
+    }
+}
+
+/// Tests whether one 2D vector is less-than-or-equal-to another 2D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2LessOrEqual>
+#[inline]
+pub fn XMVector2LessOrEqual(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (((V1.vector4_f32[0] <= V2.vector4_f32[0]) && (V1.vector4_f32[1] <= V2.vector4_f32[1])) != false);
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_cmple_ps(V1, V2);
+        return (((_mm_movemask_ps(vTemp) & 3) == 3) != false);
+    }
+}
+
+/// Tests whether the components of a 2D vector are within set bounds.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2InBounds>
+#[inline]
+pub fn XMVector2InBounds(
+    V: FXMVECTOR,
+    Bounds: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (((V.vector4_f32[0] <= Bounds.vector4_f32[0] && V.vector4_f32[0] >= -Bounds.vector4_f32[0]) &&
+            (V.vector4_f32[1] <= Bounds.vector4_f32[1] && V.vector4_f32[1] >= -Bounds.vector4_f32[1])) != false);
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        // Test if less than or equal
+        let mut vTemp1: XMVECTOR = _mm_cmple_ps(V, Bounds);
+        // Negate the bounds
+        let mut vTemp2: XMVECTOR = _mm_mul_ps(Bounds, g_XMNegativeOne.v);
+        // Test if greater or equal (Reversed)
+        vTemp2 = _mm_cmple_ps(vTemp2, V);
+        // Blend answers
+        vTemp1 = _mm_and_ps(vTemp1, vTemp2);
+        // x and y in bounds? (z and w are don't care)
+        return (((_mm_movemask_ps(vTemp1) & 0x3) == 0x3) != false);
+    }
+}
+
 // TODO: XMVector2IsNaN
 // TODO: XMVector2IsInfinite
-// TODO: XMVector2Dot
-// TODO: XMVector2Cross
-// TODO: XMVector2LengthSq
+
+/// Computes the dot product between 2D vectors.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2Dot>
+#[inline]
+pub fn XMVector2Dot(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let fDot: f32 = V1.vector4_f32[0] * V2.vector4_f32[0] + V1.vector4_f32[1] * V2.vector4_f32[1];
+        let mut Result: XMVECTORF32 = mem::MaybeUninit::uninit().assume_init();
+        Result.f[0] = fDot;
+        Result.f[1] = fDot;
+        Result.f[2] = fDot;
+        Result.f[3] = fDot;
+        return Result.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        // Perform the dot product on x and y
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V1, V2);
+        // vTemp has y splatted
+        let vTemp: XMVECTOR = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(1, 1, 1, 1));
+        // x+y
+        vLengthSq = _mm_add_ss(vLengthSq, vTemp);
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(0, 0, 0, 0));
+        return vLengthSq;
+    }
+}
+
+/// Computes the 2D cross product.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2Cross>
+#[inline]
+pub fn XMVector2Cross(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let fCross: f32 = (V1.vector4_f32[0] * V2.vector4_f32[1]) - (V1.vector4_f32[1] * V2.vector4_f32[0]);
+        let mut Result: XMVECTORF32 = mem::MaybeUninit::uninit().assume_init();
+        Result.f[0] = fCross;
+        Result.f[1] = fCross;
+        Result.f[2] = fCross;
+        Result.f[3] = fCross;
+        return Result.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        // Swap x and y
+        let mut vResult: XMVECTOR = XM_PERMUTE_PS!(V2, _MM_SHUFFLE(0, 1, 0, 1));
+        // Perform the muls
+        vResult = _mm_mul_ps(vResult, V1);
+        // Splat y
+        let vTemp: XMVECTOR = XM_PERMUTE_PS!(vResult, _MM_SHUFFLE(1, 1, 1, 1));
+        // Sub the values
+        vResult = _mm_sub_ss(vResult, vTemp);
+        // Splat the cross product
+        vResult = XM_PERMUTE_PS!(vResult, _MM_SHUFFLE(0, 0, 0, 0));
+        return vResult;
+    }
+}
+
+/// Computes the square of the length of a 2D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2LengthSq>
+#[inline]
+pub fn XMVector2LengthSq(
+    V: FXMVECTOR,
+) -> XMVECTOR
+{
+    return XMVector2Dot(V, V);
+}
+
 // TODO: XMVector2ReciprocalLengthEst
-// TODO: XMVector2ReciprocalLength
+
+/// Computes the reciprocal of the length of a 2D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2ReciprocalLength>
+#[inline]
+pub fn XMVector2ReciprocalLength(
+    V: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    {
+        let mut Result: XMVECTOR;
+        Result = XMVector2LengthSq(V);
+        Result = XMVectorReciprocalSqrt(Result);
+        return Result;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE4_INTRINSICS_))]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_dp_ps(V, V, 0x3f);
+        let vLengthSq: XMVECTOR = _mm_sqrt_ps(vTemp);
+        return _mm_div_ps(g_XMOne.v, vLengthSq);
+    }
+
+    #[cfg(all(_XM_SSE3_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        let vTemp: XMVECTOR = _mm_hadd_ps(vLengthSq, vLengthSq);
+        vLengthSq = _mm_sqrt_ss(vTemp);
+        vLengthSq = _mm_div_ss(g_XMOne.v, vLengthSq);
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(0, 0, 0, 0));
+        return vLengthSq;
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE3_INTRINSICS_), not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        // Perform the dot product on x and y
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        // vTemp has y splatted
+        let vTemp: XMVECTOR = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(1, 1, 1, 1));
+        // x+y
+        vLengthSq = _mm_add_ss(vLengthSq, vTemp);
+        vLengthSq = _mm_sqrt_ss(vLengthSq);
+        vLengthSq = _mm_div_ss(g_XMOne.v, vLengthSq);
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(0, 0, 0, 0));
+        return vLengthSq;
+    }
+}
+
 // TODO: XMVector2LengthEst
-// TODO: XMVector2Length
+
+/// Computes the length of a 2D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2Length>
+#[inline]
+pub fn XMVector2Length(
+    V: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    {
+        let mut Result: XMVECTOR;
+        Result = XMVector2LengthSq(V);
+        Result = XMVectorSqrt(Result);
+        return Result;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE4_INTRINSICS_))]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_dp_ps(V, V, 0x3f);
+        return _mm_sqrt_ps(vTemp);
+    }
+
+    #[cfg(all(_XM_SSE3_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        let vTemp: XMVECTOR = _mm_hadd_ps(vLengthSq, vLengthSq);
+        vLengthSq = _mm_sqrt_ss(vTemp);
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(0, 0, 0, 0));
+        return vLengthSq;
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE3_INTRINSICS_), not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        // Perform the dot product on x and y
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        // vTemp has y splatted
+        let vTemp: XMVECTOR = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(1, 1, 1, 1));
+        // x+y
+        vLengthSq = _mm_add_ss(vLengthSq, vTemp);
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(0, 0, 0, 0));
+        vLengthSq = _mm_sqrt_ps(vLengthSq);
+        return vLengthSq;
+    }
+}
+
 // TODO: XMVector2NormalizeEst
-// TODO: XMVector2Normalize
+
+/// Returns the normalized version of a 2D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2Normalize>
+#[inline]
+pub fn XMVector2Normalize(
+    V: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut vResult: XMVECTOR = XMVector2Length(V);
+        let mut fLength: f32 = vResult.vector4_f32[0];
+
+        // Prevent divide by zero
+        if (fLength > 0.0)
+        {
+            fLength = 1.0 / fLength;
+        }
+
+        vResult.vector4_f32[0] = V.vector4_f32[0] * fLength;
+        vResult.vector4_f32[1] = V.vector4_f32[1] * fLength;
+        vResult.vector4_f32[2] = V.vector4_f32[2] * fLength;
+        vResult.vector4_f32[3] = V.vector4_f32[3] * fLength;
+        return vResult;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE4_INTRINSICS_))]
+    unsafe {
+        let mut vLengthSq: XMVECTOR = _mm_dp_ps(V, V, 0x3f);
+        // Prepare for the division
+        let mut vResult: XMVECTOR = _mm_sqrt_ps(vLengthSq);
+        // Create zero with a single instruction
+        let mut vZeroMask: XMVECTOR = _mm_setzero_ps();
+        // Test for a divide by zero (Must be FP to detect -0.0)
+        vZeroMask = _mm_cmpneq_ps(vZeroMask, vResult);
+        // Failsafe on zero (Or epsilon) length planes
+        // If the length is infinity, set the elements to zero
+        vLengthSq = _mm_cmpneq_ps(vLengthSq, g_XMInfinity.v);
+        // Reciprocal mul to perform the normalization
+        vResult = _mm_div_ps(V, vResult);
+        // Any that are infinity, set to zero
+        vResult = _mm_and_ps(vResult, vZeroMask);
+        // Select qnan or result based on infinite length
+        let vTemp1: XMVECTOR = _mm_andnot_ps(vLengthSq, g_XMQNaN.v);
+        let vTemp2: XMVECTOR = _mm_and_ps(vResult, vLengthSq);
+        vResult = _mm_or_ps(vTemp1, vTemp2);
+        return vResult;
+    }
+
+    #[cfg(all(_XM_SSE3_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        // Perform the dot product on x and y only
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        vLengthSq = _mm_hadd_ps(vLengthSq, vLengthSq);
+        vLengthSq = _mm_moveldup_ps(vLengthSq);
+        // Prepare for the division
+        let mut vResult: XMVECTOR = _mm_sqrt_ps(vLengthSq);
+        // Create zero with a single instruction
+        let mut vZeroMask: XMVECTOR = _mm_setzero_ps();
+        // Test for a divide by zero (Must be FP to detect -0.0)
+        vZeroMask = _mm_cmpneq_ps(vZeroMask, vResult);
+        // Failsafe on zero (Or epsilon) length planes
+        // If the length is infinity, set the elements to zero
+        vLengthSq = _mm_cmpneq_ps(vLengthSq, g_XMInfinity.v);
+        // Reciprocal mul to perform the normalization
+        vResult = _mm_div_ps(V, vResult);
+        // Any that are infinity, set to zero
+        vResult = _mm_and_ps(vResult, vZeroMask);
+        // Select qnan or result based on infinite length
+        let vTemp1: XMVECTOR = _mm_andnot_ps(vLengthSq, g_XMQNaN.v);
+        let vTemp2: XMVECTOR = _mm_and_ps(vResult, vLengthSq);
+        vResult = _mm_or_ps(vTemp1, vTemp2);
+        return vResult;
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE3_INTRINSICS_), not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        // Perform the dot product on x and y only
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        let vTemp: XMVECTOR = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(1, 1, 1, 1));
+        vLengthSq = _mm_add_ss(vLengthSq, vTemp);
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(0, 0, 0, 0));
+        // Prepare for the division
+        let mut vResult: XMVECTOR = _mm_sqrt_ps(vLengthSq);
+        // Create zero with a single instruction
+        let mut vZeroMask: XMVECTOR = _mm_setzero_ps();
+        // Test for a divide by zero (Must be FP to detect -0.0)
+        vZeroMask = _mm_cmpneq_ps(vZeroMask, vResult);
+        // Failsafe on zero (Or epsilon) length planes
+        // If the length is infinity, set the elements to zero
+        vLengthSq = _mm_cmpneq_ps(vLengthSq, g_XMInfinity.v);
+        // Reciprocal mul to perform the normalization
+        vResult = _mm_div_ps(V, vResult);
+        // Any that are infinity, set to zero
+        vResult = _mm_and_ps(vResult, vZeroMask);
+        // Select qnan or result based on infinite length
+        let vTemp1: XMVECTOR = _mm_andnot_ps(vLengthSq, g_XMQNaN.v);
+        let vTemp2: XMVECTOR = _mm_and_ps(vResult, vLengthSq);
+        vResult = _mm_or_ps(vTemp1, vTemp2);
+        return vResult;
+    }
+}
+
 // TODO: XMVector2ClampLength
 // TODO: XMVector2ClampLengthV
 // TODO: XMVector2Reflect
 // TODO: XMVector2Refract
 // TODO: XMVector2RefractV
-// TODO: XMVector2Orthogonal
+
+/// Computes a vector perpendicular to a 2D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2Orthogonal>
+#[inline]
+pub fn XMVector2Orthogonal(
+    V: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Result: XMVECTORF32 = XMVECTORF32 { f: [
+            -V.vector4_f32[1],
+            V.vector4_f32[0],
+            0.0,
+            0.0
+        ]};
+        return Result.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        let mut vResult: XMVECTOR = XM_PERMUTE_PS!(V, _MM_SHUFFLE(3, 2, 0, 1));
+        vResult = _mm_mul_ps(vResult, g_XMNegateX.v);
+        return vResult;
+    }
+}
+
 // TODO: XMVector2AngleBetweenNormalsEst
-// TODO: XMVector2AngleBetweenNormals
-// TODO: XMVector2AngleBetweenVectors
-// TODO: XMVector2LinePointDistance
-// TODO: XMVector2IntersectLine
-// TODO: XMVector2Transform
+
+/// Computes the radian angle between two normalized 2D vectors.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2AngleBetweenNormals>
+#[inline]
+pub fn XMVector2AngleBetweenNormals(
+    N1: FXMVECTOR,
+    N2: FXMVECTOR,
+) -> XMVECTOR
+{
+    unsafe {
+        let mut Result: XMVECTOR = XMVector2Dot(N1, N2);
+        Result = XMVectorClamp(Result, g_XMNegativeOne.v, g_XMOne.v);
+        Result = XMVectorACos(Result);
+        return Result;
+    }
+}
+
+/// Computes the radian angle between two 2D vectors.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2AngleBetweenVectors>
+#[inline]
+pub fn XMVector2AngleBetweenVectors(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> XMVECTOR
+{
+    unsafe {
+        let mut L1: XMVECTOR = XMVector2ReciprocalLength(V1);
+        let L2: XMVECTOR = XMVector2ReciprocalLength(V2);
+
+        let Dot: XMVECTOR = XMVector2Dot(V1, V2);
+
+        L1 = XMVectorMultiply(L1, L2);
+
+        let mut CosAngle: XMVECTOR = XMVectorMultiply(Dot, L1);
+        CosAngle = XMVectorClamp(CosAngle, g_XMNegativeOne.v, g_XMOne.v);
+
+        return XMVectorACos(CosAngle);
+    }
+}
+
+/// Computes the minimum distance between a line and a point.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2LinePointDistance>
+#[inline]
+pub fn XMVector2LinePointDistance(
+    LinePoint1: FXMVECTOR,
+    LinePoint2: FXMVECTOR,
+    Point: FXMVECTOR,
+) -> XMVECTOR
+{
+    // Given a vector PointVector from LinePoint1 to Point and a vector
+    // LineVector from LinePoint1 to LinePoint2, the scaled distance
+    // PointProjectionScale from LinePoint1 to the perpendicular projection
+    // of PointVector onto the line is defined as:
+    //
+    //     PointProjectionScale = dot(PointVector, LineVector) / LengthSq(LineVector)
+
+    let PointVector: XMVECTOR = XMVectorSubtract(Point, LinePoint1);
+    let LineVector: XMVECTOR = XMVectorSubtract(LinePoint2, LinePoint1);
+
+    let LengthSq: XMVECTOR = XMVector2LengthSq(LineVector);
+
+    let mut PointProjectionScale: XMVECTOR = XMVector2Dot(PointVector, LineVector);
+    PointProjectionScale = XMVectorDivide(PointProjectionScale, LengthSq);
+
+    let mut DistanceVector: XMVECTOR = XMVectorMultiply(LineVector, PointProjectionScale);
+    DistanceVector = XMVectorSubtract(PointVector, DistanceVector);
+
+    return XMVector2Length(DistanceVector);
+}
+
+/// Finds the intersection of two lines.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2IntersectLine>
+#[inline]
+pub fn XMVector2IntersectLine(
+    Line1Point1: FXMVECTOR,
+    Line1Point2: FXMVECTOR,
+    Line2Point1: FXMVECTOR,
+    Line2Point2: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let V1: XMVECTOR = XMVectorSubtract(Line1Point2, Line1Point1);
+        let V2: XMVECTOR = XMVectorSubtract(Line2Point2, Line2Point1);
+        let V3: XMVECTOR = XMVectorSubtract(Line1Point1, Line2Point1);
+
+        let C1: XMVECTOR = XMVector2Cross(V1, V2);
+        let C2: XMVECTOR = XMVector2Cross(V2, V3);
+
+        let Result: XMVECTOR;
+        // const let Zero: XMVECTOR = XMVectorZero();
+        const Zero: XMVECTOR = unsafe { g_XMZero.v };
+        if (XMVector2NearEqual(C1, Zero, g_XMEpsilon.v))
+        {
+            if (XMVector2NearEqual(C2, Zero, g_XMEpsilon.v))
+            {
+                // Coincident
+                Result = g_XMInfinity.v;
+            }
+            else
+            {
+                // Parallel
+                Result = g_XMQNaN.v;
+            }
+        }
+        else
+        {
+            // let point: Intersection = Line1Point1 + V1 * (C2 / C1)
+            let mut Scale: XMVECTOR = XMVectorReciprocal(C1);
+            Scale = XMVectorMultiply(C2, Scale);
+            Result = XMVectorMultiplyAdd(V1, Scale, Line1Point1);
+        }
+
+        return Result;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        let V1: XMVECTOR = _mm_sub_ps(Line1Point2, Line1Point1);
+        let V2: XMVECTOR = _mm_sub_ps(Line2Point2, Line2Point1);
+        let V3: XMVECTOR = _mm_sub_ps(Line1Point1, Line2Point1);
+        // Generate the cross products
+        let C1: XMVECTOR = XMVector2Cross(V1, V2);
+        let C2: XMVECTOR = XMVector2Cross(V2, V3);
+        // If C1 is not close to epsilon, use the calculated value
+        let mut vResultMask: XMVECTOR = _mm_setzero_ps();
+        vResultMask = _mm_sub_ps(vResultMask, C1);
+        vResultMask = _mm_max_ps(vResultMask, C1);
+        // 0xFFFFFFFF if the calculated value is to be used
+        vResultMask = _mm_cmpgt_ps(vResultMask, g_XMEpsilon.v);
+        // If C1 is close to epsilon, which fail type is it? INFINITY or NAN?
+        let mut vFailMask: XMVECTOR = _mm_setzero_ps();
+        vFailMask = _mm_sub_ps(vFailMask, C2);
+        vFailMask = _mm_max_ps(vFailMask, C2);
+        vFailMask = _mm_cmple_ps(vFailMask, g_XMEpsilon.v);
+        let mut vFail: XMVECTOR = _mm_and_ps(vFailMask, g_XMInfinity.v);
+        vFailMask = _mm_andnot_ps(vFailMask, g_XMQNaN.v);
+        // vFail is NAN or INF
+        vFail = _mm_or_ps(vFail, vFailMask);
+        // let point: Intersection = Line1Point1 + V1 * (C2 / C1)
+        let mut vResult: XMVECTOR = _mm_div_ps(C2, C1);
+        vResult = XM_FMADD_PS!(vResult, V1, Line1Point1);
+        // Use result, or failure value
+        vResult = _mm_and_ps(vResult, vResultMask);
+        vResultMask = _mm_andnot_ps(vResultMask, vFail);
+        vResult = _mm_or_ps(vResult, vResultMask);
+        return vResult;
+    }
+}
+
+/// Transforms a 2D vector by a matrix.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2Transform>
+#[inline]
+pub fn XMVector2Transform(
+    V: FXMVECTOR,
+    M: FXMMATRIX,
+) -> FXMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Y: XMVECTOR = XMVectorSplatY(V);
+        let X: XMVECTOR = XMVectorSplatX(V);
+
+        let mut Result: XMVECTOR = XMVectorMultiplyAdd(Y, M.r[1], M.r[3]);
+        Result = XMVectorMultiplyAdd(X, M.r[0], Result);
+
+        return Result;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut vResult: XMVECTOR = XM_PERMUTE_PS!(V, _MM_SHUFFLE(1, 1, 1, 1)); // Y
+        vResult = XM_FMADD_PS!(vResult, M.r[1], M.r[3]);
+        let vTemp: XMVECTOR = XM_PERMUTE_PS!(V, _MM_SHUFFLE(0, 0, 0, 0)); // X
+        vResult = XM_FMADD_PS!(vTemp, M.r[0], vResult);
+        return vResult;
+    }
+}
+
 // TODO: XMVector2TransformStream
-// TODO: XMVector2TransformCoord
+
+/// Transforms a 2D vector by a given matrix, projecting the result back into w = 1.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2TransformCoord>
+#[inline]
+pub fn XMVector2TransformCoord(
+    V: FXMVECTOR,
+    M: FXMMATRIX,
+) -> FXMVECTOR {
+    unsafe {
+        let Y: XMVECTOR = XMVectorSplatY(V);
+        let X: XMVECTOR = XMVectorSplatX(V);
+
+        let mut Result: XMVECTOR = XMVectorMultiplyAdd(Y, M.r[1], M.r[3]);
+        Result = XMVectorMultiplyAdd(X, M.r[0], Result);
+
+        let W: XMVECTOR = XMVectorSplatW(Result);
+        return XMVectorDivide(Result, W);
+    }
+}
+
 // TODO: XMVector2TransformCoordStream
-// TODO: XMVector2TransformNormal
+
+/// Transforms a 2D vector by a matrix.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2TransformNormal>
+#[inline]
+pub fn XMVector2TransformNormal(
+    V: FXMVECTOR,
+    M: FXMMATRIX,
+) -> FXMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Y: XMVECTOR = XMVectorSplatY(V);
+        let X: XMVECTOR = XMVectorSplatX(V);
+
+        let mut Result: XMVECTOR = XMVectorMultiply(Y, M.r[1]);
+        Result = XMVectorMultiplyAdd(X, M.r[0], Result);
+
+        return Result;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut vResult: XMVECTOR = XM_PERMUTE_PS!(V, _MM_SHUFFLE(1, 1, 1, 1)); // Y
+        vResult = _mm_mul_ps(vResult, M.r[1]);
+        let vTemp: XMVECTOR = XM_PERMUTE_PS!(V, _MM_SHUFFLE(0, 0, 0, 0)); // X
+        vResult = XM_FMADD_PS!(vTemp, M.r[0], vResult);
+        return vResult;
+    }
+}
+
 // TODO: XMVector2TransformNormalStream
 
 // 3D Vector
@@ -6718,6 +7519,46 @@ pub fn XMVector4EqualIntR(
     }
 }
 
+/// Tests whether one 4D vector is near another 4D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4NearEqual>
+#[inline]
+pub fn XMVector4NearEqual(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+    Epsilon: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let dx: f32 = fabsf(V1.vector4_f32[0] - V2.vector4_f32[0]);
+        let dy: f32 = fabsf(V1.vector4_f32[1] - V2.vector4_f32[1]);
+        let dz: f32 = fabsf(V1.vector4_f32[2] - V2.vector4_f32[2]);
+        let dw: f32 = fabsf(V1.vector4_f32[3] - V2.vector4_f32[3]);
+
+        return (((dx <= Epsilon.vector4_f32[0]) &&
+            (dy <= Epsilon.vector4_f32[1]) &&
+            (dz <= Epsilon.vector4_f32[2]) &&
+            (dw <= Epsilon.vector4_f32[3])) != false);
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        // Get the difference
+        let vDelta: XMVECTOR = _mm_sub_ps(V1, V2);
+        // Get the absolute value of the difference
+        let mut vTemp: XMVECTOR = _mm_setzero_ps();
+        vTemp = _mm_sub_ps(vTemp, vDelta);
+        vTemp = _mm_max_ps(vTemp, vDelta);
+        vTemp = _mm_cmple_ps(vTemp, Epsilon);
+        return ((_mm_movemask_ps(vTemp) == 0xf) != false);
+    }
+}
 
 /// Tests whether two 4D vectors are not equal.
 ///
