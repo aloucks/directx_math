@@ -176,5 +176,39 @@ mod inner {
     pub fn vec_one(_rng: &mut Pcg) -> XMVECTOR {
         XMVectorSet(1.0, 1.0, 1.0, 1.0)
     }
+
+    fn range_f32(rng: &mut Pcg, low: f32, high: f32) -> f32 {
+        let r = random_f32(rng);
+        (r * (high - low)) + low
+    }
+
+    pub fn random_view_width(rng: &mut Pcg) -> f32 {
+        range_f32(rng, 1024.0, 2560.0)
+    }
+
+    pub fn random_view_height(rng: &mut Pcg) -> f32 {
+        range_f32(rng, 768.0, 1600.0)
+    }
+
+    pub fn random_near_z(rng: &mut Pcg) -> f32 {
+        range_f32(rng, 0.001, 1.0)
+    }
+
+    pub fn random_far_z(rng: &mut Pcg) -> f32 {
+        let a = range_f32(rng, 100.0, 10_000.0);
+        assert!(a >= 100.0);
+        assert!(a <= 10_000.0);
+        a
+    }
+
+    pub fn random_fov_angle_y(rng: &mut Pcg) -> f32 {
+        range_f32(rng, 45.0f32.to_radians(), 90.0f32.to_radians())
+    }
+
+    pub fn random_aspect_ratio(rng: &mut Pcg) -> f32 {
+        random_view_width(rng) / random_view_height(rng)
+    }
+
+    pub const ZERO: XMVECTOR = unsafe { XMVECTORF32 { f: [0.0, 0.0, 0.0, 0.0] }.v };
 }
 

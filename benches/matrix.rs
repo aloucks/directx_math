@@ -67,6 +67,28 @@ benchmarks!({
         random_mat4,
     );
 
+    fn _XMMatrixDecompose(M: XMMATRIX) -> bool {
+        let mut scale = ZERO;
+        let mut rotation = ZERO;
+        let mut translation = ZERO;
+        XMMatrixDecompose(&mut scale, &mut rotation, &mut translation, M)
+    }
+
+    // FIXME: The input should be a valid rotation matrix
+    bench!(
+        bench_XMMatrixDecompose,
+        "XMMatrixDecompose",
+        _XMMatrixDecompose,
+        random_mat4,
+    );
+
+    bench!(
+        bench_XMMatrixRotationQuaternion,
+        "XMMatrixRotationQuaternion",
+        XMMatrixRotationQuaternion,
+        random_quat,
+    );
+
     bench!(
         bench_XMMatrixTransformation,
         "XMMatrixTransformation",
@@ -88,32 +110,32 @@ benchmarks!({
         random_vec3,
     );
 
-    // FIXME: The inputs should use values clamped to valid ranges
     bench!(
         bench_XMMatrixPerspectiveRH,
         "XMMatrixPerspectiveRH",
         XMMatrixPerspectiveRH,
-        random_f32,
-        random_f32,
-        random_f32,
-        random_f32,
+        random_view_width,
+        random_view_height,
+        random_near_z,
+        random_far_z,
     );
 
-    // FIXME: The inputs should use values clamped to valid ranges
     bench!(
         bench_XMMatrixPerspectiveFovRH,
         "XMMatrixPerspectiveFovRH",
         XMMatrixPerspectiveFovRH,
-        random_f32,
-        random_f32,
-        random_f32,
-        random_f32,
+        random_fov_angle_y,
+        random_aspect_ratio,
+        random_near_z,
+        random_far_z,
     );
 
     criterion_group!(
         benchmarks,
         bench_XMMatrixIdentity,
         bench_XMMatrixMultiply,
+        bench_XMMatrixDecompose,
+        bench_XMMatrixRotationQuaternion,
         bench_XMMatrixTranspose,
         bench_XMMatrixMultiplyTranspose,
         bench_XMMatrixInverse,
