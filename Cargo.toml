@@ -37,3 +37,7 @@ harness = false
 [[bench]]
 name = "matrix"
 harness = false
+
+[[bench]]
+name = "vector"
+harness = false
