@@ -4877,9 +4877,61 @@ pub fn XMVectorBaryCentric(
 
 // 2D Vector
 
-// TODO: XMVector2Equal
+/// Tests whether two 2D vectors are equal.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2Equal>
+#[inline]
+pub fn XMVector2Equal(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (((V1.vector4_f32[0] == V2.vector4_f32[0]) && (V1.vector4_f32[1] == V2.vector4_f32[1])) != false);
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_cmpeq_ps(V1, V2);
+        // z and w are don't care
+        return (((_mm_movemask_ps(vTemp) & 3) == 3) != false);
+    }
+}
+
 // TODO: XMVector2EqualR
-// TODO: XMVector2EqualInt
+
+/// Tests whether two 2D vectors are equal, treating each component as an unsigned integer.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2EqualInt>
+#[inline]
+pub fn XMVector2EqualInt(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (((V1.vector4_u32[0] == V2.vector4_u32[0]) && (V1.vector4_u32[1] == V2.vector4_u32[1])) != false);
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let vTemp: __m128i = _mm_cmpeq_epi32(_mm_castps_si128(V1), _mm_castps_si128(V2));
+        return (((_mm_movemask_ps(_mm_castsi128_ps(vTemp)) & 3) == 3) != false);
+    }
+}
+
 // TODO: XMVector2EqualIntR
 // TODO: XMVector2NearEqual
 // TODO: XMVector2NotEqual

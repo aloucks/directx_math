@@ -209,13 +209,112 @@ pub fn XMConvertVectorFloatToUInt(
 
 // TODO: XMLoadInt
 // TODO: XMLoadFloat
-// TODO: XMLoadInt2
+
+/// Loads data into the x and y components of an XMVECTOR.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMLoadInt2>
+#[inline]
+pub fn XMLoadInt2(
+    pSource: &[u32; 2],
+) -> FXMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut V: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        V.vector4_u32[0] = pSource[0];
+        V.vector4_u32[1] = pSource[1];
+        V.vector4_u32[2] = 0;
+        V.vector4_u32[3] = 0;
+        return V;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        return _mm_castpd_ps(_mm_load_sd(mem::transmute::<_, *const f64>(pSource)));
+    }
+}
+
+#[test]
+fn test_XMLoadInt2() {
+    let a = XMLoadInt2(&[-1i32 as u32, 1 as u32]);
+    let b = XMVectorSetInt(-1i32 as u32, 1 as u32, 0, 0);
+    assert_eq!(-1, XMVectorGetIntX(a) as i32);
+    assert_eq!( 1, XMVectorGetIntY(a) as i32);
+    assert!(XMVector2EqualInt(a, b));
+
+    let c = XMLoadInt2(&[1, 2]);
+    let d = XMVectorSetInt(1, 2 as u32, 0, 0);
+    assert_eq!(1, XMVectorGetIntX(c));
+    assert_eq!(2, XMVectorGetIntY(d));
+    assert!(XMVector2EqualInt(c, d));
+}
+
 // TODO: XMLoadInt2A
 // TODO: XMLoadFloat2
 // TODO: XMLoadFloat2A
 // TODO: XMLoadSInt2
 // TODO: XMLoadUInt2
-// TODO: XMLoadInt3
+
+/// Loads data into the x, y, and z components of an XMVECTOR, without type checking.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMLoadInt3>
+#[inline]
+pub fn XMLoadInt3(
+    pSource: &[u32; 3],
+) -> FXMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut V: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        V.vector4_u32[0] = pSource[0];
+        V.vector4_u32[1] = pSource[1];
+        V.vector4_u32[2] = pSource[2];
+        V.vector4_u32[3] = 0;
+        return V;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE4_INTRINSICS_)]
+    unsafe {
+        let xy: __m128 = _mm_castpd_ps(_mm_load_sd(mem::transmute::<_, *const f64>(pSource)));
+        let z: __m128 = _mm_load_ss(mem::transmute::<_, *const f32>(&pSource[2]));
+        return _mm_insert_ps(xy, z, 0x20);
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        let xy: __m128 = _mm_castpd_ps(_mm_load_sd(mem::transmute::<_, *const f64>(pSource)));
+        let z: __m128 = _mm_load_ss(mem::transmute::<_, *const f32>(&pSource[2]));
+        return _mm_movelh_ps(xy, z);
+    }
+}
+
+#[test]
+fn test_XMLoadInt3() {
+    let a = XMLoadInt3(&[-1i32 as u32, 0 as u32, 1 as u32]);
+    let b = XMVectorSetInt(-1i32 as u32, 0 as u32, 1, 0);
+    assert_eq!(-1, XMVectorGetIntX(a) as i32);
+    assert_eq!( 0, XMVectorGetIntY(a) as i32);
+    assert_eq!( 1, XMVectorGetIntZ(a) as i32);
+    assert!(XMVector3EqualInt(a, b));
+
+    let c = XMLoadInt3(&[1, 2, 3]);
+    let d = XMVectorSetInt(1, 2 as u32, 3, 0);
+    assert_eq!(1, XMVectorGetIntX(c));
+    assert_eq!(2, XMVectorGetIntY(d));
+    assert_eq!(3, XMVectorGetIntZ(d));
+    assert!(XMVector3EqualInt(c, d));
+}
+
 // TODO: XMLoadInt3A
 
 /// Loads an XMFLOAT3 into an XMVECTOR.
@@ -318,7 +417,56 @@ fn test_XMLoadFloat3() {
 
 
 // TODO: XMLoadUInt3
-// TODO: XMLoadInt4
+
+/// Loads data into an XMVECTOR, without type checking.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMLoadInt4>
+#[inline]
+pub fn XMLoadInt4(
+    pSource: &[u32; 4],
+) -> FXMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut V: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        V.vector4_u32[0] = pSource[0];
+        V.vector4_u32[1] = pSource[1];
+        V.vector4_u32[2] = pSource[2];
+        V.vector4_u32[3] = pSource[3];
+        return V;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        let V: __m128i = _mm_loadu_si128(mem::transmute::<_, *const __m128i>(pSource));
+        return _mm_castsi128_ps(V);
+    }
+}
+
+#[test]
+fn test_XMLoadInt4() {
+    let a = XMLoadInt4(&[-1i32 as u32, 0 as u32, 1 as u32, 2 as u32]);
+    let b = XMVectorSetInt(-1i32 as u32, 0 as u32, 1, 2);
+    assert_eq!(-1, XMVectorGetIntX(a) as i32);
+    assert_eq!( 0, XMVectorGetIntY(a) as i32);
+    assert_eq!( 1, XMVectorGetIntZ(a) as i32);
+    assert_eq!( 2, XMVectorGetIntW(a) as i32);
+    assert!(XMVector4EqualInt(a, b));
+
+    let c = XMLoadInt4(&[1, 2, 3, 4]);
+    let d = XMVectorSetInt(1, 2 as u32, 3, 4);
+    assert_eq!(1, XMVectorGetIntX(c));
+    assert_eq!(2, XMVectorGetIntY(d));
+    assert_eq!(3, XMVectorGetIntZ(d));
+    assert_eq!(4, XMVectorGetIntW(d));
+    assert!(XMVector4EqualInt(c, d));
+}
+
 // TODO: XMLoadInt4A
 
 /// Loads an XMFLOAT4 into an XMVECTOR.
@@ -480,13 +628,131 @@ pub fn XMLoadFloat4x4(
 // TODO: XMLoadFloat4x4A
 // TODO: XMStoreInt
 // TODO: XMStoreFloat
-// TODO: XMStoreInt2
+
+/// Stores an XMVECTOR in a 2-element uint32_t array.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMStoreInt2>
+#[inline]
+pub fn XMStoreInt2(
+    pDestination: &mut [u32; 2],
+    V: FXMVECTOR,
+)
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        pDestination[0] = V.vector4_u32[0];
+        pDestination[1] = V.vector4_u32[1];
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        _mm_store_sd(mem::transmute::<_, *mut f64>(pDestination), _mm_castps_pd(V));
+    }
+}
+
+#[test]
+fn test_XMStoreInt2() {
+    let mut a: [u32; 2] = [0, 0];
+    XMStoreInt2(&mut a, XMVectorSetInt(1, 2, 0, 0));
+    assert_eq!(1, a[0]);
+    assert_eq!(2, a[1]);
+
+    let mut b: [u32; 2] = [-1i32 as u32, 1];
+    XMStoreInt2(&mut b, XMVectorSetInt(-1i32 as u32, 1, 0, 0));
+    assert_eq!(-1, b[0] as i32);
+    assert_eq!( 1, b[1] as i32);
+}
+
 // TODO: XMStoreInt2A
-// TODO: XMStoreFloat2
+
+/// Stores an XMVECTOR in an XMFLOAT2.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMStoreFloat2>
+#[inline]
+pub fn XMStoreFloat2(
+    pDestination: &mut XMFLOAT2,
+    V: FXMVECTOR,
+)
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        pDestination.x = V.vector4_f32[0];
+        pDestination.y = V.vector4_f32[1];
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        let pDestination: *mut XMFLOAT2 = mem::transmute(pDestination);
+        _mm_store_sd(mem::transmute::<_, *mut f64>(pDestination), _mm_castps_pd(V));
+    }
+}
+
+#[test]
+fn test_XMStoreFloat2() {
+    let mut a = XMFLOAT2 { x: 0.0, y: 0.0 };
+    XMStoreFloat2(&mut a, XMVectorSet(1.0, 2.0, 0.0, 0.0));
+    assert_eq!(1.0, a.x);
+    assert_eq!(2.0, a.y);
+}
+
 // TODO: XMStoreFloat2A
 // TODO: XMStoreSInt2
 // TODO: XMStoreUInt2
-// TODO: XMStoreInt3
+
+/// Stores an XMVECTOR in a 3-element uint32_t array.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMStoreInt3>
+#[inline]
+pub fn XMStoreInt3(
+    pDestination: &mut [u32; 3],
+    V: FXMVECTOR,
+)
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        pDestination[0] = V.vector4_u32[0];
+        pDestination[1] = V.vector4_u32[1];
+        pDestination[2] = V.vector4_u32[2];
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        _mm_store_sd(mem::transmute::<_, *mut f64>(&mut *pDestination), _mm_castps_pd(V));
+        let z: __m128 = XM_PERMUTE_PS!(V, _MM_SHUFFLE(2, 2, 2, 2));
+        _mm_store_ss(mem::transmute::<_, *mut f32>(&mut pDestination[2]), z);
+    }
+}
+
+#[test]
+fn test_XMStoreInt3() {
+    let mut a: [u32; 3] = [0, 0, 0];
+    XMStoreInt3(&mut a, XMVectorSetInt(1, 2, 3, 0));
+    assert_eq!(1, a[0]);
+    assert_eq!(2, a[1]);
+    assert_eq!(3, a[2]);
+
+    let mut b: [u32; 3] = [-1i32 as u32, 1, 2];
+    XMStoreInt3(&mut b, XMVectorSetInt(-1i32 as u32, 1, 2, 0));
+    assert_eq!(-1, b[0] as i32);
+    assert_eq!( 1, b[1] as i32);
+    assert_eq!( 2, b[2] as i32);
+}
+
 // TODO: XMStoreInt3A
 
 /// Stores an XMVECTOR in an XMFLOAT3.
@@ -538,7 +804,52 @@ fn test_XMStoreFloat3() {
 // TODO: XMStoreFloat3A
 // TODO: XMStoreSInt3
 // TODO: XMStoreUInt3
-// TODO: XMStoreInt4
+
+/// Stores an XMVECTOR in a 4-element uint32_t array.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMStoreInt4>
+#[inline]
+pub fn XMStoreInt4(
+    pDestination: &mut [u32; 4],
+    V: FXMVECTOR,
+)
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        pDestination[0] = V.vector4_u32[0];
+        pDestination[1] = V.vector4_u32[1];
+        pDestination[2] = V.vector4_u32[2];
+        pDestination[3] = V.vector4_u32[3];
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        _mm_storeu_si128(mem::transmute::<_, *mut __m128i>(pDestination), _mm_castps_si128(V));
+    }
+}
+
+#[test]
+fn test_XMStoreInt4() {
+    let mut a: [u32; 4] = [0, 0, 0, 0];
+    XMStoreInt4(&mut a, XMVectorSetInt(1, 2, 3, 4));
+    assert_eq!(1, a[0]);
+    assert_eq!(2, a[1]);
+    assert_eq!(3, a[2]);
+    assert_eq!(4, a[3]);
+
+    let mut b: [u32; 4] = [-1i32 as u32, 1, 2, 3];
+    XMStoreInt4(&mut b, XMVectorSetInt(-1i32 as u32, 1, 2, 3));
+    assert_eq!(-1, b[0] as i32);
+    assert_eq!( 1, b[1] as i32);
+    assert_eq!( 2, b[2] as i32);
+    assert_eq!( 3, b[3] as i32);
+}
+
 // TODO: XMStoreInt4A
 
 /// Stores an XMVECTOR in an XMFLOAT4.
