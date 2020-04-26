@@ -27,8 +27,14 @@ macro_rules! benchmarks {
 
 #[macro_export]
 macro_rules! bench {
-    (@input => $rng:expr, $arg0:expr) => {
-        $arg0($rng)
+    (@input => $rng:expr, $arg:expr) => {
+        $arg($rng)
+    };
+    (@arg => $value:ident, $arg:expr) => {
+        $value
+    };
+    (@arg => $value:ident, ref $arg:expr) => {
+        &$value
     };
     (@op => $op:ident, $inputs:expr $(,)*) => {{
         $op()
@@ -39,14 +45,14 @@ macro_rules! bench {
     }};
     (@op => $op:ident, $inputs:expr, $arg1:expr, $arg2:expr) => {{
         let (arg1, arg2) = *$inputs;
-        $op(arg1, arg2)
+        $op(arg1, bench!(@arg => arg2, $arg2))
     }};
     (@op => $op:ident, $inputs:expr, $arg1:expr, $arg2:expr, $arg3:expr) => {{
         let (arg1, arg2, arg3) = *$inputs;
         $op(arg1, arg2, arg3)
     }};
     (@op => $op:ident, $inputs:expr, $arg1:expr, $arg2:expr, $arg3:expr, $arg4:expr) => {{
-        let (arg1, arg2, arg4, arg4) = *$inputs;
+        let (arg1, arg2, arg3, arg4) = *$inputs;
         $op(arg1, arg2, arg3, arg4)
     }};
     (@op => $op:ident, $inputs:expr, $arg1:expr, $arg2:expr, $arg3:expr, $arg4:expr, $arg5:expr) => {{
@@ -157,6 +163,18 @@ mod inner {
             random_f32(rng), random_f32(rng), random_f32(rng), random_f32(rng),
             random_f32(rng), random_f32(rng), random_f32(rng), random_f32(rng),
         )
+    }
+
+    pub fn quat_identity(_rng: &mut Pcg) -> XMVECTOR {
+        XMQuaternionIdentity()
+    }
+
+    pub fn vec_zero(_rng: &mut Pcg) -> XMVECTOR {
+        XMVectorSet(0.0, 0.0, 0.0, 0.0)
+    }
+
+    pub fn vec_one(_rng: &mut Pcg) -> XMVECTOR {
+        XMVectorSet(1.0, 1.0, 1.0, 1.0)
     }
 }
 

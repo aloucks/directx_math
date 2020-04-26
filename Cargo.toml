@@ -33,3 +33,7 @@ rand_core = { version = "0.5", optional = true }
 [[bench]]
 name = "quaternion"
 harness = false
+
+[[bench]]
+name = "matrix"
+harness = false
