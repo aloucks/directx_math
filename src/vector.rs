@@ -1218,7 +1218,7 @@ fn test_XMVectorSwizzle() {
 /// If all 4 indices reference only a single vector (i.e. they are all in the range 0-3 or all in the range 4-7),
 /// use `XMVectorSwizzle` instead for better performance.
 ///
-/// For constant PermuteX/Y/Z/W parameters, it is much more efficent to use the template form of [`XMVectorPermute`]
+/// For constant PermuteX/Y/Z/W parameters, it may more efficent to use the template form of [`XMVectorPermute`]
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorPermute>
 ///
@@ -3298,7 +3298,6 @@ pub fn XMVectorReciprocalSqrt(
 // TODO: XMVectorLog2
 // TODO: XMVectorLogE
 // TODO: XMVectorLog
-// TODO: XMVectorPow [needed for color]
 
 /// Computes V1 raised to the power of V2.
 ///
@@ -6478,9 +6477,7 @@ pub fn XMVector3TransformNormal(
 
 // TODO: XMVector3TransformNormalStream
 
-// TODO: XMVector3Project (FIXME: XMMatrixMultiply)
 
-/*
 /// Project a 3D vector from object space into screen space.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3Project>
@@ -6501,11 +6498,11 @@ pub fn XMVector3Project(
     let HalfViewportWidth: f32 = ViewportWidth * 0.5;
     let HalfViewportHeight: f32 = ViewportHeight * 0.5;
 
-    let Scale: XMVECTOR = XMVectorSet(HalfViewportWidth, -HalfViewportHeight, ViewportMaxZ - ViewportMinZ, 0.0f);
-    let Offset: XMVECTOR = XMVectorSet(ViewportX + HalfViewportWidth, ViewportY + HalfViewportHeight, ViewportMinZ, 0.0f);
+    let Scale: XMVECTOR = XMVectorSet(HalfViewportWidth, -HalfViewportHeight, ViewportMaxZ - ViewportMinZ, 0.0);
+    let Offset: XMVECTOR = XMVectorSet(ViewportX + HalfViewportWidth, ViewportY + HalfViewportHeight, ViewportMinZ, 0.0);
 
-    let mut Transform: XMMATRIX = XMMatrixMultiply(World, View);
-    Transform = XMMatrixMultiply(Transform, Projection);
+    let mut Transform: XMMATRIX = XMMatrixMultiply(*World, View);
+    Transform = XMMatrixMultiply(Transform, &Projection);
 
     let mut Result: XMVECTOR = XMVector3TransformCoord(V, Transform);
 
@@ -6513,10 +6510,44 @@ pub fn XMVector3Project(
 
     return Result;
 }
-*/
 
 // TODO: XMVector3ProjectStream
-// TODO: XMVector3Unproject
+
+/// Projects a 3D vector from screen space into object space.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3Unproject>
+#[inline]
+pub fn XMVector3Unproject(
+    V: FXMVECTOR,
+    ViewportX: f32,
+    ViewportY: f32,
+    ViewportWidth: f32,
+    ViewportHeight: f32,
+    ViewportMinZ: f32,
+    ViewportMaxZ: f32,
+    Projection: FXMMATRIX,
+    View: CXMMATRIX,
+    World: CXMMATRIX,
+) -> FXMVECTOR
+{
+    const D: XMVECTORF32 = XMVECTORF32 { f: [ -1.0, 1.0, 0.0, 0.0] };
+
+    let mut Scale: XMVECTOR = XMVectorSet(ViewportWidth * 0.5, -ViewportHeight * 0.5, ViewportMaxZ - ViewportMinZ, 1.0);
+    Scale = XMVectorReciprocal(Scale);
+
+    let mut Offset: XMVECTOR = XMVectorSet(-ViewportX, -ViewportY, -ViewportMinZ, 0.0);
+    Offset = XMVectorMultiplyAdd(Scale, Offset, unsafe { D.v });
+
+    let mut Transform: XMMATRIX = XMMatrixMultiply(*World, View);
+    Transform = XMMatrixMultiply(Transform, &Projection);
+    let mut det = unsafe { mem::MaybeUninit::uninit().assume_init() };
+    Transform = XMMatrixInverse(&mut det, Transform);
+
+    let Result: XMVECTOR = XMVectorMultiplyAdd(V, Scale, Offset);
+
+    return XMVector3TransformCoord(Result, Transform);
+}
+
 // TODO: XMVector3UnprojectStream
 
 

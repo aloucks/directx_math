@@ -102,6 +102,16 @@ benchmarks!({
     );
 
     bench!(
+        bench_XMMatrixAffineTransformation,
+        "XMMatrixAffineTransformation ",
+        XMMatrixAffineTransformation ,
+        vec_one,
+        vec_zero,
+        random_quat,
+        random_vec3,
+    );
+
+    bench!(
         bench_XMMatrixLookAtRH,
         "XMMatrixLookAtRH",
         XMMatrixLookAtRH,
@@ -141,6 +151,7 @@ benchmarks!({
         bench_XMMatrixInverse,
         bench_XMMatrixDeterminant,
         bench_XMMatrixTransformation,
+        bench_XMMatrixAffineTransformation,
         bench_XMMatrixLookAtRH,
         bench_XMMatrixPerspectiveRH,
         bench_XMMatrixPerspectiveFovRH,

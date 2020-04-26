@@ -1019,7 +1019,8 @@ pub trait XMVectorPermute {
     ///
     /// This function is a template version of [`XMVectorPermute`] where the `Permute*` arguments are template values.
     ///
-    /// The trait based version is more efficient and the specialized cases provide additional optimization.
+    /// The trait based version may be more efficient with certain CPU features, and the specialized
+    /// cases may provide additional optimization.
     ///
     /// ```rust
     /// # use directx_math::*;

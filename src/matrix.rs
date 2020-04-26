@@ -1615,7 +1615,7 @@ pub fn XMMatrixScalingFromVector(
 // TODO: XMMatrixRotationNormal
 // TODO: XMMatrixRotationAxis
 
-/// Descriptrion
+/// Builds a rotation matrix from a quaternion.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixRotationQuaternion>
 #[inline]
