@@ -84,15 +84,14 @@ use std::mem;
 
 #[cfg(all(target_arch="x86_64", not(_XM_NO_INTRINSICS_)))]
 #[doc(hidden)]
-pub use std::arch::x86_64 as arch;
+use std::arch::x86_64 as arch;
 
 #[cfg(all(target_arch="x86", not(_XM_NO_INTRINSICS_)))]
 #[doc(hidden)]
-pub use std::arch::x86 as arch;
+use std::arch::x86 as arch;
 
 #[cfg(all(target_arch="arm", not(_XM_NO_INTRINSICS_)))]
-#[doc(hidden)]
-pub use std::arch::arm as arch;
+use std::arch::arm as arch;
 
 #[cfg(not(_XM_NO_INTRINSICS_))]
 use arch::*;
@@ -370,17 +369,490 @@ macro_rules! XM_PREFETCH {
     }
 }
 
-pub mod vector;
-pub mod convert;
+mod vector;
+mod convert;
 mod globals;
-pub mod misc;
-pub mod matrix;
+mod misc;
+mod matrix;
 
 pub use vector::*;
 pub use convert::*;
 use globals::*;
 pub use misc::*;
 pub use matrix::*;
+
+mod doc {
+    /// Color functions
+    ///
+    /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-color>
+    pub mod color {
+        // TODO: pub use crate::misc::XMColorSRGBToRGB;
+        // TODO: pub use crate::misc::XMColorRGBToSRGB;
+        // TODO: pub use crate::misc::XMColorAdjustContrast;
+        // TODO: pub use crate::misc::XMColorAdjustSaturation;
+        // TODO: pub use crate::misc::XMColorEqual;
+        // TODO: pub use crate::misc::XMColorGreater;
+        // TODO: pub use crate::misc::XMColorGreaterOrEqual;
+        // TODO: pub use crate::misc::XMColorHSLToRGB;
+        // TODO: pub use crate::misc::XMColorHSVToRGB;
+        // TODO: pub use crate::misc::XMColorIsInfinite;
+        // TODO: pub use crate::misc::XMColorIsNaN;
+        // TODO: pub use crate::misc::XMColorLess;
+        // TODO: pub use crate::misc::XMColorLessOrEqual;
+        // TODO: pub use crate::misc::XMColorModulate;
+        // TODO: pub use crate::misc::XMColorNegative;
+        // TODO: pub use crate::misc::XMColorNotEqual;
+        // TODO: pub use crate::misc::XMColorRGBToHSL;
+        // TODO: pub use crate::misc::XMColorRGBToHSV;
+        // TODO: pub use crate::misc::XMColorRGBToXYZ;
+        // TODO: pub use crate::misc::XMColorRGBToYUV;
+        // TODO: pub use crate::misc::XMColorRGBToYUV_HD;
+        // TODO: pub use crate::misc::XMColorSRGBToXYZ;
+        // TODO: pub use crate::misc::XMColorXYZToRGB;
+        // TODO: pub use crate::misc::XMColorXYZToSRGB;
+        // TODO: pub use crate::misc::XMColorYUVToRGB;
+        // TODO: pub use crate::misc::XMColorYUVToRGB_HD;
+    }
+
+    /// Vector data conversion functions
+    ///
+    /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-conversion>
+    pub mod conversion {
+        // TODO: pub use crate::convert::XMConvertFloatToHalf;
+        // TODO: pub use crate::convert::XMConvertFloatToHalfStream;
+        // TODO: pub use crate::convert::XMConvertHalfToFloat;
+        // TODO: pub use crate::convert::XMConvertHalfToFloatStream;
+        // TODO: pub use crate::convert::XMConvertToDegrees;
+        // TODO: pub use crate::convert::XMConvertToRadians;
+        pub use crate::convert::XMConvertVectorFloatToInt;
+        pub use crate::convert::XMConvertVectorFloatToUInt;
+        pub use crate::convert::XMConvertVectorIntToFloat;
+        pub use crate::convert::XMConvertVectorUIntToFloat;
+    }
+
+    /// Matrix functions
+    ///
+    /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-matrix>
+    pub mod matrix {
+        pub use crate::matrix::XMMatrixAffineTransformation;
+        // TODO: pub use crate::matrix::XMMatrixAffineTransformation2D;
+        pub use crate::matrix::XMMatrixDecompose;
+        pub use crate::matrix::XMMatrixDeterminant;
+        pub use crate::matrix::XMMatrixIdentity;
+        pub use crate::matrix::XMMatrixInverse;
+        pub use crate::matrix::XMMatrixIsIdentity;
+        pub use crate::matrix::XMMatrixIsInfinite;
+        pub use crate::matrix::XMMatrixIsNaN;
+        pub use crate::matrix::XMMatrixLookAtLH;
+        pub use crate::matrix::XMMatrixLookAtRH;
+        pub use crate::matrix::XMMatrixLookToLH;
+        pub use crate::matrix::XMMatrixLookToRH;
+        pub use crate::matrix::XMMatrixMultiply;
+        pub use crate::matrix::XMMatrixMultiplyTranspose;
+        pub use crate::matrix::XMMatrixOrthographicLH;
+        // TODO: pub use crate::matrix::XMMatrixOrthographicOffCenterLH;
+        // TODO: pub use crate::matrix::XMMatrixOrthographicOffCenterRH;
+        pub use crate::matrix::XMMatrixOrthographicRH;
+        pub use crate::matrix::XMMatrixPerspectiveFovLH;
+        pub use crate::matrix::XMMatrixPerspectiveFovRH;
+        pub use crate::matrix::XMMatrixPerspectiveLH;
+        // TODO: pub use crate::matrix::XMMatrixPerspectiveOffCenterLH;
+        // TODO: pub use crate::matrix::XMMatrixPerspectiveOffCenterRH;
+        pub use crate::matrix::XMMatrixPerspectiveRH;
+        // TODO: pub use crate::matrix::XMMatrixReflect;
+        // TODO: pub use crate::matrix::XMMatrixRotationAxis;
+        // TODO: pub use crate::matrix::XMMatrixRotationNormal;
+        pub use crate::matrix::XMMatrixRotationQuaternion;
+        // TODO: pub use crate::matrix::XMMatrixRotationRollPitchYaw;
+        // TODO: pub use crate::matrix::XMMatrixRotationRollPitchYawFromVector;
+        // TODO: pub use crate::matrix::XMMatrixRotationX;
+        // TODO: pub use crate::matrix::XMMatrixRotationY;
+        // TODO: pub use crate::matrix::XMMatrixRotationZ;
+        pub use crate::matrix::XMMatrixScaling;
+        pub use crate::matrix::XMMatrixScalingFromVector;
+        pub use crate::matrix::XMMatrixSet;
+        // TODO: pub use crate::matrix::XMMatrixShadow;
+        pub use crate::matrix::XMMatrixTransformation;
+        // TODO: pub use crate::matrix::XMMatrixTransformation2D;
+        pub use crate::matrix::XMMatrixTranslation;
+        pub use crate::matrix::XMMatrixTranslationFromVector;
+        pub use crate::matrix::XMMatrixTranspose;
+
+    }
+
+    /// Plane functions
+    ///
+    /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-plane>
+    pub mod plane {
+        // TODO: pub use crate::misc::XMPlaneDot;
+        // TODO: pub use crate::misc::XMPlaneDotCoord;
+        // TODO: pub use crate::misc::XMPlaneDotNormal;
+        // TODO: pub use crate::misc::XMPlaneEqual;
+        // TODO: pub use crate::misc::XMPlaneFromPointNormal;
+        // TODO: pub use crate::misc::XMPlaneFromPoints;
+        // TODO: pub use crate::misc::XMPlaneIntersectLine;
+        // TODO: pub use crate::misc::XMPlaneIntersectPlane;
+        // TODO: pub use crate::misc::XMPlaneIsInfinite;
+        // TODO: pub use crate::misc::XMPlaneIsNaN;
+        // TODO: pub use crate::misc::XMPlaneNearEqual;
+        // TODO: pub use crate::misc::XMPlaneNormalize;
+        // TODO: pub use crate::misc::XMPlaneNormalizeEst;
+        // TODO: pub use crate::misc::XMPlaneNotEqual;
+        // TODO: pub use crate::misc::XMPlaneTransform;
+        // TODO: pub use crate::misc::XMPlaneTransformStream;
+    }
+
+    /// Quaternion functions
+    ///
+    /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-quaternion>
+    pub mod quaternion {
+        // TODO: pub use crate::misc::XMQuaternionBaryCentric;
+        // TODO: pub use crate::misc::XMQuaternionBaryCentricV;
+        pub use crate::misc::XMQuaternionConjugate;
+        pub use crate::misc::XMQuaternionDot;
+        pub use crate::misc::XMQuaternionEqual;
+        pub use crate::misc::XMQuaternionExp;
+        pub use crate::misc::XMQuaternionIdentity;
+        pub use crate::misc::XMQuaternionInverse;
+        pub use crate::misc::XMQuaternionIsIdentity;
+        pub use crate::misc::XMQuaternionIsInfinite;
+        pub use crate::misc::XMQuaternionIsNaN;
+        pub use crate::misc::XMQuaternionLength;
+        pub use crate::misc::XMQuaternionLengthSq;
+        pub use crate::misc::XMQuaternionLn;
+        pub use crate::misc::XMQuaternionMultiply;
+        pub use crate::misc::XMQuaternionNormalize;
+        pub use crate::misc::XMQuaternionNormalizeEst;
+        pub use crate::misc::XMQuaternionNotEqual;
+        pub use crate::misc::XMQuaternionReciprocalLength;
+        pub use crate::misc::XMQuaternionRotationAxis;
+        pub use crate::misc::XMQuaternionRotationMatrix;
+        pub use crate::misc::XMQuaternionRotationNormal;
+        pub use crate::misc::XMQuaternionRotationRollPitchYaw;
+        pub use crate::misc::XMQuaternionRotationRollPitchYawFromVector;
+        pub use crate::misc::XMQuaternionSlerp;
+        pub use crate::misc::XMQuaternionSlerpV;
+        pub use crate::misc::XMQuaternionSquad;
+        pub use crate::misc::XMQuaternionSquadSetup;
+        pub use crate::misc::XMQuaternionSquadV;
+        pub use crate::misc::XMQuaternionToAxisAngle;
+    }
+
+    /// Scalar functions
+    ///
+    /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-scalar>
+    pub mod scalar {
+        pub use crate::misc::XMScalarACos;
+        pub use crate::misc::XMScalarACosEst;
+        pub use crate::misc::XMScalarASin;
+        pub use crate::misc::XMScalarASinEst;
+        pub use crate::misc::XMScalarCos;
+        pub use crate::misc::XMScalarCosEst;
+        // TODO: pub use crate::misc::XMScalarModAngle;
+        pub use crate::misc::XMScalarNearEqual;
+        pub use crate::misc::XMScalarSin;
+        pub use crate::misc::XMScalarSinCos;
+        pub use crate::misc::XMScalarSinCosEst;
+        pub use crate::misc::XMScalarSinEst;
+    }
+
+    /// Vector functions
+    ///
+    /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector>
+    pub mod vector {
+        /// Vector arithmetic functions
+        ///
+        /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector-arithmetic>
+        pub mod arithmetic {
+            pub use crate::vector::XMVectorAbs;
+            pub use crate::vector::XMVectorAdd;
+            pub use crate::vector::XMVectorAddAngles;
+            pub use crate::vector::XMVectorCeiling;
+            pub use crate::vector::XMVectorClamp;
+            pub use crate::vector::XMVectorDivide;
+            pub use crate::vector::XMVectorFloor;
+            pub use crate::vector::XMVectorIsInfinite;
+            pub use crate::vector::XMVectorIsNaN;
+            pub use crate::vector::XMVectorMax;
+            pub use crate::vector::XMVectorMin;
+            pub use crate::vector::XMVectorMod;
+            pub use crate::vector::XMVectorModAngles;
+            pub use crate::vector::XMVectorMultiply;
+            pub use crate::vector::XMVectorMultiplyAdd;
+            pub use crate::vector::XMVectorNegate;
+            pub use crate::vector::XMVectorNegativeMultiplySubtract;
+            pub use crate::vector::XMVectorPow;
+            pub use crate::vector::XMVectorReciprocal;
+            pub use crate::vector::XMVectorReciprocalEst;
+            pub use crate::vector::XMVectorReciprocalSqrt;
+            pub use crate::vector::XMVectorReciprocalSqrtEst;
+            pub use crate::vector::XMVectorRound;
+            pub use crate::vector::XMVectorSaturate;
+            pub use crate::vector::XMVectorScale;
+            pub use crate::vector::XMVectorSqrt;
+            pub use crate::vector::XMVectorSqrtEst;
+            pub use crate::vector::XMVectorSubtract;
+            pub use crate::vector::XMVectorSubtractAngles;
+            pub use crate::vector::XMVectorSum;
+            pub use crate::vector::XMVectorTruncate;
+        }
+
+        /// Vector bit-wise manipulation functions
+        ///
+        /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector-bit-wise>
+        pub mod bit_wise {
+            pub use crate::vector::XMVectorAndCInt;
+            pub use crate::vector::XMVectorAndInt;
+            pub use crate::vector::XMVectorNorInt;
+            pub use crate::vector::XMVectorNotEqual;
+            pub use crate::vector::XMVectorNotEqualInt;
+            pub use crate::vector::XMVectorOrInt;
+            pub use crate::vector::XMVectorXorInt;
+        }
+
+        /// Vector comparison functions
+        ///
+        /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector-comparison>
+        pub mod comparison {
+            pub use crate::vector::XMVectorEqual;
+            pub use crate::vector::XMVectorEqualInt;
+            pub use crate::vector::XMVectorEqualIntR;
+            pub use crate::vector::XMVectorEqualR;
+            pub use crate::vector::XMVectorGreater;
+            pub use crate::vector::XMVectorGreaterOrEqual;
+            pub use crate::vector::XMVectorGreaterOrEqualR;
+            pub use crate::vector::XMVectorGreaterR;
+            pub use crate::vector::XMVectorLess;
+            pub use crate::vector::XMVectorLessOrEqual;
+            pub use crate::vector::XMVectorNearEqual;
+
+        }
+
+        /// Component-wise Vector operations
+        ///
+        /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector-component-wise>
+        pub mod component_wise {
+            pub use crate::vector::XMVectorInsert;
+            pub use crate::vector::XMVectorMergeXY;
+            pub use crate::vector::XMVectorMergeZW;
+            pub use crate::vector::XMVectorPermute;
+            pub use crate::vector::XMVectorRotateLeft;
+            pub use crate::vector::XMVectorRotateRight;
+            pub use crate::vector::XMVectorSelect;
+            pub use crate::vector::XMVectorSelectControl;
+            pub use crate::vector::XMVectorShiftLeft;
+            pub use crate::vector::XMVectorSplatW;
+            pub use crate::vector::XMVectorSplatX;
+            pub use crate::vector::XMVectorSplatY;
+            pub use crate::vector::XMVectorSplatZ;
+            pub use crate::vector::XMVectorSwizzle;
+
+        }
+
+        /// Geometric functions
+        ///
+        /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector-geometric>
+        pub mod geometric {
+            pub use crate::vector::XMVectorBaryCentric;
+            // TODO: pub use crate::vector::XMVectorBaryCentricV;
+            pub use crate::vector::XMVectorCatmullRom;
+            // TODO: pub use crate::vector::XMVectorCatmullRomV;
+            pub use crate::vector::XMVectorHermite;
+            // TODO: pub use crate::vector::XMVectorHermiteV;
+            pub use crate::vector::XMVectorInBounds;
+            pub use crate::vector::XMVectorInBoundsR;
+            pub use crate::vector::XMVectorLerp;
+            pub use crate::vector::XMVectorLerpV;            
+        }
+
+        /// Vector initialization
+        ///
+        /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector-initialization>
+        pub mod initialization {
+            pub use crate::vector::XMVectorFalseInt;
+            pub use crate::vector::XMVectorReplicate;
+            pub use crate::vector::XMVectorReplicateInt;
+            // TODO: pub use crate::vector::XMVectorReplicateIntPtr;
+            // TODO: pub use crate::vector::XMVectorReplicatePtr;
+            pub use crate::vector::XMVectorSet;
+            // TODO: pub use crate::vector::XMVectorSetBinaryConstant;
+            pub use crate::vector::XMVectorSetInt;
+            // TODO: pub use crate::vector::XMVectorSplatConstant;
+            // TODO: pub use crate::vector::XMVectorSplatConstantInt;
+            pub use crate::vector::XMVectorSplatEpsilon;
+            pub use crate::vector::XMVectorSplatInfinity;
+            pub use crate::vector::XMVectorSplatOne;
+            pub use crate::vector::XMVectorSplatQNaN;
+            pub use crate::vector::XMVectorSplatSignMask;
+            pub use crate::vector::XMVectorTrueInt;
+            pub use crate::vector::XMVectorZero;
+        }
+
+        /// Vector based trigonometry and logarithmic functions
+        ///
+        /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector-transcendental>
+        pub mod transendental {
+            pub use crate::vector::XMVectorACos;
+            pub use crate::vector::XMVectorACosEst;
+            pub use crate::vector::XMVectorASin;
+            pub use crate::vector::XMVectorASinEst;
+            pub use crate::vector::XMVectorATan;
+            pub use crate::vector::XMVectorATan2;
+            pub use crate::vector::XMVectorATan2Est;
+            pub use crate::vector::XMVectorATanEst;
+            pub use crate::vector::XMVectorCos;
+            pub use crate::vector::XMVectorCosEst;
+            // TODO: pub use crate::vector::XMVectorCosH;
+            // TODO: pub use crate::vector::XMVectorExp;
+            // TODO: pub use crate::vector::XMVectorExp2;
+            // TODO: pub use crate::vector::XMVectorExpE;
+            // TODO: pub use crate::vector::XMVectorLog;
+            // TODO: pub use crate::vector::XMVectorLog2;
+            // TODO: pub use crate::vector::XMVectorLogE;
+            pub use crate::vector::XMVectorSin;
+            pub use crate::vector::XMVectorSinCos;
+            pub use crate::vector::XMVectorSinCosEst;
+            pub use crate::vector::XMVectorSinEst;
+            // TODO: pub use crate::vector::XMVectorSinH;
+            pub use crate::vector::XMVectorTan;
+            pub use crate::vector::XMVectorTanEst;
+            // TODO: pub use crate::vector::XMVectorTanH;
+        }
+
+        /// 2D Vector functions
+        ///
+        /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector2>
+        pub mod vector2d {
+
+        }
+
+        /// 3D Vector functions
+        ///
+        /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector3>
+        pub mod vector3d {
+
+        }
+
+        /// 4D Vector functions
+        ///
+        /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector4>
+        pub mod vector4d {
+
+        }
+
+        /// Vector manipulation functions
+        ///
+        /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-templates>
+        pub mod template {
+            pub use crate::XMMax;
+            pub use crate::XMMin;
+            pub use crate::XMVectorPermute;
+            pub use crate::XMVectorRotateLeft;
+            pub use crate::XMVectorRotateRight;
+            pub use crate::XMVectorShiftLeft;
+            pub use crate::XMVectorSwizzle;
+            pub use crate::XMVectorInsert;
+        }
+
+        /// Vector accessors
+        ///
+        /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-accessors>
+        pub mod accessor {
+            pub use crate::vector::XMVectorGetByIndex;
+            // TODO: pub use crate::vector::XMVectorGetByIndexPtr;
+            pub use crate::vector::XMVectorGetIntByIndex;
+            // TODO: pub use crate::vector::XMVectorGetIntByIndexPtr;
+            pub use crate::vector::XMVectorGetIntW;
+            // TODO: pub use crate::vector::XMVectorGetIntWPtr;
+            pub use crate::vector::XMVectorGetIntX;
+            // TODO: pub use crate::vector::XMVectorGetIntXPtr;
+            pub use crate::vector::XMVectorGetIntY;
+            // TODO: pub use crate::vector::XMVectorGetIntYPtr;
+            pub use crate::vector::XMVectorGetIntZ;
+            // TODO: pub use crate::vector::XMVectorGetIntZPtr;
+            pub use crate::vector::XMVectorGetW;
+            pub use crate::vector::XMVectorGetWPtr;
+            pub use crate::vector::XMVectorGetX;
+            pub use crate::vector::XMVectorGetXPtr;
+            pub use crate::vector::XMVectorGetY;
+            pub use crate::vector::XMVectorGetYPtr;
+            pub use crate::vector::XMVectorGetZ;
+            pub use crate::vector::XMVectorGetZPtr;
+            pub use crate::vector::XMVectorSetByIndex;
+            // TODO: pub use crate::vector::XMVectorSetByIndexPtr;
+            pub use crate::vector::XMVectorSetIntByIndex;
+            // TODO: pub use crate::vector::XMVectorSetIntByIndexPtr;
+            pub use crate::vector::XMVectorSetIntW;
+            // TODO: pub use crate::vector::XMVectorSetIntWPtr;
+            pub use crate::vector::XMVectorSetIntX;
+            // TODO: pub use crate::vector::XMVectorSetIntXPtr;
+            pub use crate::vector::XMVectorSetIntY;
+            // TODO: pub use crate::vector::XMVectorSetIntYPtr;
+            pub use crate::vector::XMVectorSetIntZ;
+            // TODO: pub use crate::vector::XMVectorSetIntZPtr;
+            pub use crate::vector::XMVectorSetW;
+            // TODO: pub use crate::vector::XMVectorSetWPtr;
+            pub use crate::vector::XMVectorSetX;
+            // TODO: pub use crate::vector::XMVectorSetXPtr;
+            pub use crate::vector::XMVectorSetY;
+            // TODO: pub use crate::vector::XMVectorSetYPtr;
+            pub use crate::vector::XMVectorSetZ;
+            // TODO: pub use crate::vector::XMVectorSetZPtr;
+        }
+    }
+
+    /// Vector and Matrix load functions
+    ///
+    /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-load>
+    pub mod load {
+        // TODO
+    }
+
+    /// Vector and Matrix store functions
+    ///
+    /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-storage>
+    pub mod store {
+        // TODO
+    }
+
+    /// Utility and comparison functions
+    ///
+    /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-utilities>
+    pub mod utility {
+        pub use crate::XMComparisonAllFalse;
+        pub use crate::XMComparisonAllInBounds;
+        pub use crate::XMComparisonAllTrue;
+        pub use crate::XMComparisonAnyFalse;
+        pub use crate::XMComparisonAnyOutOfBounds;
+        pub use crate::XMComparisonAnyTrue;
+        pub use crate::XMComparisonMixed;
+        // TODO: pub use crate::XMFresnelTerm;
+        // TODO: pub use crate::XMVerifyCPUSupport;
+    }
+
+    pub mod structures {
+        // TODO
+    }
+
+    /// Collision classes
+    ///
+    /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-directxmath-classes>
+    pub mod classes {
+        // TODO: pub use crate::collision::BoundingBox;
+        // TODO: pub use crate::collision::BoundingFrustum;
+        // TODO: pub use crate::collision::BoundingOrientedBox;
+        // TODO: pub use crate::collision::BoundingSphere;
+    }
+
+    pub mod enumerations {
+        // TODO
+    }
+    pub mod types {
+        // TODO
+    }
+}
+
+pub use doc::*;
 
 pub const XM_PI: f32 = 3.141592654;
 pub const XM_2PI: f32 = 6.283185307;
