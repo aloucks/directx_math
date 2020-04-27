@@ -73,7 +73,41 @@ pub fn XMQuaternionDot(
 
 /// Computes the product of two quaternions.
 ///
+/// ## Parameters
+///
+/// `Q1` First quaternion.
+///
+/// `Q2` Second quaternion.
+///
+/// ## Return Value
+///
+/// Returns the product of two quaternions as `Q2*Q1`.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent
+/// quaternions, where the `X`, `Y`, and `Z` components are the vector part and
+/// the `W` component is the scalar part.
+///
+/// The result represents the rotation `Q1` followed by the rotation `Q2` to be
+/// consistent with [`XMMatrixMultiply`] concatenation since this function is
+/// typically used to concatenate quaternions that represent rotations
+/// (i.e. it returns `Q2*Q1`).
+///
+/// This function computes the equivalent to the following pseduo-code:
+///
+/// ```text
+/// XMVECTOR Result;
+/// Result.x = (Q2.w * Q1.x) + (Q2.x * Q1.w) + (Q2.y * Q1.z) - (Q2.z * Q1.y);
+/// Result.y = (Q2.w * Q1.y) - (Q2.x * Q1.z) + (Q2.y * Q1.w) + (Q2.z * Q1.x);
+/// Result.z = (Q2.w * Q1.z) + (Q2.x * Q1.y) - (Q2.y * Q1.x) + (Q2.z * Q1.w);
+/// Result.w = (Q2.w * Q1.w) - (Q2.x * Q1.x) - (Q2.y * Q1.y) - (Q2.z * Q1.z);
+/// return Result;
+/// ```
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionMultiply>
+///
+/// [`XMMatrixMultiply`]: crate::matrix::XMMatrixMultiply
 #[inline]
 pub fn XMQuaternionMultiply(
     Q1: FXMVECTOR,
@@ -736,9 +770,9 @@ pub fn XMQuaternionRotationMatrix(
 
     #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {
-        const XMPMMP: XMVECTORF32 = { XMVECTORF32 { f: [  1.0, -1.0, -1.0,  1.0 ] } };
-        const XMMPMP: XMVECTORF32 = { XMVECTORF32 { f: [ -1.0,  1.0, -1.0,  1.0 ] } };
-        const XMMMPP: XMVECTORF32 = { XMVECTORF32 { f: [ -1.0, -1.0,  1.0,  1.0 ] } };
+        const XMPMMP: XMVECTORF32 = XMVECTORF32 { f: [  1.0, -1.0, -1.0,  1.0 ] };
+        const XMMPMP: XMVECTORF32 = XMVECTORF32 { f: [ -1.0,  1.0, -1.0,  1.0 ] };
+        const XMMMPP: XMVECTORF32 = XMVECTORF32 { f: [ -1.0, -1.0,  1.0,  1.0 ] };
 
         let r0: XMVECTOR = M.r[0];  // (r00, r01, r02, 0)
         let r1: XMVECTOR = M.r[1];  // (r10, r11, r12, 0)
