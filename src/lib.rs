@@ -905,25 +905,8 @@ mod doc {
                 // TODO: pub use crate::vector::XMVector4RefractV;
             }
             pub mod transformation {
-                // TODO: pub use crate::vector::XMVector4AngleBetweenNormals;
-                // TODO: pub use crate::vector::XMVector4AngleBetweenNormalsEst;
-                // TODO: pub use crate::vector::XMVector4AngleBetweenVectors;
-                // TODO: pub use crate::vector::XMVector4ClampLength;
-                // TODO: pub use crate::vector::XMVector4ClampLengthV;
-                pub use crate::vector::XMVector4Cross;
-                pub use crate::vector::XMVector4Dot;
-                pub use crate::vector::XMVector4InBounds;
-                pub use crate::vector::XMVector4Length;
-                pub use crate::vector::XMVector4LengthEst;
-                pub use crate::vector::XMVector4LengthSq;
-                pub use crate::vector::XMVector4Normalize;
-                pub use crate::vector::XMVector4NormalizeEst;
-                // TODO: pub use crate::vector::XMVector4Orthogonal;
-                pub use crate::vector::XMVector4ReciprocalLength;
-                pub use crate::vector::XMVector4ReciprocalLengthEst;
-                // TODO: pub use crate::vector::XMVector4Reflect;
-                // TODO: pub use crate::vector::XMVector4Refract;
-                // TODO: pub use crate::vector::XMVector4RefractV;
+                // TODO: pub use crate::vector::XMVector4Transform;
+                // TODO: pub use crate::vector::XMVector4TransformStream;
             }
         }
 
