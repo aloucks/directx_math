@@ -1,0 +1,61 @@
+name: tests
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  pull_request:
+  push:
+
+jobs:
+  no-intrinsics:
+    name: No Intrinsics
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+          - nightly
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install rust
+        uses: actions-rs/toolchain@v1
+        id: rust
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          override: true
+          profile: minimal
+      - name: Build and test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --features=no_intrinsics
+
+  intrinsics:
+    name: Intrinsics
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+          - nightly
+        target_feature:
+          - ""
+          - "+sse3"
+          - "+sse3,+sse4.1"
+          - "+sse3,+sse4.1,+avx"
+          - "+sse3,+sse4.1,+avx,+fma"
+          - "+sse3,+sse4.1,+avx,+fma,+avx2"
+    env:
+      RUSTFLAGS: "-C target-feature=${{ matrix.target_feature }}"
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install rust
+        uses: actions-rs/toolchain@v1
+        id: rust
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          override: true
+          profile: minimal
+      - name: Build and test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
