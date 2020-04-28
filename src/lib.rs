@@ -435,7 +435,7 @@ mod doc {
     /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-matrix>
     pub mod matrix {
         pub use crate::matrix::XMMatrixAffineTransformation;
-        // TODO: pub use crate::matrix::XMMatrixAffineTransformation2D;
+        pub use crate::matrix::XMMatrixAffineTransformation2D;
         pub use crate::matrix::XMMatrixDecompose;
         pub use crate::matrix::XMMatrixDeterminant;
         pub use crate::matrix::XMMatrixIdentity;
@@ -459,21 +459,21 @@ mod doc {
         // TODO: pub use crate::matrix::XMMatrixPerspectiveOffCenterLH;
         // TODO: pub use crate::matrix::XMMatrixPerspectiveOffCenterRH;
         pub use crate::matrix::XMMatrixPerspectiveRH;
-        // TODO: pub use crate::matrix::XMMatrixReflect;
-        // TODO: pub use crate::matrix::XMMatrixRotationAxis;
-        // TODO: pub use crate::matrix::XMMatrixRotationNormal;
+        pub use crate::matrix::XMMatrixReflect;
+        pub use crate::matrix::XMMatrixRotationAxis;
+        pub use crate::matrix::XMMatrixRotationNormal;
         pub use crate::matrix::XMMatrixRotationQuaternion;
-        // TODO: pub use crate::matrix::XMMatrixRotationRollPitchYaw;
-        // TODO: pub use crate::matrix::XMMatrixRotationRollPitchYawFromVector;
-        // TODO: pub use crate::matrix::XMMatrixRotationX;
-        // TODO: pub use crate::matrix::XMMatrixRotationY;
-        // TODO: pub use crate::matrix::XMMatrixRotationZ;
+        pub use crate::matrix::XMMatrixRotationRollPitchYaw;
+        pub use crate::matrix::XMMatrixRotationRollPitchYawFromVector;
+        pub use crate::matrix::XMMatrixRotationX;
+        pub use crate::matrix::XMMatrixRotationY;
+        pub use crate::matrix::XMMatrixRotationZ;
         pub use crate::matrix::XMMatrixScaling;
         pub use crate::matrix::XMMatrixScalingFromVector;
         pub use crate::matrix::XMMatrixSet;
-        // TODO: pub use crate::matrix::XMMatrixShadow;
+        pub use crate::matrix::XMMatrixShadow;
         pub use crate::matrix::XMMatrixTransformation;
-        // TODO: pub use crate::matrix::XMMatrixTransformation2D;
+        pub use crate::matrix::XMMatrixTransformation2D;
         pub use crate::matrix::XMMatrixTranslation;
         pub use crate::matrix::XMMatrixTranslationFromVector;
         pub use crate::matrix::XMMatrixTranspose;
@@ -484,7 +484,7 @@ mod doc {
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-plane>
     pub mod plane {
-        // TODO: pub use crate::misc::XMPlaneDot;
+        pub use crate::misc::XMPlaneDot;
         // TODO: pub use crate::misc::XMPlaneDotCoord;
         // TODO: pub use crate::misc::XMPlaneDotNormal;
         // TODO: pub use crate::misc::XMPlaneEqual;
@@ -495,7 +495,7 @@ mod doc {
         // TODO: pub use crate::misc::XMPlaneIsInfinite;
         // TODO: pub use crate::misc::XMPlaneIsNaN;
         // TODO: pub use crate::misc::XMPlaneNearEqual;
-        // TODO: pub use crate::misc::XMPlaneNormalize;
+        pub use crate::misc::XMPlaneNormalize;
         // TODO: pub use crate::misc::XMPlaneNormalizeEst;
         // TODO: pub use crate::misc::XMPlaneNotEqual;
         // TODO: pub use crate::misc::XMPlaneTransform;
@@ -548,7 +548,7 @@ mod doc {
         pub use crate::misc::XMScalarASinEst;
         pub use crate::misc::XMScalarCos;
         pub use crate::misc::XMScalarCosEst;
-        // TODO: pub use crate::misc::XMScalarModAngle;
+        pub use crate::misc::XMScalarModAngle;
         pub use crate::misc::XMScalarNearEqual;
         pub use crate::misc::XMScalarSin;
         pub use crate::misc::XMScalarSinCos;
@@ -723,21 +723,208 @@ mod doc {
         ///
         /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector2>
         pub mod vector2d {
+            /// 2D Vector comparison functions
+            ///
+            /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector2-comparison>
+            pub mod comparison {
+                pub use crate::vector::XMVector2Equal;
+                pub use crate::vector::XMVector2EqualInt;
+                // TODO: pub use crate::vector::XMVector2EqualIntR;
+                // TODO: pub use crate::vector::XMVector2EqualR;
+                pub use crate::vector::XMVector2Greater;
+                pub use crate::vector::XMVector2GreaterOrEqual;
+                // TODO: pub use crate::vector::XMVector2GreaterOrEqualR;
+                // TODO: pub use crate::vector::XMVector2GreaterR;
+                // TODO: pub use crate::vector::XMVector2IsInfinite;
+                // TODO: pub use crate::vector::XMVector2IsNaN;
+                pub use crate::vector::XMVector2Less;
+                pub use crate::vector::XMVector2LessOrEqual;
+                pub use crate::vector::XMVector2NearEqual;
+                pub use crate::vector::XMVector2NotEqual;
+                pub use crate::vector::XMVector2NotEqualInt;
+            }
 
+            /// 2D Vector geometric functions
+            ///
+            /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector2-geometric>
+            pub mod geometric {
+                pub use crate::vector::XMVector2AngleBetweenNormals;
+                // TODO: pub use crate::vector::XMVector2AngleBetweenNormalsEst;
+                pub use crate::vector::XMVector2AngleBetweenVectors;
+                // TODO: pub use crate::vector::XMVector2ClampLength;
+                // TODO: pub use crate::vector::XMVector2ClampLengthV;
+                pub use crate::vector::XMVector2Cross;
+                pub use crate::vector::XMVector2Dot;
+                pub use crate::vector::XMVector2InBounds;
+                pub use crate::vector::XMVector2IntersectLine;
+                pub use crate::vector::XMVector2Length;
+                // TODO: pub use crate::vector::XMVector2LengthEst;
+                pub use crate::vector::XMVector2LengthSq;
+                pub use crate::vector::XMVector2LinePointDistance;
+                pub use crate::vector::XMVector2Normalize;
+                // TODO: pub use crate::vector::XMVector2NormalizeEst;
+                pub use crate::vector::XMVector2Orthogonal;
+                pub use crate::vector::XMVector2ReciprocalLength;
+                // TODO: pub use crate::vector::XMVector2ReciprocalLengthEst;
+                // TODO: pub use crate::vector::XMVector2Reflect;
+                // TODO: pub use crate::vector::XMVector2Refract;
+                // TODO: pub use crate::vector::XMVector2RefractV;
+            }
+
+            /// 2D vector transformation
+            ///
+            /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector2-transformation>
+            pub mod transformation {
+                pub use crate::vector::XMVector2Transform;
+                pub use crate::vector::XMVector2TransformCoord;
+                // TODO: pub use crate::vector::XMVector2TransformCoordStream;
+                pub use crate::vector::XMVector2TransformNormal;
+                // TODO: pub use crate::vector::XMVector2TransformNormalStream;
+                // TODO: pub use crate::vector::XMVector2TransformStream;
+            }
         }
 
         /// 3D Vector functions
         ///
         /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector3>
         pub mod vector3d {
+            /// 3D Vector comparison
+            ///
+            /// https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector3-comparison
+            pub mod comparison {
+                pub use crate::vector::XMVector3Equal;
+                pub use crate::vector::XMVector3EqualInt;
+                pub use crate::vector::XMVector3EqualIntR;
+                pub use crate::vector::XMVector3EqualR;
+                pub use crate::vector::XMVector3Greater;
+                pub use crate::vector::XMVector3GreaterOrEqual;
+                pub use crate::vector::XMVector3GreaterOrEqualR;
+                pub use crate::vector::XMVector3GreaterR;
+                pub use crate::vector::XMVector3IsInfinite;
+                pub use crate::vector::XMVector3IsNaN;
+                pub use crate::vector::XMVector3Less;
+                pub use crate::vector::XMVector3LessOrEqual;
+                pub use crate::vector::XMVector3NearEqual;
+                pub use crate::vector::XMVector3NotEqual;
+                pub use crate::vector::XMVector3NotEqualInt;
+            }
 
+            /// 3D vector geometric functions
+            ///
+            /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector3-geometric>
+            pub mod geometric {
+                pub use crate::vector::XMVector3AngleBetweenNormals;
+                pub use crate::vector::XMVector3AngleBetweenNormalsEst;
+                pub use crate::vector::XMVector3AngleBetweenVectors;
+                pub use crate::vector::XMVector3ClampLength;
+                pub use crate::vector::XMVector3ClampLengthV;
+                pub use crate::vector::XMVector3ComponentsFromNormal;
+                pub use crate::vector::XMVector3Cross;
+                pub use crate::vector::XMVector3Dot;
+                pub use crate::vector::XMVector3InBounds;
+                pub use crate::vector::XMVector3Length;
+                pub use crate::vector::XMVector3LengthEst;
+                pub use crate::vector::XMVector3LengthSq;
+                pub use crate::vector::XMVector3LinePointDistance;
+                pub use crate::vector::XMVector3Normalize;
+                pub use crate::vector::XMVector3NormalizeEst;
+                pub use crate::vector::XMVector3Orthogonal;
+                pub use crate::vector::XMVector3ReciprocalLength;
+                pub use crate::vector::XMVector3ReciprocalLengthEst;
+                pub use crate::vector::XMVector3Reflect;
+                pub use crate::vector::XMVector3Refract;
+                pub use crate::vector::XMVector3RefractV;
+            }
+
+            /// 3D vector transformation
+            ///
+            /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector3-transformation>
+            pub mod transformation {
+                pub use crate::vector::XMVector3InverseRotate;
+                pub use crate::vector::XMVector3Project;
+                // TODO: pub use crate::vector::XMVector3ProjectStream;
+                pub use crate::vector::XMVector3Rotate;
+                pub use crate::vector::XMVector3Transform;
+                pub use crate::vector::XMVector3TransformCoord;
+                // TODO: pub use crate::vector::XMVector3TransformCoordStream;
+                pub use crate::vector::XMVector3TransformNormal;
+                // TODO: pub use crate::vector::XMVector3TransformNormalStream;
+                // TODO: pub use crate::vector::XMVector3TransformStream;
+                pub use crate::vector::XMVector3Unproject;
+                // TODO: pub use crate::vector::XMVector3UnprojectStream;
+            }
         }
 
         /// 4D Vector functions
         ///
         /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector4>
         pub mod vector4d {
+            /// 4D vector comparison
+            ///
+            /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector4-comparison>
+            pub mod comparison {
+                pub use crate::vector::XMVector4Equal;
+                pub use crate::vector::XMVector4EqualInt;
+                pub use crate::vector::XMVector4EqualIntR;
+                // TODO: pub use crate::vector::XMVector4EqualR;
+                pub use crate::vector::XMVector4Greater;
+                pub use crate::vector::XMVector4GreaterOrEqual;
+                // TODO: pub use crate::vector::XMVector4GreaterOrEqualR;
+                // TODO: pub use crate::vector::XMVector4GreaterR;
+                pub use crate::vector::XMVector4IsInfinite;
+                pub use crate::vector::XMVector4IsNaN;
+                pub use crate::vector::XMVector4Less;
+                pub use crate::vector::XMVector4LessOrEqual;
+                pub use crate::vector::XMVector4NearEqual;
+                pub use crate::vector::XMVector4NotEqual;
+                pub use crate::vector::XMVector4NotEqualInt;
+            }
 
+            /// 4D vector geometric
+            ///
+            /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector4-geometric>
+            pub mod geometric {
+                // TODO: pub use crate::vector::XMVector4AngleBetweenNormals;
+                // TODO: pub use crate::vector::XMVector4AngleBetweenNormalsEst;
+                // TODO: pub use crate::vector::XMVector4AngleBetweenVectors;
+                // TODO: pub use crate::vector::XMVector4ClampLength;
+                // TODO: pub use crate::vector::XMVector4ClampLengthV;
+                pub use crate::vector::XMVector4Cross;
+                pub use crate::vector::XMVector4Dot;
+                pub use crate::vector::XMVector4InBounds;
+                pub use crate::vector::XMVector4Length;
+                pub use crate::vector::XMVector4LengthEst;
+                pub use crate::vector::XMVector4LengthSq;
+                pub use crate::vector::XMVector4Normalize;
+                pub use crate::vector::XMVector4NormalizeEst;
+                // TODO: pub use crate::vector::XMVector4Orthogonal;
+                pub use crate::vector::XMVector4ReciprocalLength;
+                pub use crate::vector::XMVector4ReciprocalLengthEst;
+                // TODO: pub use crate::vector::XMVector4Reflect;
+                // TODO: pub use crate::vector::XMVector4Refract;
+                // TODO: pub use crate::vector::XMVector4RefractV;
+            }
+            pub mod transformation {
+                // TODO: pub use crate::vector::XMVector4AngleBetweenNormals;
+                // TODO: pub use crate::vector::XMVector4AngleBetweenNormalsEst;
+                // TODO: pub use crate::vector::XMVector4AngleBetweenVectors;
+                // TODO: pub use crate::vector::XMVector4ClampLength;
+                // TODO: pub use crate::vector::XMVector4ClampLengthV;
+                pub use crate::vector::XMVector4Cross;
+                pub use crate::vector::XMVector4Dot;
+                pub use crate::vector::XMVector4InBounds;
+                pub use crate::vector::XMVector4Length;
+                pub use crate::vector::XMVector4LengthEst;
+                pub use crate::vector::XMVector4LengthSq;
+                pub use crate::vector::XMVector4Normalize;
+                pub use crate::vector::XMVector4NormalizeEst;
+                // TODO: pub use crate::vector::XMVector4Orthogonal;
+                pub use crate::vector::XMVector4ReciprocalLength;
+                pub use crate::vector::XMVector4ReciprocalLengthEst;
+                // TODO: pub use crate::vector::XMVector4Reflect;
+                // TODO: pub use crate::vector::XMVector4Refract;
+                // TODO: pub use crate::vector::XMVector4RefractV;
+            }
         }
 
         /// Vector manipulation functions
@@ -805,14 +992,128 @@ mod doc {
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-load>
     pub mod load {
-        // TODO
+        // TODO: pub use crate::convert::XMLoadByte2;
+        // TODO: pub use crate::convert::XMLoadByte4;
+        // TODO: pub use crate::convert::XMLoadByteN2;
+        // TODO: pub use crate::convert::XMLoadByteN4;
+        // TODO: pub use crate::convert::XMLoadColor;
+        // TODO: pub use crate::convert::XMLoadDec4;
+        // TODO: pub use crate::convert::XMLoadDecN4;
+        // TODO: pub use crate::convert::XMLoadFloat;
+        pub use crate::convert::XMLoadFloat2;
+        // TODO: pub use crate::convert::XMLoadFloat2A;
+        pub use crate::convert::XMLoadFloat3;
+        // TODO: pub use crate::convert::XMLoadFloat3A;
+        // TODO: pub use crate::convert::XMLoadFloat3PK;
+        // TODO: pub use crate::convert::XMLoadFloat3SE;
+        pub use crate::convert::XMLoadFloat3x3;
+        // TODO: pub use crate::convert::XMLoadFloat3x4;
+        // TODO: pub use crate::convert::XMLoadFloat3x4A;
+        pub use crate::convert::XMLoadFloat4;
+        // TODO: pub use crate::convert::XMLoadFloat4A;
+        // TODO: pub use crate::convert::XMLoadFloat4x3;
+        // TODO: pub use crate::convert::XMLoadFloat4x3A;
+        pub use crate::convert::XMLoadFloat4x4;
+        // TODO: pub use crate::convert::XMLoadFloat4x4A;
+        // TODO: pub use crate::convert::XMLoadHalf2;
+        // TODO: pub use crate::convert::XMLoadHalf4;
+        // TODO: pub use crate::convert::XMLoadInt;
+        pub use crate::convert::XMLoadInt2;
+        // TODO: pub use crate::convert::XMLoadInt2A;
+        pub use crate::convert::XMLoadInt3;
+        // TODO: pub use crate::convert::XMLoadInt3A;
+        pub use crate::convert::XMLoadInt4;
+        // TODO: pub use crate::convert::XMLoadInt4A;
+        // TODO: pub use crate::convert::XMLoadShort2;
+        // TODO: pub use crate::convert::XMLoadShort4;
+        // TODO: pub use crate::convert::XMLoadShortN2;
+        // TODO: pub use crate::convert::XMLoadShortN4;
+        // TODO: pub use crate::convert::XMLoadSInt2;
+        // TODO: pub use crate::convert::XMLoadSInt3;
+        // TODO: pub use crate::convert::XMLoadSInt4;
+        // TODO: pub use crate::convert::XMLoadU555;
+        // TODO: pub use crate::convert::XMLoadU565;
+        // TODO: pub use crate::convert::XMLoadUByte2;
+        // TODO: pub use crate::convert::XMLoadUByte4;
+        // TODO: pub use crate::convert::XMLoadUByteN2;
+        // TODO: pub use crate::convert::XMLoadUByteN4;
+        // TODO: pub use crate::convert::XMLoadUDec4;
+        // TODO: pub use crate::convert::XMLoadUDecN4;
+        // TODO: pub use crate::convert::XMLoadUDecN4_XR;
+        // TODO: pub use crate::convert::XMLoadUInt2;
+        // TODO: pub use crate::convert::XMLoadUInt3;
+        // TODO: pub use crate::convert::XMLoadUInt4;
+        // TODO: pub use crate::convert::XMLoadUNibble4;
+        // TODO: pub use crate::convert::XMLoadUShort2;
+        // TODO: pub use crate::convert::XMLoadUShort4;
+        // TODO: pub use crate::convert::XMLoadUShortN2;
+        // TODO: pub use crate::convert::XMLoadUShortN4;
+        // TODO: pub use crate::convert::XMLoadXDec4;
+        // TODO: pub use crate::convert::XMLoadXDecN4;
     }
 
     /// Vector and Matrix store functions
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-storage>
     pub mod store {
-        // TODO
+        // TODO: pub use crate::convert::XMStoreByte2;
+        // TODO: pub use crate::convert::XMStoreByte4;
+        // TODO: pub use crate::convert::XMStoreByteN2;
+        // TODO: pub use crate::convert::XMStoreByteN4;
+        // TODO: pub use crate::convert::XMStoreColor;
+        // TODO: pub use crate::convert::XMStoreDec4;
+        // TODO: pub use crate::convert::XMStoreDecN4;
+        // TODO: pub use crate::convert::XMStoreFloat;
+        pub use crate::convert::XMStoreFloat2;
+        // TODO: pub use crate::convert::XMStoreFloat2A;
+        pub use crate::convert::XMStoreFloat3;
+        // TODO: pub use crate::convert::XMStoreFloat3A;
+        // TODO: pub use crate::convert::XMStoreFloat3PK;
+        // TODO: pub use crate::convert::XMStoreFloat3SE;
+        pub use crate::convert::XMStoreFloat3x3;
+        // TODO: pub use crate::convert::XMStoreFloat3x4;
+        // TODO: pub use crate::convert::XMStoreFloat3x4A;
+        pub use crate::convert::XMStoreFloat4;
+        // TODO: pub use crate::convert::XMStoreFloat4A;
+        // TODO: pub use crate::convert::XMStoreFloat4x3;
+        // TODO: pub use crate::convert::XMStoreFloat4x3A;
+        pub use crate::convert::XMStoreFloat4x4;
+        // TODO: pub use crate::convert::XMStoreFloat4x4A;
+        // TODO: pub use crate::convert::XMStoreHalf2;
+        // TODO: pub use crate::convert::XMStoreHalf4;
+        // TODO: pub use crate::convert::XMStoreInt;
+        pub use crate::convert::XMStoreInt2;
+        // TODO: pub use crate::convert::XMStoreInt2A;
+        pub use crate::convert::XMStoreInt3;
+        // TODO: pub use crate::convert::XMStoreInt3A;
+        pub use crate::convert::XMStoreInt4;
+        // TODO: pub use crate::convert::XMStoreInt4A;
+        // TODO: pub use crate::convert::XMStoreShort2;
+        // TODO: pub use crate::convert::XMStoreShort4;
+        // TODO: pub use crate::convert::XMStoreShortN2;
+        // TODO: pub use crate::convert::XMStoreShortN4;
+        // TODO: pub use crate::convert::XMStoreSInt2;
+        // TODO: pub use crate::convert::XMStoreSInt3;
+        // TODO: pub use crate::convert::XMStoreSInt4;
+        // TODO: pub use crate::convert::XMStoreU555;
+        // TODO: pub use crate::convert::XMStoreU565;
+        // TODO: pub use crate::convert::XMStoreUByte2;
+        // TODO: pub use crate::convert::XMStoreUByte4;
+        // TODO: pub use crate::convert::XMStoreUByteN2;
+        // TODO: pub use crate::convert::XMStoreUByteN4;
+        // TODO: pub use crate::convert::XMStoreUDec4;
+        // TODO: pub use crate::convert::XMStoreUDecN4;
+        // TODO: pub use crate::convert::XMStoreUDecN4_XR;
+        // TODO: pub use crate::convert::XMStoreUInt2;
+        // TODO: pub use crate::convert::XMStoreUInt3;
+        // TODO: pub use crate::convert::XMStoreUInt4;
+        // TODO: pub use crate::convert::XMStoreUNibble4;
+        // TODO: pub use crate::convert::XMStoreUShort2;
+        // TODO: pub use crate::convert::XMStoreUShort4;
+        // TODO: pub use crate::convert::XMStoreUShortN2;
+        // TODO: pub use crate::convert::XMStoreUShortN4;
+        // TODO: pub use crate::convert::XMStoreXDec4;
+        // TODO: pub use crate::convert::XMStoreXDecN4;
     }
 
     /// Utility and comparison functions

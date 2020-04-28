@@ -255,7 +255,36 @@ fn test_XMLoadInt2() {
 }
 
 // TODO: XMLoadInt2A
-// TODO: XMLoadFloat2
+
+/// Loads data into the x, y, and z components of an XMVECTOR, without type checking.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMLoadInt3>
+#[inline]
+pub fn XMLoadFloat2(
+    pSource: &XMFLOAT2,
+) -> FXMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut V: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        V.vector4_f32[0] = pSource.x;
+        V.vector4_f32[1] = pSource.y;
+        V.vector4_f32[2] = 0.0;
+        V.vector4_f32[3] = 0.0;
+        return V;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        return _mm_castpd_ps(_mm_load_sd(mem::transmute::<_, *const f64>(pSource)));
+    }
+}
+
 // TODO: XMLoadFloat2A
 // TODO: XMLoadSInt2
 // TODO: XMLoadUInt2
@@ -536,6 +565,7 @@ pub fn XMLoadFloat3x3(
         M.r[2].vector4_f32[1] = pSource.m[2][1];
         M.r[2].vector4_f32[2] = pSource.m[2][2];
         M.r[2].vector4_f32[3] = 0.0;
+
         M.r[3].vector4_f32[0] = 0.0;
         M.r[3].vector4_f32[1] = 0.0;
         M.r[3].vector4_f32[2] = 0.0;
@@ -893,13 +923,57 @@ fn test_XMStoreFloat4() {
 // TODO: XMStoreFloat4A
 // TODO: XMStoreSInt4
 // TODO: XMStoreUInt4
-// TODO: XMStoreFloat3x3
+
+/// Stores an XMMATRIX in an XMFLOAT3X3.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMStoreFloat3x3>
+#[inline]
+pub fn XMStoreFloat3x3(
+    pDestination: &mut XMFLOAT3X3,
+    M: FXMMATRIX,
+)
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        pDestination.m[0][0] = M.r[0].vector4_f32[0];
+        pDestination.m[0][1] = M.r[0].vector4_f32[1];
+        pDestination.m[0][2] = M.r[0].vector4_f32[2];
+
+        pDestination.m[1][0] = M.r[1].vector4_f32[0];
+        pDestination.m[1][1] = M.r[1].vector4_f32[1];
+        pDestination.m[1][2] = M.r[1].vector4_f32[2];
+
+        pDestination.m[2][0] = M.r[2].vector4_f32[0];
+        pDestination.m[2][1] = M.r[2].vector4_f32[1];
+        pDestination.m[2][2] = M.r[2].vector4_f32[2];
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut vTemp1: XMVECTOR = M.r[0];
+        let mut vTemp2: XMVECTOR = M.r[1];
+        let mut vTemp3: XMVECTOR = M.r[2];
+        let vWork: XMVECTOR = _mm_shuffle_ps(vTemp1, vTemp2, _MM_SHUFFLE(0, 0, 2, 2));
+        vTemp1 = _mm_shuffle_ps(vTemp1, vWork, _MM_SHUFFLE(2, 0, 1, 0));
+        _mm_storeu_ps(&mut pDestination.m[0][0], vTemp1);
+        vTemp2 = _mm_shuffle_ps(vTemp2, vTemp3, _MM_SHUFFLE(1, 0, 2, 1));
+        _mm_storeu_ps(&mut pDestination.m[1][1], vTemp2);
+        vTemp3 = XM_PERMUTE_PS!(vTemp3, _MM_SHUFFLE(2, 2, 2, 2));
+        _mm_store_ss(&mut pDestination.m[2][2], vTemp3);
+    }
+}
+
 // TODO: XMStoreFloat4x3
 // TODO: XMStoreFloat4x3A
 // TODO: XMStoreFloat3x4
 // TODO: XMStoreFloat3x4A
 
-/// Descriptrion
+/// Stores an XMMATRIX in an XMFLOAT4X4.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMStoreFloat4x4>
 #[inline]

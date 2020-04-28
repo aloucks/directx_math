@@ -879,11 +879,83 @@ pub fn XMQuaternionToAxisAngle(
 // TODO: XMPlaneIsNaN
 // TODO: XMPlaneIsInfinite
 
-// TODO: XMPlaneDot
+/// Calculates the dot product between an input plane and a 4D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneDot>
+#[inline]
+pub fn XMPlaneDot(
+    P: FXMVECTOR,
+    V: FXMVECTOR,
+) -> XMVECTOR
+{
+    return XMVector4Dot(P, V);
+}
+
 // TODO: XMPlaneDotCoord
 // TODO: XMPlaneDotNormal
 // TODO: XMPlaneNormalizeEst
-// TODO: XMPlaneNormalize
+
+/// Normalizes the coefficients of a plane so that coefficients of x, y, and z form a unit normal vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneNormalize>
+#[inline]
+pub fn XMPlaneNormalize(
+    P: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut fLengthSq: f32 = sqrtf((P.vector4_f32[0] * P.vector4_f32[0]) + (P.vector4_f32[1] * P.vector4_f32[1]) + (P.vector4_f32[2] * P.vector4_f32[2]));
+        // Prevent divide by zero
+        if (fLengthSq > 0.0)
+        {
+            fLengthSq = 1.0 / fLengthSq;
+        }
+        let vResult = XMVECTORF32 { f: [
+                P.vector4_f32[0] * fLengthSq,
+                P.vector4_f32[1] * fLengthSq,
+                P.vector4_f32[2] * fLengthSq,
+                P.vector4_f32[3] * fLengthSq
+        ] };
+        return vResult.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    unsafe {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE4_INTRINSICS_)]
+    unsafe {
+        let mut vLengthSq: XMVECTOR = _mm_dp_ps(P, P, 0x7f);
+        // Prepare for the division
+        let mut vResult: XMVECTOR = _mm_sqrt_ps(vLengthSq);
+        // Failsafe on zero (Or epsilon) length planes
+        // If the length is infinity, set the elements to zero
+        vLengthSq = _mm_cmpneq_ps(vLengthSq, g_XMInfinity.v);
+        // Reciprocal mul to perform the normalization
+        vResult = _mm_div_ps(P, vResult);
+        // Any that are infinity, set to zero
+        vResult = _mm_and_ps(vResult, vLengthSq);
+        return vResult;
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        let mut vLengthSq: XMVECTOR = _mm_dp_ps(P, P, 0x7f);
+        // Prepare for the division
+        let mut vResult: XMVECTOR = _mm_sqrt_ps(vLengthSq);
+        // Failsafe on zero (Or epsilon) length planes
+        // If the length is infinity, set the elements to zero
+        vLengthSq = _mm_cmpneq_ps(vLengthSq, g_XMInfinity.v);
+        // Reciprocal mul to perform the normalization
+        vResult = _mm_div_ps(P, vResult);
+        // Any that are infinity, set to zero
+        vResult = _mm_and_ps(vResult, vLengthSq);
+        return vResult;
+    }
+}
+
 // TODO: XMPlaneIntersectLine
 // TODO: XMPlaneIntersectPlane
 // TODO: XMPlaneTransform
@@ -935,6 +1007,32 @@ pub fn XMScalarNearEqual(
 {
     let Delta: f32 = S1 - S2;
     return (fabsf(Delta) <= Epsilon);
+}
+
+/// Computes an angle between -XM_PI and XM_PI.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarModAngle>
+#[inline]
+pub fn XMScalarModAngle(
+    Angle: f32
+) -> f32
+{
+    // Note: The modulo is performed with unsigned math only to work
+    // around a precision error on numbers that are close to PI
+
+    // Normalize the range from 0.0f to XM_2PI
+    let Angle = Angle + XM_PI;
+    // Perform the modulo, unsigned
+    let mut fTemp: f32 = fabsf(Angle);
+    fTemp = fTemp - (XM_2PI * ((fTemp / XM_2PI) as i32) as f32);
+    // Restore the number to the range of -XM_PI to XM_PI-epsilon
+    fTemp = fTemp - XM_PI;
+    // If the modulo'd value was negative, restore negation
+    if (Angle < 0.0)
+    {
+        fTemp = -fTemp;
+    }
+    return fTemp;
 }
 
 /// Computes the sine of a radian angle.

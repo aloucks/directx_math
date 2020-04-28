@@ -39,3 +39,7 @@ $2: $1
 
 \n^[^XM].*$\n*
 ;\n
+
+
+^([\w]+).*$
+pub use crate::convert::$1;

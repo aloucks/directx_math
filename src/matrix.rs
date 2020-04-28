@@ -1607,13 +1607,335 @@ pub fn XMMatrixScalingFromVector(
     }
 }
 
-// TODO: XMMatrixRotationX
-// TODO: XMMatrixRotationY
-// TODO: XMMatrixRotationZ
-// TODO: XMMatrixRotationRollPitchYaw
-// TODO: XMMatrixRotationRollPitchYawFromVector
-// TODO: XMMatrixRotationNormal
-// TODO: XMMatrixRotationAxis
+/// Builds a matrix that rotates around the x-axis.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixRotationX>
+#[inline]
+pub fn XMMatrixRotationX(
+    Angle: f32,
+) -> XMMATRIX
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut fSinAngle: f32 = 0.0;
+        let mut fCosAngle: f32 = 0.0;
+        XMScalarSinCos(&mut fSinAngle, &mut fCosAngle, Angle);
+
+        let mut M: XMMATRIX = uninitialized();
+        M.m[0][0] = 1.0;
+        M.m[0][1] = 0.0;
+        M.m[0][2] = 0.0;
+        M.m[0][3] = 0.0;
+
+        M.m[1][0] = 0.0;
+        M.m[1][1] = fCosAngle;
+        M.m[1][2] = fSinAngle;
+        M.m[1][3] = 0.0;
+
+        M.m[2][0] = 0.0;
+        M.m[2][1] = -fSinAngle;
+        M.m[2][2] = fCosAngle;
+        M.m[2][3] = 0.0;
+
+        M.m[3][0] = 0.0;
+        M.m[3][1] = 0.0;
+        M.m[3][2] = 0.0;
+        M.m[3][3] = 1.0;
+        return M;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut SinAngle: f32 = 0.0;
+        let mut CosAngle: f32 = 0.0;
+        XMScalarSinCos(&mut SinAngle, &mut CosAngle, Angle);
+
+        let vSin: XMVECTOR = _mm_set_ss(SinAngle);
+        let mut vCos: XMVECTOR = _mm_set_ss(CosAngle);
+        // x = 0,y = cos,z = sin, w = 0
+        vCos = _mm_shuffle_ps(vCos, vSin, _MM_SHUFFLE(3, 0, 0, 3));
+        let mut M: XMMATRIX = uninitialized();
+        M.r[0] = g_XMIdentityR0.v;
+        M.r[1] = vCos;
+        // x = 0,y = sin,z = cos, w = 0
+        vCos = XM_PERMUTE_PS!(vCos, _MM_SHUFFLE(3, 1, 2, 0));
+        // x = 0,y = -sin,z = cos, w = 0
+        vCos = _mm_mul_ps(vCos, g_XMNegateY.v);
+        M.r[2] = vCos;
+        M.r[3] = g_XMIdentityR3.v;
+        return M;
+    }
+}
+
+/// Builds a matrix that rotates around the y-axis.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixRotationY>
+#[inline]
+pub fn XMMatrixRotationY(
+    Angle: f32,
+) -> XMMATRIX
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut fSinAngle: f32 = 0.0;
+        let mut fCosAngle: f32 = 0.0;
+        XMScalarSinCos(&mut fSinAngle, &mut fCosAngle, Angle);
+
+        let mut M: XMMATRIX = uninitialized();
+        M.m[0][0] = fCosAngle;
+        M.m[0][1] = 0.0;
+        M.m[0][2] = -fSinAngle;
+        M.m[0][3] = 0.0;
+
+        M.m[1][0] = 0.0;
+        M.m[1][1] = 1.0;
+        M.m[1][2] = 0.0;
+        M.m[1][3] = 0.0;
+
+        M.m[2][0] = fSinAngle;
+        M.m[2][1] = 0.0;
+        M.m[2][2] = fCosAngle;
+        M.m[2][3] = 0.0;
+
+        M.m[3][0] = 0.0;
+        M.m[3][1] = 0.0;
+        M.m[3][2] = 0.0;
+        M.m[3][3] = 1.0;
+        return M;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut SinAngle: f32 = 0.0;
+        let mut CosAngle: f32 = 0.0;
+        XMScalarSinCos(&mut SinAngle, &mut CosAngle, Angle);
+
+        let mut vSin: XMVECTOR = _mm_set_ss(SinAngle);
+        let vCos: XMVECTOR = _mm_set_ss(CosAngle);
+        // x = sin,y = 0,z = cos, w = 0
+        vSin = _mm_shuffle_ps(vSin, vCos, _MM_SHUFFLE(3, 0, 3, 0));
+        let mut M: XMMATRIX = uninitialized();
+        M.r[2] = vSin;
+        M.r[1] = g_XMIdentityR1.v;
+        // x = cos,y = 0,z = sin, w = 0
+        vSin = XM_PERMUTE_PS!(vSin, _MM_SHUFFLE(3, 0, 1, 2));
+        // x = cos,y = 0,z = -sin, w = 0
+        vSin = _mm_mul_ps(vSin, g_XMNegateZ.v);
+        M.r[0] = vSin;
+        M.r[3] = g_XMIdentityR3.v;
+        return M;
+    }
+}
+
+/// Builds a matrix that rotates around the z-axis.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixRotationZ>
+#[inline]
+pub fn XMMatrixRotationZ(
+    Angle: f32,
+) -> XMMATRIX
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut fSinAngle: f32 = 0.0;
+        let mut fCosAngle: f32 = 0.0;
+        XMScalarSinCos(&mut fSinAngle, &mut fCosAngle, Angle);
+
+        let mut M: XMMATRIX = uninitialized();
+        M.m[0][0] = fCosAngle;
+        M.m[0][1] = fSinAngle;
+        M.m[0][2] = 0.0;
+        M.m[0][3] = 0.0;
+
+        M.m[1][0] = -fSinAngle;
+        M.m[1][1] = fCosAngle;
+        M.m[1][2] = 0.0;
+        M.m[1][3] = 0.0;
+
+        M.m[2][0] = 0.0;
+        M.m[2][1] = 0.0;
+        M.m[2][2] = 1.0;
+        M.m[2][3] = 0.0;
+
+        M.m[3][0] = 0.0;
+        M.m[3][1] = 0.0;
+        M.m[3][2] = 0.0;
+        M.m[3][3] = 1.0;
+        return M;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut SinAngle: f32 = 0.0;
+        let mut CosAngle: f32 = 0.0;
+        XMScalarSinCos(&mut SinAngle, &mut CosAngle, Angle);
+
+        let vSin: XMVECTOR = _mm_set_ss(SinAngle);
+        let mut vCos: XMVECTOR = _mm_set_ss(CosAngle);
+        // x = cos,y = sin,z = 0, w = 0
+        vCos = _mm_unpacklo_ps(vCos, vSin);
+        let mut M: XMMATRIX = uninitialized();
+        M.r[0] = vCos;
+        // x = sin,y = cos,z = 0, w = 0
+        vCos = XM_PERMUTE_PS!(vCos, _MM_SHUFFLE(3, 2, 0, 1));
+        // x = cos,y = -sin,z = 0, w = 0
+        vCos = _mm_mul_ps(vCos, g_XMNegateX.v);
+        M.r[1] = vCos;
+        M.r[2] = g_XMIdentityR2.v;
+        M.r[3] = g_XMIdentityR3.v;
+        return M;
+    }
+}
+
+/// Builds a rotation matrix based on a vector containing the Euler angles (pitch, yaw, and roll).
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixRotationRollPitchYawFromVector>
+#[inline]
+pub fn XMMatrixRotationRollPitchYaw(
+    Pitch: f32,
+    Yaw: f32,
+    Roll: f32,
+) -> XMMATRIX
+{
+    let Angles: XMVECTOR = XMVectorSet(Pitch, Yaw, Roll, 0.0);
+    return XMMatrixRotationRollPitchYawFromVector(Angles);
+}
+
+/// Builds a rotation matrix based on a vector containing the Euler angles (pitch, yaw, and roll).
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixRotationRollPitchYawFromVector>
+#[inline]
+pub fn XMMatrixRotationRollPitchYawFromVector(
+    Angles: FXMVECTOR,
+) -> XMMATRIX
+{
+    let Q: XMVECTOR = XMQuaternionRotationRollPitchYawFromVector(Angles);
+    return XMMatrixRotationQuaternion(Q);
+}
+
+/// Builds a matrix that rotates around an arbitrary normal vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixRotationNormal>
+#[inline]
+pub fn XMMatrixRotationNormal(
+    NormalAxis: FXMVECTOR,
+    Angle: f32,
+) -> XMMATRIX
+{
+    #[cfg(any(_XM_NO_INTRINSICS_, _XM_ARM_NEON_INTRINSICS_))]
+    unsafe {
+        let mut fSinAngle: f32 = 0.0;
+        let mut fCosAngle: f32 = 0.0;
+        XMScalarSinCos(&mut fSinAngle, &mut fCosAngle, Angle);
+
+        let A: XMVECTOR = XMVectorSet(fSinAngle, fCosAngle, 1.0 - fCosAngle, 0.0);
+
+        let C2: XMVECTOR = XMVectorSplatZ(A);
+        let C1: XMVECTOR = XMVectorSplatY(A);
+        let C0: XMVECTOR = XMVectorSplatX(A);
+
+        let N0: XMVECTOR = <(XM_SWIZZLE_Y, XM_SWIZZLE_Z, XM_SWIZZLE_X, XM_SWIZZLE_W)>::XMVectorSwizzle(NormalAxis);
+        let N1: XMVECTOR = <(XM_SWIZZLE_Z, XM_SWIZZLE_X, XM_SWIZZLE_Y, XM_SWIZZLE_W)>::XMVectorSwizzle(NormalAxis);
+
+        let mut V0: XMVECTOR = XMVectorMultiply(C2, N0);
+        V0 = XMVectorMultiply(V0, N1);
+
+        let mut R0: XMVECTOR = XMVectorMultiply(C2, NormalAxis);
+        R0 = XMVectorMultiplyAdd(R0, NormalAxis, C1);
+
+        let R1: XMVECTOR = XMVectorMultiplyAdd(C0, NormalAxis, V0);
+        let R2: XMVECTOR = XMVectorNegativeMultiplySubtract(C0, NormalAxis, V0);
+
+        V0 = XMVectorSelect(A, R0, g_XMSelect1110.v);
+        let V1: XMVECTOR = <(XM_PERMUTE_0Z, XM_PERMUTE_1Y, XM_PERMUTE_1Z, XM_PERMUTE_0X)>::XMVectorPermute(R1, R2);
+        let V2: XMVECTOR = <(XM_PERMUTE_0Y, XM_PERMUTE_1X, XM_PERMUTE_0Y, XM_PERMUTE_1X)>::XMVectorPermute(R1, R2);
+
+        let mut M: XMMATRIX = uninitialized();
+        M.r[0] = <(XM_PERMUTE_0X, XM_PERMUTE_1X, XM_PERMUTE_1Y, XM_PERMUTE_0W)>::XMVectorPermute(V0, V1);
+        M.r[1] = <(XM_PERMUTE_1Z, XM_PERMUTE_0Y, XM_PERMUTE_1W, XM_PERMUTE_0W)>::XMVectorPermute(V0, V1);
+        M.r[2] = <(XM_PERMUTE_1X, XM_PERMUTE_1Y, XM_PERMUTE_0Z, XM_PERMUTE_0W)>::XMVectorPermute(V0, V2);
+        M.r[3] = g_XMIdentityR3.v;
+        return M;
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut fSinAngle: f32 = 0.0;
+        let mut fCosAngle: f32 = 0.0;
+        XMScalarSinCos(&mut fSinAngle, &mut fCosAngle, Angle);
+
+        let C2: XMVECTOR = _mm_set_ps1(1.0 - fCosAngle);
+        let C1: XMVECTOR = _mm_set_ps1(fCosAngle);
+        let C0: XMVECTOR = _mm_set_ps1(fSinAngle);
+
+        let N0: XMVECTOR = XM_PERMUTE_PS!(NormalAxis, _MM_SHUFFLE(3, 0, 2, 1));
+        let N1: XMVECTOR = XM_PERMUTE_PS!(NormalAxis, _MM_SHUFFLE(3, 1, 0, 2));
+
+        let mut V0: XMVECTOR = _mm_mul_ps(C2, N0);
+        V0 = _mm_mul_ps(V0, N1);
+
+        let mut R0: XMVECTOR = _mm_mul_ps(C2, NormalAxis);
+        R0 = _mm_mul_ps(R0, NormalAxis);
+        R0 = _mm_add_ps(R0, C1);
+
+        let mut R1: XMVECTOR = _mm_mul_ps(C0, NormalAxis);
+        R1 = _mm_add_ps(R1, V0);
+        let mut R2: XMVECTOR = _mm_mul_ps(C0, NormalAxis);
+        R2 = _mm_sub_ps(V0, R2);
+
+        V0 = _mm_and_ps(R0, g_XMMask3.v);
+        let mut V1: XMVECTOR = _mm_shuffle_ps(R1, R2, _MM_SHUFFLE(2, 1, 2, 0));
+        V1 = XM_PERMUTE_PS!(V1, _MM_SHUFFLE(0, 3, 2, 1));
+        let mut V2: XMVECTOR = _mm_shuffle_ps(R1, R2, _MM_SHUFFLE(0, 0, 1, 1));
+        V2 = XM_PERMUTE_PS!(V2, _MM_SHUFFLE(2, 0, 2, 0));
+
+        R2 = _mm_shuffle_ps(V0, V1, _MM_SHUFFLE(1, 0, 3, 0));
+        R2 = XM_PERMUTE_PS!(R2, _MM_SHUFFLE(1, 3, 2, 0));
+
+        let mut M: XMMATRIX = uninitialized();
+        M.r[0] = R2;
+
+        R2 = _mm_shuffle_ps(V0, V1, _MM_SHUFFLE(3, 2, 3, 1));
+        R2 = XM_PERMUTE_PS!(R2, _MM_SHUFFLE(1, 3, 0, 2));
+        M.r[1] = R2;
+
+        V2 = _mm_shuffle_ps(V2, V0, _MM_SHUFFLE(3, 2, 1, 0));
+        M.r[2] = V2;
+        M.r[3] = g_XMIdentityR3.v;
+        return M;
+    }
+}
+
+/// Builds a rotation matrix based on a vector containing the Euler angles (pitch, yaw, and roll).
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixRotationRollPitchYawFromVector>
+#[inline]
+pub fn XMMatrixRotationAxis(
+    Axis: FXMVECTOR,
+    Angle: f32,
+) -> XMMATRIX
+{
+    debug_assert!(!XMVector3Equal(Axis, XMVectorZero()));
+    debug_assert!(!XMVector3IsInfinite(Axis));
+
+    let Normal: XMVECTOR = XMVector3Normalize(Axis);
+    return XMMatrixRotationNormal(Normal, Angle);
+}
 
 /// Builds a rotation matrix from a quaternion.
 ///
@@ -1706,7 +2028,47 @@ pub fn XMMatrixRotationQuaternion(
     }
 }
 
-// TODO: XMMatrixTransformation2D
+/// Builds a 2D transformation matrix.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixTransformation2D>
+#[inline]
+pub fn XMMatrixTransformation2D(
+    ScalingOrigin: FXMVECTOR,
+    ScalingOrientation: f32,
+    Scaling: FXMVECTOR,
+    RotationOrigin: FXMVECTOR,
+    Rotation: f32,
+    Translation: GXMVECTOR
+) -> XMMATRIX
+{
+    unsafe {
+        // M = Inverse(MScalingOrigin) * Transpose(MScalingOrientation) * MScaling * MScalingOrientation *
+        //         MScalingOrigin * Inverse(MRotationOrigin) * MRotation * MRotationOrigin * MTranslation;
+
+        let VScalingOrigin: XMVECTOR = XMVectorSelect(g_XMSelect1100.v, ScalingOrigin, g_XMSelect1100.v);
+        let NegScalingOrigin: XMVECTOR = XMVectorNegate(VScalingOrigin);
+
+        let MScalingOriginI: XMMATRIX = XMMatrixTranslationFromVector(NegScalingOrigin);
+        let MScalingOrientation: XMMATRIX = XMMatrixRotationZ(ScalingOrientation);
+        let MScalingOrientationT: XMMATRIX = XMMatrixTranspose(MScalingOrientation);
+        let VScaling: XMVECTOR = XMVectorSelect(g_XMOne.v, Scaling, g_XMSelect1100.v);
+        let MScaling: XMMATRIX = XMMatrixScalingFromVector(VScaling);
+        let VRotationOrigin: XMVECTOR = XMVectorSelect(g_XMSelect1100.v, RotationOrigin, g_XMSelect1100.v);
+        let MRotation: XMMATRIX = XMMatrixRotationZ(Rotation);
+        let VTranslation: XMVECTOR = XMVectorSelect(g_XMSelect1100.v, Translation, g_XMSelect1100.v);
+
+        let mut M: XMMATRIX = XMMatrixMultiply(MScalingOriginI, &MScalingOrientationT);
+        M = XMMatrixMultiply(M, &MScaling);
+        M = XMMatrixMultiply(M, &MScalingOrientation);
+        M.r[3] = XMVectorAdd(M.r[3], VScalingOrigin);
+        M.r[3] = XMVectorSubtract(M.r[3], VRotationOrigin);
+        M = XMMatrixMultiply(M, &MRotation);
+        M.r[3] = XMVectorAdd(M.r[3], VRotationOrigin);
+        M.r[3] = XMVectorAdd(M.r[3], VTranslation);
+
+        return M;
+    }
+}
 
 /// Builds a transformation matrix.
 ///
@@ -1749,7 +2111,35 @@ pub fn XMMatrixTransformation(
     }
 }
 
-// TODO: XMMatrixAffineTransformation2D
+/// Builds a 2D affine transformation matrix in the xy plane.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixAffineTransformation2D>
+#[inline]
+pub fn XMMatrixAffineTransformation2D(
+    Scaling: FXMVECTOR,
+    RotationOrigin: FXMVECTOR,
+    Rotation: f32,
+    Translation: GXMVECTOR
+) -> XMMATRIX
+{
+    unsafe {
+        // M = MScaling * Inverse(MRotationOrigin) * MRotation * MRotationOrigin * MTranslation;
+
+        let VScaling: XMVECTOR = XMVectorSelect(g_XMOne.v, Scaling, g_XMSelect1100.v);
+        let MScaling: XMMATRIX = XMMatrixScalingFromVector(VScaling);
+        let VRotationOrigin: XMVECTOR = XMVectorSelect(g_XMSelect1100.v, RotationOrigin, g_XMSelect1100.v);
+        let MRotation: XMMATRIX = XMMatrixRotationZ(Rotation);
+        let VTranslation: XMVECTOR = XMVectorSelect(g_XMSelect1100.v, Translation, g_XMSelect1100.v);
+
+        let mut M: XMMATRIX;
+        M = MScaling;
+        M.r[3] = XMVectorSubtract(M.r[3], VRotationOrigin);
+        M = XMMatrixMultiply(M, &MRotation);
+        M.r[3] = XMVectorAdd(M.r[3], VRotationOrigin);
+        M.r[3] = XMVectorAdd(M.r[3], VTranslation);
+        return M;
+    }
+}
 
 /// Builds an affine transformation matrix.
 ///
@@ -1780,8 +2170,74 @@ pub fn XMMatrixAffineTransformation(
     }
 }
 
-// TODO: XMMatrixReflect
-// TODO: XMMatrixShadow
+/// Builds a transformation matrix designed to reflect vectors through a given plane.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixReflect>
+#[inline]
+pub fn XMMatrixReflect(
+    ReflectionPlane: FXMVECTOR
+) -> XMMATRIX
+{
+    unsafe {
+        debug_assert!(!XMVector3Equal(ReflectionPlane, XMVectorZero()));
+        // FIXME: XMPlaneIsInfinite
+        // debug_assert!(!XMPlaneIsInfinite(ReflectionPlane));
+
+        const NegativeTwo: XMVECTORF32 = XMVECTORF32 { f: [ -2.0, -2.0, -2.0, 0.0 ] };
+
+        let P: XMVECTOR = XMPlaneNormalize(ReflectionPlane);
+        let S: XMVECTOR = XMVectorMultiply(P, NegativeTwo.v);
+
+        let A: XMVECTOR = XMVectorSplatX(P);
+        let B: XMVECTOR = XMVectorSplatY(P);
+        let C: XMVECTOR = XMVectorSplatZ(P);
+        let D: XMVECTOR = XMVectorSplatW(P);
+
+        let mut M: XMMATRIX = uninitialized();
+        M.r[0] = XMVectorMultiplyAdd(A, S, g_XMIdentityR0.v);
+        M.r[1] = XMVectorMultiplyAdd(B, S, g_XMIdentityR1.v);
+        M.r[2] = XMVectorMultiplyAdd(C, S, g_XMIdentityR2.v);
+        M.r[3] = XMVectorMultiplyAdd(D, S, g_XMIdentityR3.v);
+        return M;
+    }
+}
+
+/// Builds a transformation matrix that flattens geometry into a plane.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixShadow>
+#[inline]
+pub fn XMMatrixShadow(
+    ShadowPlane: FXMVECTOR,
+    LightPosition: FXMVECTOR,
+) -> XMMATRIX
+{
+    unsafe {
+        const Select0001: XMVECTORU32 = XMVECTORU32 { u: [ XM_SELECT_0, XM_SELECT_0, XM_SELECT_0, XM_SELECT_1 ] };
+
+        debug_assert!(!XMVector3Equal(ShadowPlane, XMVectorZero()));
+        // FIXME: XMPlaneIsInfinite
+        // debug_assert!(!XMPlaneIsInfinite(ShadowPlane));
+
+        let mut P: XMVECTOR = XMPlaneNormalize(ShadowPlane);
+        let mut Dot: XMVECTOR = XMPlaneDot(P, LightPosition);
+        P = XMVectorNegate(P);
+        let D: XMVECTOR = XMVectorSplatW(P);
+        let C: XMVECTOR = XMVectorSplatZ(P);
+        let B: XMVECTOR = XMVectorSplatY(P);
+        let A: XMVECTOR = XMVectorSplatX(P);
+        Dot = XMVectorSelect(Select0001.v, Dot, Select0001.v);
+
+        let mut M: XMMATRIX = uninitialized();
+        M.r[3] = XMVectorMultiplyAdd(D, LightPosition, Dot);
+        Dot = XMVectorRotateLeft(Dot, 1);
+        M.r[2] = XMVectorMultiplyAdd(C, LightPosition, Dot);
+        Dot = XMVectorRotateLeft(Dot, 1);
+        M.r[1] = XMVectorMultiplyAdd(B, LightPosition, Dot);
+        Dot = XMVectorRotateLeft(Dot, 1);
+        M.r[0] = XMVectorMultiplyAdd(A, LightPosition, Dot);
+        return M;
+    }
+}
 
 /// Builds a view matrix for a left-handed coordinate system using a camera position, an up direction, and a focal point.
 ///
