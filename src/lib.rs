@@ -866,11 +866,11 @@ mod doc {
                 pub use crate::vector::XMVector4Equal;
                 pub use crate::vector::XMVector4EqualInt;
                 pub use crate::vector::XMVector4EqualIntR;
-                // TODO: pub use crate::vector::XMVector4EqualR;
+                pub use crate::vector::XMVector4EqualR;
                 pub use crate::vector::XMVector4Greater;
                 pub use crate::vector::XMVector4GreaterOrEqual;
-                // TODO: pub use crate::vector::XMVector4GreaterOrEqualR;
-                // TODO: pub use crate::vector::XMVector4GreaterR;
+                pub use crate::vector::XMVector4GreaterOrEqualR;
+                pub use crate::vector::XMVector4GreaterR;
                 pub use crate::vector::XMVector4IsInfinite;
                 pub use crate::vector::XMVector4IsNaN;
                 pub use crate::vector::XMVector4Less;
@@ -884,11 +884,11 @@ mod doc {
             ///
             /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector4-geometric>
             pub mod geometric {
-                // TODO: pub use crate::vector::XMVector4AngleBetweenNormals;
-                // TODO: pub use crate::vector::XMVector4AngleBetweenNormalsEst;
-                // TODO: pub use crate::vector::XMVector4AngleBetweenVectors;
-                // TODO: pub use crate::vector::XMVector4ClampLength;
-                // TODO: pub use crate::vector::XMVector4ClampLengthV;
+                pub use crate::vector::XMVector4AngleBetweenNormals;
+                pub use crate::vector::XMVector4AngleBetweenNormalsEst;
+                pub use crate::vector::XMVector4AngleBetweenVectors;
+                pub use crate::vector::XMVector4ClampLength;
+                pub use crate::vector::XMVector4ClampLengthV;
                 pub use crate::vector::XMVector4Cross;
                 pub use crate::vector::XMVector4Dot;
                 pub use crate::vector::XMVector4InBounds;
@@ -897,15 +897,15 @@ mod doc {
                 pub use crate::vector::XMVector4LengthSq;
                 pub use crate::vector::XMVector4Normalize;
                 pub use crate::vector::XMVector4NormalizeEst;
-                // TODO: pub use crate::vector::XMVector4Orthogonal;
+                pub use crate::vector::XMVector4Orthogonal;
                 pub use crate::vector::XMVector4ReciprocalLength;
                 pub use crate::vector::XMVector4ReciprocalLengthEst;
-                // TODO: pub use crate::vector::XMVector4Reflect;
-                // TODO: pub use crate::vector::XMVector4Refract;
-                // TODO: pub use crate::vector::XMVector4RefractV;
+                pub use crate::vector::XMVector4Reflect;
+                pub use crate::vector::XMVector4Refract;
+                pub use crate::vector::XMVector4RefractV;
             }
             pub mod transformation {
-                // TODO: pub use crate::vector::XMVector4Transform;
+                pub use crate::vector::XMVector4Transform;
                 // TODO: pub use crate::vector::XMVector4TransformStream;
             }
         }

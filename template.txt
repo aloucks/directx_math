@@ -46,7 +46,7 @@ pub fn FunctionName(
 pub fn FunctionName(
     V1: FXMVECTOR,
     V2: FXMVECTOR,
-) -> FXMVECTOR
+) -> XMVECTOR
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {

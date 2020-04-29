@@ -7435,7 +7435,57 @@ pub fn XMVector4Equal(
     // return XMComparisonAllTrue(XMVector4EqualR(V1, V2));
 }
 
-// TODO: XMVector4EqualR
+/// Tests whether two 4D vectors are equal. In addition, this function returns a comparison value that can be examined using functions such as XMComparisonAllTrue.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4EqualR>
+#[inline]
+pub fn XMVector4EqualR(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> u32
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut CR: u32 = 0;
+
+        if ((V1.vector4_f32[0] == V2.vector4_f32[0]) &&
+            (V1.vector4_f32[1] == V2.vector4_f32[1]) &&
+            (V1.vector4_f32[2] == V2.vector4_f32[2]) &&
+            (V1.vector4_f32[3] == V2.vector4_f32[3]))
+        {
+            CR = XM_CRMASK_CR6TRUE;
+        }
+        else if ((V1.vector4_f32[0] != V2.vector4_f32[0]) &&
+            (V1.vector4_f32[1] != V2.vector4_f32[1]) &&
+            (V1.vector4_f32[2] != V2.vector4_f32[2]) &&
+            (V1.vector4_f32[3] != V2.vector4_f32[3]))
+        {
+            CR = XM_CRMASK_CR6FALSE;
+        }
+        return CR;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_cmpeq_ps(V1, V2);
+        let iTest: i32 = _mm_movemask_ps(vTemp);
+        let mut CR: u32 = 0;
+        if (iTest == 0xf)     // All equal?
+        {
+            CR = XM_CRMASK_CR6TRUE;
+        }
+        else if (iTest == 0)  // All not equal?
+        {
+            CR = XM_CRMASK_CR6FALSE;
+        }
+        return CR;
+    }
+}
 
 /// Tests whether two 4D vectors are equal, treating each component as an unsigned integer.
 ///
@@ -7647,7 +7697,56 @@ pub fn XMVector4Greater(
     // return XMComparisonAllTrue(XMVector4GreaterR(V1, V2));
 }
 
-// TODO: XMVector4GreaterR
+/// Tests whether one 4D vector is greater than another 4D vector and returns a comparison value that can be examined using functions such as XMComparisonAllTrue.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4GreaterR>
+#[inline]
+pub fn XMVector4GreaterR(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> u32
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut CR: u32 = 0;
+        if (V1.vector4_f32[0] > V2.vector4_f32[0] &&
+            V1.vector4_f32[1] > V2.vector4_f32[1] &&
+            V1.vector4_f32[2] > V2.vector4_f32[2] &&
+            V1.vector4_f32[3] > V2.vector4_f32[3])
+        {
+            CR = XM_CRMASK_CR6TRUE;
+        }
+        else if (V1.vector4_f32[0] <= V2.vector4_f32[0] &&
+            V1.vector4_f32[1] <= V2.vector4_f32[1] &&
+            V1.vector4_f32[2] <= V2.vector4_f32[2] &&
+            V1.vector4_f32[3] <= V2.vector4_f32[3])
+        {
+            CR = XM_CRMASK_CR6FALSE;
+        }
+        return CR;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut CR: u32 = 0;
+        let vTemp: XMVECTOR = _mm_cmpgt_ps(V1, V2);
+        let iTest: i32 = _mm_movemask_ps(vTemp);
+        if (iTest == 0xf)
+        {
+            CR = XM_CRMASK_CR6TRUE;
+        }
+        else if (!ibool(iTest))
+        {
+            CR = XM_CRMASK_CR6FALSE;
+        }
+        return CR;
+    }
+}
 
 /// Tests whether one 4D vector is greater-than-or-equal-to another 4D vector.
 ///
@@ -7678,7 +7777,57 @@ pub fn XMVector4GreaterOrEqual(
     // return XMComparisonAllTrue(XMVector4GreaterOrEqualR(V1, V2));
 }
 
-// TODO: XMVector4GreaterOrEqualR
+
+/// Tests whether one 4D vector is greater-than-or-equal-to another 4D vector and returns a comparison value that can be examined using functions such as XMComparisonAllTrue.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4GreaterOrEqualR>
+#[inline]
+pub fn XMVector4GreaterOrEqualR(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> u32
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut CR: u32 = 0;
+        if ((V1.vector4_f32[0] >= V2.vector4_f32[0]) &&
+            (V1.vector4_f32[1] >= V2.vector4_f32[1]) &&
+            (V1.vector4_f32[2] >= V2.vector4_f32[2]) &&
+            (V1.vector4_f32[3] >= V2.vector4_f32[3]))
+        {
+            CR = XM_CRMASK_CR6TRUE;
+        }
+        else if ((V1.vector4_f32[0] < V2.vector4_f32[0]) &&
+            (V1.vector4_f32[1] < V2.vector4_f32[1]) &&
+            (V1.vector4_f32[2] < V2.vector4_f32[2]) &&
+            (V1.vector4_f32[3] < V2.vector4_f32[3]))
+        {
+            CR = XM_CRMASK_CR6FALSE;
+        }
+        return CR;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut CR: u32 = 0;
+        let vTemp: XMVECTOR = _mm_cmpge_ps(V1, V2);
+        let iTest: i32 = _mm_movemask_ps(vTemp);
+        if (iTest == 0x0f)
+        {
+            CR = XM_CRMASK_CR6TRUE;
+        }
+        else if (!ibool(iTest))
+        {
+            CR = XM_CRMASK_CR6FALSE;
+        }
+        return CR;
+    }
+}
 
 /// Tests whether one 4D vector is less than another 4D vector.
 ///
@@ -8408,16 +8557,315 @@ pub fn XMVector4Normalize(
     }
 }
 
-// TODO: XMVector4ClampLength
-// TODO: XMVector4ClampLengthV
-// TODO: XMVector4Reflect
-// TODO: XMVector4Refract
-// TODO: XMVector4RefractV
-// TODO: XMVector4Orthogonal
-// TODO: XMVector4AngleBetweenNormalsEst
-// TODO: XMVector4AngleBetweenNormals
-// TODO: XMVector4AngleBetweenVectors
-// TODO: XMVector4Transform
+/// Clamps the length of a 4D vector to a given range.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4ClampLength>
+#[inline]
+pub fn XMVector4ClampLength(
+    V: FXMVECTOR,
+    LengthMin: f32,
+    LengthMax: f32,
+) -> XMVECTOR
+{
+    let ClampMax: XMVECTOR = XMVectorReplicate(LengthMax);
+    let ClampMin: XMVECTOR = XMVectorReplicate(LengthMin);
+
+    return XMVector4ClampLengthV(V, ClampMin, ClampMax);
+}
+
+
+/// Clamps the length of a 4D vector to a given range.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4ClampLengthV>
+#[inline]
+pub fn XMVector4ClampLengthV(
+    V: FXMVECTOR,
+    LengthMin: FXMVECTOR,
+    LengthMax: FXMVECTOR,
+) -> XMVECTOR
+{
+    unsafe {
+        debug_assert!((XMVectorGetY(LengthMin) == XMVectorGetX(LengthMin)) && (XMVectorGetZ(LengthMin) == XMVectorGetX(LengthMin)) && (XMVectorGetW(LengthMin) == XMVectorGetX(LengthMin)));
+        debug_assert!((XMVectorGetY(LengthMax) == XMVectorGetX(LengthMax)) && (XMVectorGetZ(LengthMax) == XMVectorGetX(LengthMax)) && (XMVectorGetW(LengthMax) == XMVectorGetX(LengthMax)));
+        debug_assert!(XMVector4GreaterOrEqual(LengthMin, XMVectorZero()));
+        debug_assert!(XMVector4GreaterOrEqual(LengthMax, XMVectorZero()));
+        debug_assert!(XMVector4GreaterOrEqual(LengthMax, LengthMin));
+
+        let LengthSq: XMVECTOR = XMVector4LengthSq(V);
+
+        const Zero: XMVECTOR = unsafe { g_XMZero.v };
+
+        let RcpLength: XMVECTOR = XMVectorReciprocalSqrt(LengthSq);
+
+        let InfiniteLength: XMVECTOR = XMVectorEqualInt(LengthSq, g_XMInfinity.v);
+        let ZeroLength: XMVECTOR = XMVectorEqual(LengthSq, Zero);
+
+        let mut Normal: XMVECTOR = XMVectorMultiply(V, RcpLength);
+
+        let mut Length: XMVECTOR = XMVectorMultiply(LengthSq, RcpLength);
+
+        let Select: XMVECTOR = XMVectorEqualInt(InfiniteLength, ZeroLength);
+        Length = XMVectorSelect(LengthSq, Length, Select);
+        Normal = XMVectorSelect(LengthSq, Normal, Select);
+
+        let ControlMax: XMVECTOR = XMVectorGreater(Length, LengthMax);
+        let ControlMin: XMVECTOR = XMVectorLess(Length, LengthMin);
+
+        let mut ClampLength: XMVECTOR = XMVectorSelect(Length, LengthMax, ControlMax);
+        ClampLength = XMVectorSelect(ClampLength, LengthMin, ControlMin);
+
+        let mut Result: XMVECTOR = XMVectorMultiply(Normal, ClampLength);
+
+        // Preserve the original vector (with no precision loss) if the length falls within the given range
+        let Control: XMVECTOR = XMVectorEqualInt(ControlMax, ControlMin);
+        Result = XMVectorSelect(Result, V, Control);
+
+        return Result;
+    }
+}
+
+/// Reflects an incident 4D vector across a 4D normal vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4Reflect>
+#[inline]
+pub fn XMVector4Reflect(
+    Incident: FXMVECTOR,
+    Normal: FXMVECTOR,
+) -> XMVECTOR
+{
+    // Result = Incident - (2 * dot(Incident, Normal)) * Normal
+
+    let mut Result: XMVECTOR = XMVector4Dot(Incident, Normal);
+    Result = XMVectorAdd(Result, Result);
+    Result = XMVectorNegativeMultiplySubtract(Result, Normal, Incident);
+
+    return Result;
+}
+
+/// Reflects an incident 4D vector across a 4D normal vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4Refract>
+#[inline]
+pub fn XMVector4Refract(
+    Incident: FXMVECTOR,
+    Normal: FXMVECTOR,
+    RefractionIndex: f32,
+) -> XMVECTOR
+{
+    let Index: XMVECTOR = XMVectorReplicate(RefractionIndex);
+    return XMVector4RefractV(Incident, Normal, Index);
+}
+
+/// Computes a vector perpendicular to a 4D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4RefractV>
+#[inline]
+pub fn XMVector4RefractV(
+    Incident: FXMVECTOR,
+    Normal: FXMVECTOR,
+    RefractionIndex: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let IDotN: XMVECTOR;
+        let mut R: XMVECTOR;
+        const Zero: XMVECTOR = unsafe { g_XMZero.v };
+
+        // Result = RefractionIndex * Incident - Normal * (RefractionIndex * dot(Incident, Normal) +
+        // sqrt(1 - RefractionIndex * RefractionIndex * (1 - dot(Incident, Normal) * dot(Incident, Normal))))
+
+        IDotN = XMVector4Dot(Incident, Normal);
+
+        // R = 1.0f - RefractionIndex * RefractionIndex * (1.0f - IDotN * IDotN)
+        R = XMVectorNegativeMultiplySubtract(IDotN, IDotN, g_XMOne.v);
+        R = XMVectorMultiply(R, RefractionIndex);
+        R = XMVectorNegativeMultiplySubtract(R, RefractionIndex, g_XMOne.v);
+
+        if (XMVector4LessOrEqual(R, Zero))
+        {
+            // Total internal reflection
+            return Zero;
+        }
+        else
+        {
+            let mut Result: XMVECTOR;
+
+            // R = RefractionIndex * IDotN + sqrt(R)
+            R = XMVectorSqrt(R);
+            R = XMVectorMultiplyAdd(RefractionIndex, IDotN, R);
+
+            // Result = RefractionIndex * Incident - Normal * R
+            Result = XMVectorMultiply(RefractionIndex, Incident);
+            Result = XMVectorNegativeMultiplySubtract(Normal, R, Result);
+
+            return Result;
+        }
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let IDotN: XMVECTOR = XMVector4Dot(Incident, Normal);
+
+        // R = 1.0f - RefractionIndex * RefractionIndex * (1.0f - IDotN * IDotN)
+        let mut R: XMVECTOR = XM_FNMADD_PS!(IDotN, IDotN, g_XMOne.v);
+        let R2: XMVECTOR = _mm_mul_ps(RefractionIndex, RefractionIndex);
+        R = XM_FNMADD_PS!(R, R2, g_XMOne.v);
+
+        let mut vResult: XMVECTOR = _mm_cmple_ps(R, g_XMZero.v);
+        if (_mm_movemask_ps(vResult) == 0x0f)
+        {
+            // Total internal reflection
+            vResult = g_XMZero.v;
+        }
+        else
+        {
+            // R = RefractionIndex * IDotN + sqrt(R)
+            R = _mm_sqrt_ps(R);
+            R = XM_FMADD_PS!(RefractionIndex, IDotN, R);
+            // Result = RefractionIndex * Incident - Normal * R
+            vResult = _mm_mul_ps(RefractionIndex, Incident);
+            vResult = XM_FNMADD_PS!(R, Normal, vResult);
+        }
+        return vResult;
+    }
+}
+
+
+/// Computes a vector perpendicular to a 4D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4Orthogonal>
+#[inline]
+pub fn XMVector4Orthogonal(
+    V: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Result = XMVECTORF32 { f: [
+            V.vector4_f32[2],
+            V.vector4_f32[3],
+            -V.vector4_f32[0],
+            -V.vector4_f32[1]
+        ]};
+        return Result.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        const FlipZW: XMVECTORF32 = XMVECTORF32 { f: [ 1.0, 1.0, -1.0, -1.0 ] };
+        let mut vResult: XMVECTOR = XM_PERMUTE_PS!(V, _MM_SHUFFLE(1, 0, 3, 2));
+        vResult = _mm_mul_ps(vResult, FlipZW.v);
+        return vResult;
+    }
+}
+
+/// Estimates the radian angle between two normalized 4D vectors.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4AngleBetweenNormalsEst>
+#[inline]
+pub fn XMVector4AngleBetweenNormalsEst(
+    N1: FXMVECTOR,
+    N2: FXMVECTOR,
+) -> XMVECTOR
+{
+    unsafe {
+        let mut Result: XMVECTOR = XMVector4Dot(N1, N2);
+        Result = XMVectorClamp(Result, g_XMNegativeOne.v, g_XMOne.v);
+        Result = XMVectorACosEst(Result);
+        return Result;
+    }
+}
+
+/// Computes the radian angle between two normalized 4D vectors.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4AngleBetweenNormals>
+#[inline]
+pub fn XMVector4AngleBetweenNormals(
+    N1: FXMVECTOR,
+    N2: FXMVECTOR,
+) -> XMVECTOR
+{
+    unsafe {
+        let mut Result: XMVECTOR = XMVector4Dot(N1, N2);
+        Result = XMVectorClamp(Result, g_XMNegativeOne.v, g_XMOne.v);
+        Result = XMVectorACos(Result);
+        return Result;
+    }
+}
+
+/// Compute the radian angle between two 4D vectors.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4AngleBetweenVectors>
+#[inline]
+pub fn XMVector4AngleBetweenVectors(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> XMVECTOR
+{
+    unsafe {
+        let mut L1: XMVECTOR = XMVector4ReciprocalLength(V1);
+        let L2: XMVECTOR = XMVector4ReciprocalLength(V2);
+
+        let Dot: XMVECTOR = XMVector4Dot(V1, V2);
+
+        L1 = XMVectorMultiply(L1, L2);
+
+        let mut CosAngle: XMVECTOR = XMVectorMultiply(Dot, L1);
+        CosAngle = XMVectorClamp(CosAngle, g_XMNegativeOne.v, g_XMOne.v);
+
+        return XMVectorACos(CosAngle);
+    }
+}
+
+/// Transforms a 4D vector by a matrix.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4Transform>
+#[inline]
+pub fn XMVector4Transform(
+    V: FXMVECTOR,
+    M: XMMATRIX,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let fX: f32 = (M.m[0][0] * V.vector4_f32[0]) + (M.m[1][0] * V.vector4_f32[1]) + (M.m[2][0] * V.vector4_f32[2]) + (M.m[3][0] * V.vector4_f32[3]);
+        let fY: f32 = (M.m[0][1] * V.vector4_f32[0]) + (M.m[1][1] * V.vector4_f32[1]) + (M.m[2][1] * V.vector4_f32[2]) + (M.m[3][1] * V.vector4_f32[3]);
+        let fZ: f32 = (M.m[0][2] * V.vector4_f32[0]) + (M.m[1][2] * V.vector4_f32[1]) + (M.m[2][2] * V.vector4_f32[2]) + (M.m[3][2] * V.vector4_f32[3]);
+        let fW: f32 = (M.m[0][3] * V.vector4_f32[0]) + (M.m[1][3] * V.vector4_f32[1]) + (M.m[2][3] * V.vector4_f32[2]) + (M.m[3][3] * V.vector4_f32[3]);
+        let vResult = XMVECTORF32 { f: [ fX, fY, fZ, fW ] };
+        return vResult.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut vResult: XMVECTOR = XM_PERMUTE_PS!(V, _MM_SHUFFLE(3, 3, 3, 3)); // W
+        vResult = _mm_mul_ps(vResult, M.r[3]);
+        let mut vTemp: XMVECTOR = XM_PERMUTE_PS!(V, _MM_SHUFFLE(2, 2, 2, 2)); // Z
+        vResult = XM_FMADD_PS!(vTemp, M.r[2], vResult);
+        vTemp = XM_PERMUTE_PS!(V, _MM_SHUFFLE(1, 1, 1, 1)); // Y
+        vResult = XM_FMADD_PS!(vTemp, M.r[1], vResult);
+        vTemp = XM_PERMUTE_PS!(V, _MM_SHUFFLE(0, 0, 0, 0)); // X
+        vResult = XM_FMADD_PS!(vTemp, M.r[0], vResult);
+        return vResult;
+    }
+}
+
 // TODO: XMVector4TransformStream
 
 impl From<&[f32; 4]> for XMVector {
