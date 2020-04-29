@@ -574,7 +574,74 @@ pub fn XMQuaternionSquadSetup(
 }
 
 // TODO: XMQuaternionBaryCentric
-// TODO: XMQuaternionBaryCentricV
+
+/// Returns a point in barycentric coordinates, using the specified quaternions.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionBaryCentric>
+#[inline]
+pub fn XMQuaternionBaryCentric(
+    Q0: FXMVECTOR,
+    Q1: FXMVECTOR,
+    Q2: FXMVECTOR,
+    f: f32,
+    g: f32,
+) -> XMVECTOR
+{
+    let s = f + g;
+
+    let Result: XMVECTOR;
+    if ((s < 0.00001) && (s > -0.00001))
+    {
+        Result = Q0;
+    }
+    else
+    {
+        let Q01: XMVECTOR = XMQuaternionSlerp(Q0, Q1, s);
+        let Q02: XMVECTOR = XMQuaternionSlerp(Q0, Q2, s);
+
+        Result = XMQuaternionSlerp(Q01, Q02, g / s);
+    }
+
+    return Result;
+}
+
+/// Returns a point in barycentric coordinates, using the specified quaternions.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionBaryCentricV>
+#[inline]
+pub fn XMQuaternionBaryCentricV(
+    Q0: FXMVECTOR,
+    Q1: FXMVECTOR,
+    Q2: FXMVECTOR,
+    F: FXMVECTOR,
+    G: FXMVECTOR,
+) -> XMVECTOR
+{
+    debug_assert!((XMVectorGetY(F) == XMVectorGetX(F)) && (XMVectorGetZ(F) == XMVectorGetX(F)) && (XMVectorGetW(F) == XMVectorGetX(F)));
+    debug_assert!((XMVectorGetY(G) == XMVectorGetX(G)) && (XMVectorGetZ(G) == XMVectorGetX(G)) && (XMVectorGetW(G) == XMVectorGetX(G)));
+
+    // PERFORMANCE: const
+    let Epsilon: XMVECTOR = XMVectorSplatConstant(1, 16);
+
+    let S: XMVECTOR = XMVectorAdd(F, G);
+
+    let Result: XMVECTOR;
+    if (XMVector4InBounds(S, Epsilon))
+    {
+        Result = Q0;
+    }
+    else
+    {
+        let Q01: XMVECTOR = XMQuaternionSlerpV(Q0, Q1, S);
+        let Q02: XMVECTOR = XMQuaternionSlerpV(Q0, Q2, S);
+        let mut GS: XMVECTOR = XMVectorReciprocal(S);
+        GS = XMVectorMultiply(G, GS);
+
+        Result = XMQuaternionSlerpV(Q01, Q02, GS);
+    }
+
+    return Result;
+}
 
 /// Returns the identity quaternion.
 ///

@@ -4765,7 +4765,79 @@ pub fn XMVectorHermite(
     }
 }
 
-// TODO: XMVectorHermiteV
+/// Performs a Hermite spline interpolation, using the specified vectors.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorHermiteV>
+#[inline]
+pub fn XMVectorHermiteV(
+    Position0: FXMVECTOR,
+    Tangent0: FXMVECTOR,
+    Position1: FXMVECTOR,
+    Tangent1: GXMVECTOR,
+    T: HXMVECTOR,
+) -> XMVECTOR
+{
+    // Result = (2 * t^3 - 3 * t^2 + 1) * Position0 +
+    //          (t^3 - 2 * t^2 + t) * Tangent0 +
+    //          (-2 * t^3 + 3 * t^2) * Position1 +
+    //          (t^3 - t^2) * Tangent1
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let T2: XMVECTOR = XMVectorMultiply(T, T);
+        let T3: XMVECTOR = XMVectorMultiply(T, T2);
+
+        let P0: XMVECTOR = XMVectorReplicate(2.0 * T3.vector4_f32[0] - 3.0 * T2.vector4_f32[0] + 1.0);
+        let T0: XMVECTOR = XMVectorReplicate(T3.vector4_f32[1] - 2.0 * T2.vector4_f32[1] + T.vector4_f32[1]);
+        let P1: XMVECTOR = XMVectorReplicate(-2.0 * T3.vector4_f32[2] + 3.0 * T2.vector4_f32[2]);
+        let T1: XMVECTOR = XMVectorReplicate(T3.vector4_f32[3] - T2.vector4_f32[3]);
+
+        let mut Result: XMVECTOR = XMVectorMultiply(P0, Position0);
+        Result = XMVectorMultiplyAdd(T0, Tangent0, Result);
+        Result = XMVectorMultiplyAdd(P1, Position1, Result);
+        Result = XMVectorMultiplyAdd(T1, Tangent1, Result);
+
+        return Result;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        const CatMulT2: XMVECTORF32 = XMVECTORF32 { f: [ -3.0, -2.0, 3.0, -1.0 ] };
+        const CatMulT3: XMVECTORF32 = XMVECTORF32 { f: [ 2.0, 1.0, -2.0, 1.0 ] };
+
+        let mut T2: XMVECTOR = _mm_mul_ps(T, T);
+        let mut T3: XMVECTOR = _mm_mul_ps(T, T2);
+        // Mul by the constants against t^2
+        T2 = _mm_mul_ps(T2, CatMulT2.v);
+        // Mul by the constants against t^3
+        T3 = XM_FMADD_PS!(T3, CatMulT3.v, T2);
+        // T3 now has the pre-result.
+        // I need to add t.y only
+        T2 = _mm_and_ps(T, g_XMMaskY.v);
+        T3 = _mm_add_ps(T3, T2);
+        // Add 1.0f to x
+        T3 = _mm_add_ps(T3, g_XMIdentityR0.v);
+        // Now, I have the constants created
+        // Mul the x constant to Position0
+        let mut vResult: XMVECTOR = XM_PERMUTE_PS!(T3, _MM_SHUFFLE(0, 0, 0, 0));
+        vResult = _mm_mul_ps(vResult, Position0);
+        // Mul the y constant to Tangent0
+        T2 = XM_PERMUTE_PS!(T3, _MM_SHUFFLE(1, 1, 1, 1));
+        vResult = XM_FMADD_PS!(T2, Tangent0, vResult);
+        // Mul the z constant to Position1
+        T2 = XM_PERMUTE_PS!(T3, _MM_SHUFFLE(2, 2, 2, 2));
+        vResult = XM_FMADD_PS!(T2, Position1, vResult);
+        // Mul the w constant to Tangent1
+        T3 = XM_PERMUTE_PS!(T3, _MM_SHUFFLE(3, 3, 3, 3));
+        vResult = XM_FMADD_PS!(T3, Tangent1, vResult);
+        return vResult;
+    }
+}
 
 /// Performs a Catmull-Rom interpolation, using the specified position vectors.
 ///
@@ -4827,7 +4899,88 @@ pub fn XMVectorCatmullRom(
 }
 
 
-// TODO: XMVectorCatmullRomV
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorCatmullRomV>
+#[inline]
+pub fn XMVectorCatmullRomV(
+    Position0: FXMVECTOR,
+    Position1: FXMVECTOR,
+    Position2: FXMVECTOR,
+    Position3: GXMVECTOR,
+    T: HXMVECTOR,
+) -> XMVECTOR
+{
+    // Result = ((-t^3 + 2 * t^2 - t) * Position0 +
+    //           (3 * t^3 - 5 * t^2 + 2) * Position1 +
+    //           (-3 * t^3 + 4 * t^2 + t) * Position2 +
+    //           (t^3 - t^2) * Position3) * 0.5
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let fx: f32 = T.vector4_f32[0];
+        let fy: f32 = T.vector4_f32[1];
+        let fz: f32 = T.vector4_f32[2];
+        let fw: f32 = T.vector4_f32[3];
+        let vResult = XMVECTORF32 { f: [
+            0.5 * ((-fx * fx * fx + 2.0 * fx * fx - fx) * Position0.vector4_f32[0]
+            + (3.0 * fx * fx * fx - 5.0 * fx * fx + 2.0) * Position1.vector4_f32[0]
+            + (-3.0 * fx * fx * fx + 4.0 * fx * fx + fx) * Position2.vector4_f32[0]
+            + (fx * fx * fx - fx * fx) * Position3.vector4_f32[0]),
+
+            0.5 * ((-fy * fy * fy + 2.0 * fy * fy - fy) * Position0.vector4_f32[1]
+            + (3.0 * fy * fy * fy - 5.0 * fy * fy + 2.0) * Position1.vector4_f32[1]
+            + (-3.0 * fy * fy * fy + 4.0 * fy * fy + fy) * Position2.vector4_f32[1]
+            + (fy * fy * fy - fy * fy) * Position3.vector4_f32[1]),
+
+            0.5 * ((-fz * fz * fz + 2.0 * fz * fz - fz) * Position0.vector4_f32[2]
+            + (3.0 * fz * fz * fz - 5.0 * fz * fz + 2.0) * Position1.vector4_f32[2]
+            + (-3.0 * fz * fz * fz + 4.0 * fz * fz + fz) * Position2.vector4_f32[2]
+            + (fz * fz * fz - fz * fz) * Position3.vector4_f32[2]),
+
+            0.5 * ((-fw * fw * fw + 2.0 * fw * fw - fw) * Position0.vector4_f32[3]
+            + (3.0 * fw * fw * fw - 5.0 * fw * fw + 2.0) * Position1.vector4_f32[3]
+            + (-3.0 * fw * fw * fw + 4.0 * fw * fw + fw) * Position2.vector4_f32[3]
+            + (fw * fw * fw - fw * fw) * Position3.vector4_f32[3])
+         ] };
+        return vResult.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        const Catmul2: XMVECTORF32 = XMVECTORF32 { f: [ 2.0, 2.0, 2.0, 2.0 ] };
+        const Catmul3: XMVECTORF32 = XMVECTORF32 { f: [ 3.0, 3.0, 3.0, 3.0 ] };
+        const Catmul4: XMVECTORF32 = XMVECTORF32 { f :[ 4.0, 4.0, 4.0, 4.0 ] };
+        const Catmul5: XMVECTORF32 = XMVECTORF32 { f: [5.0, 5.0, 5.0, 5.0 ] };
+        // Cache T^2 and T^3
+        let T2: XMVECTOR = _mm_mul_ps(T, T);
+        let mut T3: XMVECTOR = _mm_mul_ps(T, T2);
+        // Perform the Position0 term
+        let mut vResult: XMVECTOR = _mm_add_ps(T2, T2);
+        vResult = _mm_sub_ps(vResult, T);
+        vResult = _mm_sub_ps(vResult, T3);
+        vResult = _mm_mul_ps(vResult, Position0);
+        // Perform the Position1 term and add
+        let mut vTemp: XMVECTOR = _mm_mul_ps(T3, Catmul3.v);
+        vTemp = XM_FNMADD_PS!(T2, Catmul5.v, vTemp);
+        vTemp = _mm_add_ps(vTemp, Catmul2.v);
+        vResult = XM_FMADD_PS!(vTemp, Position1, vResult);
+        // Perform the Position2 term and add
+        vTemp = _mm_mul_ps(T2, Catmul4.v);
+        vTemp = XM_FNMADD_PS!(T3, Catmul3.v, vTemp);
+        vTemp = _mm_add_ps(vTemp, T);
+        vResult = XM_FMADD_PS!(vTemp, Position2, vResult);
+        // Position3 is the last term
+        T3 = _mm_sub_ps(T3, T2);
+        vResult = XM_FMADD_PS!(T3, Position3, vResult);
+        // Multiply by 0.5f and exit
+        vResult = _mm_mul_ps(vResult, g_XMOneHalf.v);
+        return vResult;
+    }
+}
 
 /// Returns a point in Barycentric coordinates, using the specified position vectors.
 ///
@@ -4873,7 +5026,44 @@ pub fn XMVectorBaryCentric(
     }
 }
 
-// TODO: XMVectorBaryCentricV
+/// Returns a point in Barycentric coordinates, using the specified position vectors.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorBaryCentricV>
+#[inline]
+pub fn XMVectorBaryCentricV(
+    Position0: FXMVECTOR,
+    Position1: FXMVECTOR,
+    Position2: FXMVECTOR,
+    F: GXMVECTOR,
+    G: HXMVECTOR,
+) -> XMVECTOR
+{
+    // Result = Position0 + f * (Position1 - Position0) + g * (Position2 - Position0)
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    {
+        let P10: XMVECTOR = XMVectorSubtract(Position1, Position0);
+        let P20: XMVECTOR = XMVectorSubtract(Position2, Position0);
+
+        let mut Result: XMVECTOR = XMVectorMultiplyAdd(P10, F, Position0);
+        Result = XMVectorMultiplyAdd(P20, G, Result);
+
+        return Result;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut R1: XMVECTOR = _mm_sub_ps(Position1, Position0);
+        let R2: XMVECTOR = _mm_sub_ps(Position2, Position0);
+        R1 = XM_FMADD_PS!(R1, F, Position0);
+        return XM_FMADD_PS!(R2, G, R1);
+    }
+}
 
 // 2D Vector
 

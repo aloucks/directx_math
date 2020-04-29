@@ -506,8 +506,8 @@ mod doc {
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-quaternion>
     pub mod quaternion {
-        // TODO: pub use crate::misc::XMQuaternionBaryCentric;
-        // TODO: pub use crate::misc::XMQuaternionBaryCentricV;
+        pub use crate::misc::XMQuaternionBaryCentric;
+        pub use crate::misc::XMQuaternionBaryCentricV;
         pub use crate::misc::XMQuaternionConjugate;
         pub use crate::misc::XMQuaternionDot;
         pub use crate::misc::XMQuaternionEqual;
@@ -654,11 +654,11 @@ mod doc {
         /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector-geometric>
         pub mod geometric {
             pub use crate::vector::XMVectorBaryCentric;
-            // TODO: pub use crate::vector::XMVectorBaryCentricV;
+            pub use crate::vector::XMVectorBaryCentricV;
             pub use crate::vector::XMVectorCatmullRom;
-            // TODO: pub use crate::vector::XMVectorCatmullRomV;
+            pub use crate::vector::XMVectorCatmullRomV;
             pub use crate::vector::XMVectorHermite;
-            // TODO: pub use crate::vector::XMVectorHermiteV;
+            pub use crate::vector::XMVectorHermiteV;
             pub use crate::vector::XMVectorInBounds;
             pub use crate::vector::XMVectorInBoundsR;
             pub use crate::vector::XMVectorLerp;
@@ -2299,8 +2299,8 @@ pub fn XMVectorSetBinaryConstant(C0: u32, C1: u32, C2: u32, C3: u32) -> XMVECTOR
 /// https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatConstant
 #[inline]
 pub fn XMVectorSplatConstant(IntConstant: i32, DivExponent: u32) -> XMVECTOR {
-    assert!(IntConstant >= -16 && IntConstant <= 15);
-    assert!(DivExponent < 32);
+    debug_assert!(IntConstant >= -16 && IntConstant <= 15);
+    debug_assert!(DivExponent < 32);
 
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
