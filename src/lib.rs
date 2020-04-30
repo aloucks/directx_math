@@ -201,6 +201,8 @@ pub(crate) fn tanh(x: f32) -> f32 {
 
 #[inline(always)]
 #[cfg(_XM_NO_INTRINSICS_)]
+#[allow(dead_code)]
+// TODO: XMVectorLog2
 pub(crate) fn logf(x: f32) -> f32 {
     x.log2()
 }
