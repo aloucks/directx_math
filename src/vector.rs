@@ -3254,7 +3254,7 @@ pub fn XMVectorReciprocalSqrtEst(
     }
 }
 
-/// Computes  the per-component reciprocal square root of a vector.
+/// Computes the per-component reciprocal square root of a vector.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorReciprocalSqrt>
 #[inline]
@@ -3288,9 +3288,113 @@ pub fn XMVectorReciprocalSqrt(
     }
 }
 
-// TODO: XMVectorExp2
+/// Computes two raised to the power for each component.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorExp2>
+#[inline]
+pub fn XMVectorExp2(
+    V: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Result = XMVECTORF32 {
+            f: [
+                powf(2.0, V.vector4_f32[0]),
+                powf(2.0, V.vector4_f32[1]),
+                powf(2.0, V.vector4_f32[2]),
+                powf(2.0, V.vector4_f32[3])
+            ]
+        };
+        return Result.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let itrunc: __m128i = _mm_cvttps_epi32(V);
+        let ftrunc: __m128 = _mm_cvtepi32_ps(itrunc);
+        let y: __m128 = _mm_sub_ps(V, ftrunc);
+
+        let mut poly: __m128 = XM_FMADD_PS!(g_XMExpEst7.v, y, g_XMExpEst6.v);
+        poly = XM_FMADD_PS!(poly, y, g_XMExpEst5.v);
+        poly = XM_FMADD_PS!(poly, y, g_XMExpEst4.v);
+        poly = XM_FMADD_PS!(poly, y, g_XMExpEst3.v);
+        poly = XM_FMADD_PS!(poly, y, g_XMExpEst2.v);
+        poly = XM_FMADD_PS!(poly, y, g_XMExpEst1.v);
+        poly = XM_FMADD_PS!(poly, y, g_XMOne.v);
+
+        let mut biased: __m128i = _mm_add_epi32(itrunc, g_XMExponentBias.m128i());
+        biased = _mm_slli_epi32(biased, 23);
+        let result0: __m128 = _mm_div_ps(_mm_castsi128_ps(biased), poly);
+
+        biased = _mm_add_epi32(itrunc, g_XM253.m128i());
+        biased = _mm_slli_epi32(biased, 23);
+        let mut result1: __m128 = _mm_div_ps(_mm_castsi128_ps(biased), poly);
+        result1 = _mm_mul_ps(g_XMMinNormal.v, result1);
+
+        // Use selection to handle the cases
+        //  if (V is NaN) -> QNaN;
+        //  else if (V sign bit set)
+        //      if (V > -150)
+        //         if (V.exponent < -126) -> result1
+        //         else -> result0
+        //      else -> +0
+        //  else
+        //      if (V < 128) -> result0
+        //      else -> +inf
+
+        let mut comp: __m128i = _mm_cmplt_epi32(_mm_castps_si128(V), g_XMBin128.m128i());
+        let mut select0: __m128i = _mm_and_si128(comp, _mm_castps_si128(result0));
+        let mut select1: __m128i = _mm_andnot_si128(comp, g_XMInfinity.m128i());
+        let result2: __m128i = _mm_or_si128(select0, select1);
+
+        comp = _mm_cmplt_epi32(itrunc, g_XMSubnormalExponent.m128i());
+        select1 = _mm_and_si128(comp, _mm_castps_si128(result1));
+        select0 = _mm_andnot_si128(comp, _mm_castps_si128(result0));
+        let result3: __m128i = _mm_or_si128(select0, select1);
+
+        comp = _mm_cmplt_epi32(_mm_castps_si128(V), g_XMBinNeg150.m128i());
+        select0 = _mm_and_si128(comp, result3);
+        select1 = _mm_andnot_si128(comp, g_XMZero.m128i());
+        let result4: __m128i = _mm_or_si128(select0, select1);
+
+        let sign: __m128i = _mm_and_si128(_mm_castps_si128(V), g_XMNegativeZero.m128i());
+        comp = _mm_cmpeq_epi32(sign, g_XMNegativeZero.m128i());
+        select0 = _mm_and_si128(comp, result4);
+        select1 = _mm_andnot_si128(comp, result2);
+        let result5: __m128i = _mm_or_si128(select0, select1);
+
+        let mut t0: __m128i = _mm_and_si128(_mm_castps_si128(V), g_XMQNaNTest.m128i());
+        let mut t1: __m128i = _mm_and_si128(_mm_castps_si128(V), g_XMInfinity.m128i());
+        t0 = _mm_cmpeq_epi32(t0, g_XMZero.m128i());
+        t1 = _mm_cmpeq_epi32(t1, g_XMInfinity.m128i());
+        let isNaN: __m128i = _mm_andnot_si128(t0, t1);
+
+        select0 = _mm_and_si128(isNaN, g_XMQNaN.m128i());
+        select1 = _mm_andnot_si128(isNaN, result5);
+        let vResult: __m128i = _mm_or_si128(select0, select1);
+
+        return _mm_castsi128_ps(vResult);
+    }
+}
+
 // TODO: XMVectorExpE
-// TODO: XMVectorExp
+
+/// Computes two raised to the power for each component.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorExp>
+#[inline]
+pub fn XMVectorExp(
+    V: FXMVECTOR,
+) -> XMVECTOR {
+    return XMVectorExp2(V);
+}
+
 // TODO: Internal / multi_sll_epi32
 // TODO: Internal / multi_srl_epi32
 // TODO: Internal / GetLeadingBit __m128i
@@ -3831,9 +3935,108 @@ fn test_XMVectorTan() {
     }
 }
 
-// TODO: XMVectorSinH
-// TODO: XMVectorCosH
-// TODO: XMVectorTanH
+/// Computes the hyperbolic sine of each component of an XMVECTOR.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSinH>
+#[inline]
+pub fn XMVectorSinH(
+    V: FXMVECTOR,
+) -> XMVECTOR
+{
+    // 7-degree minimax approximation
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Result = XMVECTORF32 {
+            f: [
+                sinh(V.vector4_f32[0]),
+                sinh(V.vector4_f32[1]),
+                sinh(V.vector4_f32[2]),
+                sinh(V.vector4_f32[3])
+            ]
+        };
+        return Result.v;
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        const Scale: XMVECTORF32 = XMVECTORF32 { f :[ 1.442695040888963, 1.442695040888963, 1.442695040888963, 1.442695040888963 ] }; // 1.0f / ln(2.0f)
+
+        let V1: XMVECTOR = XM_FMADD_PS!(V, Scale.v, g_XMNegativeOne.v);
+        let V2: XMVECTOR = XM_FNMADD_PS!(V, Scale.v, g_XMNegativeOne.v);
+        let E1: XMVECTOR = XMVectorExp(V1);
+        let E2: XMVECTOR = XMVectorExp(V2);
+
+        return _mm_sub_ps(E1, E2);
+    }
+}
+
+/// Computes the hyperbolic cosine of each component of an XMVECTOR.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorCosH>
+#[inline]
+pub fn XMVectorCosH(
+    V: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Result = XMVECTORF32 {
+            f: [
+                cosh(V.vector4_f32[0]),
+                cosh(V.vector4_f32[1]),
+                cosh(V.vector4_f32[2]),
+                cosh(V.vector4_f32[3])
+            ]
+        };
+        return Result.v;
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        const Scale: XMVECTORF32 = XMVECTORF32 { f :[ 1.442695040888963, 1.442695040888963, 1.442695040888963, 1.442695040888963 ] }; // 1.0f / ln(2.0f)
+
+        let V1: XMVECTOR = XM_FMADD_PS!(V, Scale.v, g_XMNegativeOne.v);
+        let V2: XMVECTOR = XM_FNMADD_PS!(V, Scale.v, g_XMNegativeOne.v);
+        let E1: XMVECTOR = XMVectorExp(V1);
+        let E2: XMVECTOR = XMVectorExp(V2);
+
+        return _mm_add_ps(E1, E2);
+    }
+}
+
+/// Computes the hyperbolic tangent of each component of an XMVECTOR.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorTanH>
+#[inline]
+pub fn XMVectorTanH(
+    V: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let Result = XMVECTORF32 {
+            f: [
+                tanh(V.vector4_f32[0]),
+                tanh(V.vector4_f32[1]),
+                tanh(V.vector4_f32[2]),
+                tanh(V.vector4_f32[3])
+            ]
+        };
+        return Result.v;
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        const Scale: XMVECTORF32 = XMVECTORF32 { f :[ 2.8853900817779268, 2.8853900817779268, 2.8853900817779268, 2.8853900817779268 ] }; // 2.0f / ln(2.0f)
+
+        let mut E: XMVECTOR = _mm_mul_ps(V, Scale.v);
+        E = XMVectorExp(E);
+        E = XM_FMADD_PS!(E, g_XMOneHalf.v, g_XMOneHalf.v);
+        E = _mm_div_ps(g_XMOne.v, E);
+        return _mm_sub_ps(g_XMOne.v, E);
+    }
+}
 
 /// Computes the arcsine of each component of an XMVECTOR.
 ///
@@ -5096,6 +5299,54 @@ pub fn XMVector2Equal(
 
 // TODO: XMVector2EqualR
 
+/// Tests whether two 2D vectors are equal. In addition, this function returns a comparison value that can be examined using functions such as XMComparisonAllTrue.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2EqualR>
+#[inline]
+pub fn XMVector2EqualR(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> u32
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut CR: u32 = 0;
+        if ((V1.vector4_f32[0] == V2.vector4_f32[0]) &&
+            (V1.vector4_f32[1] == V2.vector4_f32[1]))
+        {
+            CR = XM_CRMASK_CR6TRUE;
+        }
+        else if ((V1.vector4_f32[0] != V2.vector4_f32[0]) &&
+            (V1.vector4_f32[1] != V2.vector4_f32[1]))
+        {
+            CR = XM_CRMASK_CR6FALSE;
+        }
+        return CR;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_cmpeq_ps(V1, V2);
+        // z and w are don't care
+        let iTest: i32 = _mm_movemask_ps(vTemp) & 3;
+        let mut CR = 0;
+        if (iTest == 3)
+        {
+            CR = XM_CRMASK_CR6TRUE;
+        }
+        else if (!ibool(iTest))
+        {
+            CR = XM_CRMASK_CR6FALSE;
+        }
+        return CR;
+    }
+}
+
 /// Tests whether two 2D vectors are equal, treating each component as an unsigned integer.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2EqualInt>
@@ -5122,7 +5373,52 @@ pub fn XMVector2EqualInt(
     }
 }
 
-// TODO: XMVector2EqualIntR
+/// Tests whether two 2D vectors are equal, treating each component as an unsigned integer. In addition, this function returns a comparison value that can be examined using functions such as XMComparisonAllTrue.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2EqualIntR>
+#[inline]
+pub fn XMVector2EqualIntR(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> u32
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut CR: u32 = 0;
+        if ((V1.vector4_u32[0] == V2.vector4_u32[0]) &&
+            (V1.vector4_u32[1] == V2.vector4_u32[1]))
+        {
+            CR = XM_CRMASK_CR6TRUE;
+        }
+        else if ((V1.vector4_u32[0] != V2.vector4_u32[0]) &&
+            (V1.vector4_u32[1] != V2.vector4_u32[1]))
+        {
+            CR = XM_CRMASK_CR6FALSE;
+        }
+        return CR;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        let vTemp: __m128i = _mm_cmpeq_epi32(_mm_castps_si128(V1), _mm_castps_si128(V2));
+        let iTest: i32 = _mm_movemask_ps(_mm_castsi128_ps(vTemp)) & 3;
+        let mut CR: u32 = 0;
+        if (iTest == 3)
+        {
+            CR = XM_CRMASK_CR6TRUE;
+        }
+        else if (!ibool(iTest))
+        {
+            CR = XM_CRMASK_CR6FALSE;
+        }
+        return CR;
+    }
+}
 
 /// Tests whether one 2D vector is near another 2D vector.
 ///
@@ -5244,6 +5540,53 @@ pub fn XMVector2Greater(
 
 // TODO: XMVector2GreaterR
 
+/// Tests whether one 2D vector is greater than another 2D vector and returns a comparison value that can be examined using functions such as XMComparisonAllTrue.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2GreaterR>
+#[inline]
+pub fn XMVector2GreaterR(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> u32
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut CR = 0;
+        if ((V1.vector4_f32[0] > V2.vector4_f32[0]) &&
+            (V1.vector4_f32[1] > V2.vector4_f32[1]))
+        {
+            CR = XM_CRMASK_CR6TRUE;
+        }
+        else if ((V1.vector4_f32[0] <= V2.vector4_f32[0]) &&
+            (V1.vector4_f32[1] <= V2.vector4_f32[1]))
+        {
+            CR = XM_CRMASK_CR6FALSE;
+        }
+        return CR;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_cmpgt_ps(V1, V2);
+        let iTest: i32 = _mm_movemask_ps(vTemp) & 3;
+        let mut CR = 0;
+        if (iTest == 3)
+        {
+            CR = XM_CRMASK_CR6TRUE;
+        }
+        else if (!ibool(iTest))
+        {
+            CR = XM_CRMASK_CR6FALSE;
+        }
+        return CR;
+    }
+}
+
 /// Tests whether one 2D vector is greater-than-or-equal-to another 2D vector.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2GreaterOrEqual>
@@ -5270,7 +5613,52 @@ pub fn XMVector2GreaterOrEqual(
     }
 }
 
-// TODO: XMVector2GreaterOrEqualR
+/// Tests whether one 2D vector is greater-than-or-equal-to another 2D vector and returns a comparison value that can be examined using functions such as XMComparisonAllTrue.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2GreaterOrEqualR>
+#[inline]
+pub fn XMVector2GreaterOrEqualR(
+    V1: FXMVECTOR,
+    V2: FXMVECTOR,
+) -> u32
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut CR = 0;
+        if ((V1.vector4_f32[0] >= V2.vector4_f32[0]) &&
+            (V1.vector4_f32[1] >= V2.vector4_f32[1]))
+        {
+            CR = XM_CRMASK_CR6TRUE;
+        }
+        else if ((V1.vector4_f32[0] < V2.vector4_f32[0]) &&
+            (V1.vector4_f32[1] < V2.vector4_f32[1]))
+        {
+            CR = XM_CRMASK_CR6FALSE;
+        }
+        return CR;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_cmpge_ps(V1, V2);
+        let iTest: i32 = _mm_movemask_ps(vTemp) & 3;
+        let mut CR: u32 = 0;
+        if (iTest == 3)
+        {
+            CR = XM_CRMASK_CR6TRUE;
+        }
+        else if (!ibool(iTest))
+        {
+            CR = XM_CRMASK_CR6FALSE;
+        }
+        return CR;
+    }
+}
 
 /// Tests whether one 2D vector is less than another 2D vector.
 ///
@@ -5359,8 +5747,63 @@ pub fn XMVector2InBounds(
     }
 }
 
-// TODO: XMVector2IsNaN
-// TODO: XMVector2IsInfinite
+/// Tests whether any component of a 2D vector is a NaN.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2IsNaN>
+#[inline]
+pub fn XMVector2IsNaN(
+    V: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (XMISNAN!(V.vector4_f32[0]) ||
+            XMISNAN!(V.vector4_f32[1]));
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        // Test against itself. NaN is always not equal
+        let vTempNan: XMVECTOR = _mm_cmpneq_ps(V, V);
+        // If x or y are NaN, the mask is non-zero
+        return ((_mm_movemask_ps(vTempNan) & 3) != 0);
+    }
+}
+
+/// Tests whether any component of a 2D vector is positive or negative infinity.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2IsInfinite>
+#[inline]
+pub fn XMVector2IsInfinite(
+    V: FXMVECTOR,
+) -> bool
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        return (XMISINF!(V.vector4_f32[0]) ||
+            XMISINF!(V.vector4_f32[1]));
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        // Mask off the sign bit
+        let mut vTemp: __m128 = _mm_and_ps(V, g_XMAbsMask.v);
+        // Compare to infinity
+        vTemp = _mm_cmpeq_ps(vTemp, g_XMInfinity.v);
+        // If x or z are infinity, the signs are true.
+        return ((_mm_movemask_ps(vTemp) & 3) != 0);
+    }
+}
 
 /// Computes the dot product between 2D vectors.
 ///

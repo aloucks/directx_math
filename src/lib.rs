@@ -181,6 +181,30 @@ pub(crate) fn powf(x: f32, n: f32) -> f32 {
     x.powf(n)
 }
 
+#[inline(always)]
+#[cfg(_XM_NO_INTRINSICS_)]
+pub(crate) fn sinh(x: f32) -> f32 {
+    x.sinh()
+}
+
+#[inline(always)]
+#[cfg(_XM_NO_INTRINSICS_)]
+pub(crate) fn cosh(x: f32) -> f32 {
+    x.cosh()
+}
+
+#[inline(always)]
+#[cfg(_XM_NO_INTRINSICS_)]
+pub(crate) fn tanh(x: f32) -> f32 {
+    x.tanh()
+}
+
+#[inline(always)]
+#[cfg(_XM_NO_INTRINSICS_)]
+pub(crate) fn logf(x: f32) -> f32 {
+    x.log2()
+}
+
 #[inline]
 #[cfg(_XM_NO_INTRINSICS_)]
 pub(crate) fn modff(x: f32) -> (f32, f32) {
@@ -422,8 +446,8 @@ mod doc {
         // TODO: pub use crate::convert::XMConvertFloatToHalfStream;
         // TODO: pub use crate::convert::XMConvertHalfToFloat;
         // TODO: pub use crate::convert::XMConvertHalfToFloatStream;
-        // TODO: pub use crate::convert::XMConvertToDegrees;
-        // TODO: pub use crate::convert::XMConvertToRadians;
+        pub use crate::XMConvertToDegrees;
+        pub use crate::XMConvertToRadians;
         pub use crate::convert::XMConvertVectorFloatToInt;
         pub use crate::convert::XMConvertVectorFloatToUInt;
         pub use crate::convert::XMConvertVectorIntToFloat;
@@ -675,10 +699,10 @@ mod doc {
             // TODO: pub use crate::vector::XMVectorReplicateIntPtr;
             // TODO: pub use crate::vector::XMVectorReplicatePtr;
             pub use crate::vector::XMVectorSet;
-            // TODO: pub use crate::vector::XMVectorSetBinaryConstant;
+            pub use crate::XMVectorSetBinaryConstant;
             pub use crate::vector::XMVectorSetInt;
-            // TODO: pub use crate::vector::XMVectorSplatConstant;
-            // TODO: pub use crate::vector::XMVectorSplatConstantInt;
+            pub use crate::XMVectorSplatConstant;
+            pub use crate::XMVectorSplatConstantInt;
             pub use crate::vector::XMVectorSplatEpsilon;
             pub use crate::vector::XMVectorSplatInfinity;
             pub use crate::vector::XMVectorSplatOne;
@@ -702,9 +726,9 @@ mod doc {
             pub use crate::vector::XMVectorATanEst;
             pub use crate::vector::XMVectorCos;
             pub use crate::vector::XMVectorCosEst;
-            // TODO: pub use crate::vector::XMVectorCosH;
-            // TODO: pub use crate::vector::XMVectorExp;
-            // TODO: pub use crate::vector::XMVectorExp2;
+            pub use crate::vector::XMVectorCosH;
+            pub use crate::vector::XMVectorExp;
+            pub use crate::vector::XMVectorExp2;
             // TODO: pub use crate::vector::XMVectorExpE;
             // TODO: pub use crate::vector::XMVectorLog;
             // TODO: pub use crate::vector::XMVectorLog2;
@@ -713,10 +737,10 @@ mod doc {
             pub use crate::vector::XMVectorSinCos;
             pub use crate::vector::XMVectorSinCosEst;
             pub use crate::vector::XMVectorSinEst;
-            // TODO: pub use crate::vector::XMVectorSinH;
+            pub use crate::vector::XMVectorSinH;
             pub use crate::vector::XMVectorTan;
             pub use crate::vector::XMVectorTanEst;
-            // TODO: pub use crate::vector::XMVectorTanH;
+            pub use crate::vector::XMVectorTanH;
         }
 
         /// 2D Vector functions
@@ -729,14 +753,14 @@ mod doc {
             pub mod comparison {
                 pub use crate::vector::XMVector2Equal;
                 pub use crate::vector::XMVector2EqualInt;
-                // TODO: pub use crate::vector::XMVector2EqualIntR;
-                // TODO: pub use crate::vector::XMVector2EqualR;
+                pub use crate::vector::XMVector2EqualIntR;
+                pub use crate::vector::XMVector2EqualR;
                 pub use crate::vector::XMVector2Greater;
                 pub use crate::vector::XMVector2GreaterOrEqual;
-                // TODO: pub use crate::vector::XMVector2GreaterOrEqualR;
-                // TODO: pub use crate::vector::XMVector2GreaterR;
-                // TODO: pub use crate::vector::XMVector2IsInfinite;
-                // TODO: pub use crate::vector::XMVector2IsNaN;
+                pub use crate::vector::XMVector2GreaterOrEqualR;
+                pub use crate::vector::XMVector2GreaterR;
+                pub use crate::vector::XMVector2IsInfinite;
+                pub use crate::vector::XMVector2IsNaN;
                 pub use crate::vector::XMVector2Less;
                 pub use crate::vector::XMVector2LessOrEqual;
                 pub use crate::vector::XMVector2NearEqual;
