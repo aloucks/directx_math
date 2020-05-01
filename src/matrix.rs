@@ -309,10 +309,10 @@ pub fn XMMatrixMultiply(
         let mut mResult: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
 
         // Splat the component X,Y,Z then W
-        let mut vX: XMVECTOR = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[0]).add(0));
-        let mut vY: XMVECTOR = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[0]).add(1));
-        let mut vZ: XMVECTOR = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[0]).add(2));
-        let mut vW: XMVECTOR = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[0]).add(3));
+        let mut vX: XMVECTOR = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[0])[0])));
+        let mut vY: XMVECTOR = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[0])[1])));
+        let mut vZ: XMVECTOR = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[0])[2])));
+        let mut vW: XMVECTOR = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[0])[3])));
 
         // Perform the operation on the first row
         vX = _mm_mul_ps(vX, M2.r[0]);
@@ -326,10 +326,10 @@ pub fn XMMatrixMultiply(
         mResult.r[0] = vX;
 
         // Repeat for the other 3 rows
-        vX = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[1]).add(0));
-        vY = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[1]).add(1));
-        vZ = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[1]).add(2));
-        vW = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[1]).add(3));
+        vX = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[1])[0])));
+        vY = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[1])[1])));
+        vZ = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[1])[2])));
+        vW = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[1])[3])));
 
         vX = _mm_mul_ps(vX, M2.r[0]);
         vY = _mm_mul_ps(vY, M2.r[1]);
@@ -341,10 +341,10 @@ pub fn XMMatrixMultiply(
         vX = _mm_add_ps(vX, vY);
         mResult.r[1] = vX;
 
-        vX = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[2]).add(0));
-        vY = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[2]).add(1));
-        vZ = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[2]).add(2));
-        vW = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[2]).add(3));
+        vX = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[2])[0])));
+        vY = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[2])[1])));
+        vZ = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[2])[2])));
+        vW = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[2])[3])));
 
         vX = _mm_mul_ps(vX, M2.r[0]);
         vY = _mm_mul_ps(vY, M2.r[1]);
@@ -356,10 +356,10 @@ pub fn XMMatrixMultiply(
         vX = _mm_add_ps(vX, vY);
         mResult.r[2] = vX;
 
-        vX = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[3]).add(0));
-        vY = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[3]).add(1));
-        vZ = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[3]).add(2));
-        vW = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[3]).add(3));
+        vX = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[3])[0])));
+        vY = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[3])[1])));
+        vZ = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[3])[2])));
+        vW = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[3])[3])));
 
         vX = _mm_mul_ps(vX, M2.r[0]);
         vY = _mm_mul_ps(vY, M2.r[1]);
@@ -605,10 +605,10 @@ pub fn XMMatrixMultiplyTranspose(
     #[cfg(all(_XM_AVX_INTRINSICS_, not(_XM_AVX2_INTRINSICS_)))]
     unsafe {
         // Splat the component X,Y,Z then W
-        let mut vX: XMVECTOR = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[0]).add(0));
-        let mut vY: XMVECTOR = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[0]).add(1));
-        let mut vZ: XMVECTOR = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[0]).add(2));
-        let mut vW: XMVECTOR = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[0]).add(3));
+        let mut vX: XMVECTOR = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[0])[0])));
+        let mut vY: XMVECTOR = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[0])[1])));
+        let mut vZ: XMVECTOR = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[0])[2])));
+        let mut vW: XMVECTOR = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[0])[3])));
 
         // Perform the operation on the first row
         vX = _mm_mul_ps(vX, M2.r[0]);
@@ -622,10 +622,10 @@ pub fn XMMatrixMultiplyTranspose(
         let r0: XMVECTOR = vX;
 
         // Repeat for the other 3 rows
-        vX = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[1]).add(0));
-        vY = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[1]).add(1));
-        vZ = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[1]).add(2));
-        vW = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[1]).add(3));
+        vX = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[1])[0])));
+        vY = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[1])[1])));
+        vZ = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[1])[2])));
+        vW = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[1])[3])));
 
         vX = _mm_mul_ps(vX, M2.r[0]);
         vY = _mm_mul_ps(vY, M2.r[1]);
@@ -637,10 +637,10 @@ pub fn XMMatrixMultiplyTranspose(
         vX = _mm_add_ps(vX, vY);
         let r1: XMVECTOR = vX;
 
-        vX = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[2]).add(0));
-        vY = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[2]).add(1));
-        vZ = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[2]).add(2));
-        vW = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[2]).add(3));
+        vX = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[2])[0])));
+        vY = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[2])[1])));
+        vZ = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[2])[2])));
+        vW = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[2])[3])));
 
         vX = _mm_mul_ps(vX, M2.r[0]);
         vY = _mm_mul_ps(vY, M2.r[1]);
@@ -652,10 +652,10 @@ pub fn XMMatrixMultiplyTranspose(
         vX = _mm_add_ps(vX, vY);
         let r2: XMVECTOR = vX;
 
-        vX = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[3]).add(0));
-        vY = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[3]).add(1));
-        vZ = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[3]).add(2));
-        vW = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&M1.r[3]).add(3));
+        vX = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[3])[0])));
+        vY = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[3])[1])));
+        vZ = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[3])[2])));
+        vW = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[3])[3])));
 
         vX = _mm_mul_ps(vX, M2.r[0]);
         vY = _mm_mul_ps(vY, M2.r[1]);
@@ -1362,6 +1362,37 @@ pub fn XMMatrixDecompose(
         *outRotQuat = XMQuaternionRotationMatrix(matTemp);
         return true;
     }
+}
+
+#[test]
+fn test_XMMatrixDecompose() {
+    let scaling_origin = XMVectorSet(0.0, 0.0, 0.0, 0.0);
+    let scaling_orientation_quaternion = XMQuaternionRotationRollPitchYaw(0.1 ,0.2, 0.3);
+    let scaling = XMVectorSet(1.1, 1.2, 1.3, 0.0);
+    let rotation_origin = XMVectorSet(0.0, 0.0, 0.0, 0.0);
+    let rotation_quaternion = XMQuaternionRotationRollPitchYaw(0.4 ,0.5, 0.6);
+    let translation = XMVectorSet(7.0, 8.0, 9.0, 0.0);
+
+    let transform = XMMatrixTransformation(
+        scaling_origin,
+        scaling_orientation_quaternion,
+        scaling,
+        rotation_origin,
+        rotation_quaternion,
+        translation
+    );
+
+    let mut out_scale = XMVectorZero();
+    let mut out_rot_quat = XMVectorZero();
+    let mut out_trans = XMVectorZero();
+
+    assert!(XMMatrixDecompose(&mut out_scale, &mut out_rot_quat, &mut out_trans, transform));
+
+    let epsilon = XMVectorReplicate(1.0e-1);
+
+    assert!(XMVector3NearEqual(out_scale, scaling, epsilon));
+    assert!(XMVector4NearEqual(out_rot_quat, rotation_quaternion, epsilon));
+    assert!(XMVector3NearEqual(out_trans, translation, epsilon));
 }
 
 /// Builds the identity matrix.

@@ -284,7 +284,11 @@ macro_rules! idx {
     };
     ($name:ident[$offset:expr][$offset2:expr]) => {
         *$name[$offset as usize].offset($offset2 as isize)
-    }
+    };
+    (f32x4($m128:expr)[$offset:expr]) => {{
+        let vector: &[f32; 4] = &std::mem::transmute($m128);
+        vector[$offset]
+    }};
 }
 
 macro_rules! assert_approx_eq  {
