@@ -775,26 +775,26 @@ mod doc {
             /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector2-geometric>
             pub mod geometric {
                 pub use crate::vector::XMVector2AngleBetweenNormals;
-                // TODO: pub use crate::vector::XMVector2AngleBetweenNormalsEst;
+                pub use crate::vector::XMVector2AngleBetweenNormalsEst;
                 pub use crate::vector::XMVector2AngleBetweenVectors;
-                // TODO: pub use crate::vector::XMVector2ClampLength;
-                // TODO: pub use crate::vector::XMVector2ClampLengthV;
+                pub use crate::vector::XMVector2ClampLength;
+                pub use crate::vector::XMVector2ClampLengthV;
                 pub use crate::vector::XMVector2Cross;
                 pub use crate::vector::XMVector2Dot;
                 pub use crate::vector::XMVector2InBounds;
                 pub use crate::vector::XMVector2IntersectLine;
                 pub use crate::vector::XMVector2Length;
-                // TODO: pub use crate::vector::XMVector2LengthEst;
+                pub use crate::vector::XMVector2LengthEst;
                 pub use crate::vector::XMVector2LengthSq;
                 pub use crate::vector::XMVector2LinePointDistance;
                 pub use crate::vector::XMVector2Normalize;
-                // TODO: pub use crate::vector::XMVector2NormalizeEst;
+                pub use crate::vector::XMVector2NormalizeEst;
                 pub use crate::vector::XMVector2Orthogonal;
                 pub use crate::vector::XMVector2ReciprocalLength;
-                // TODO: pub use crate::vector::XMVector2ReciprocalLengthEst;
-                // TODO: pub use crate::vector::XMVector2Reflect;
-                // TODO: pub use crate::vector::XMVector2Refract;
-                // TODO: pub use crate::vector::XMVector2RefractV;
+                pub use crate::vector::XMVector2ReciprocalLengthEst;
+                pub use crate::vector::XMVector2Reflect;
+                pub use crate::vector::XMVector2Refract;
+                pub use crate::vector::XMVector2RefractV;
             }
 
             /// 2D vector transformation

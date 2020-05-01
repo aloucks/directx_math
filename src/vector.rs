@@ -5297,8 +5297,6 @@ pub fn XMVector2Equal(
     }
 }
 
-// TODO: XMVector2EqualR
-
 /// Tests whether two 2D vectors are equal. In addition, this function returns a comparison value that can be examined using functions such as XMComparisonAllTrue.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2EqualR>
@@ -5537,8 +5535,6 @@ pub fn XMVector2Greater(
         return (((_mm_movemask_ps(vTemp) & 3) == 3) != false);
     }
 }
-
-// TODO: XMVector2GreaterR
 
 /// Tests whether one 2D vector is greater than another 2D vector and returns a comparison value that can be examined using functions such as XMComparisonAllTrue.
 ///
@@ -5895,7 +5891,55 @@ pub fn XMVector2LengthSq(
     return XMVector2Dot(V, V);
 }
 
-// TODO: XMVector2ReciprocalLengthEst
+/// Estimates the reciprocal of the length of a 2D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2ReciprocalLengthEst>
+#[inline]
+pub fn XMVector2ReciprocalLengthEst(
+    V: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    {
+        let mut Result: XMVECTOR;
+        Result = XMVector2LengthSq(V);
+        Result = XMVectorReciprocalSqrtEst(Result);
+        return Result;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE4_INTRINSICS_))]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_dp_ps(V, V, 0x3f);
+        return _mm_rsqrt_ps(vTemp);
+    }
+
+    #[cfg(all(_XM_SSE3_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        let vTemp: XMVECTOR = _mm_hadd_ps(vLengthSq, vLengthSq);
+        vLengthSq = _mm_rsqrt_ss(vTemp);
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(0, 0, 0, 0));
+        return vLengthSq;
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE3_INTRINSICS_), not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        // Perform the dot product on x and y
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        // vTemp has y splatted
+        let vTemp: XMVECTOR = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(1, 1, 1, 1));
+        // x+y
+        vLengthSq = _mm_add_ss(vLengthSq, vTemp);
+        vLengthSq = _mm_rsqrt_ss(vLengthSq);
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(0, 0, 0, 0));
+        return vLengthSq;
+    }
+}
 
 /// Computes the reciprocal of the length of a 2D vector.
 ///
@@ -5950,7 +5994,55 @@ pub fn XMVector2ReciprocalLength(
     }
 }
 
-// TODO: XMVector2LengthEst
+/// Estimates the length of a 2D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2LengthEst>
+#[inline]
+pub fn XMVector2LengthEst(
+    V: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    {
+        let mut Result: XMVECTOR;
+        Result = XMVector2LengthSq(V);
+        Result = XMVectorSqrtEst(Result);
+        return Result;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE4_INTRINSICS_))]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_dp_ps(V, V, 0x3f);
+        return _mm_sqrt_ps(vTemp);
+    }
+
+    #[cfg(all(_XM_SSE3_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        let vTemp: XMVECTOR = _mm_hadd_ps(vLengthSq, vLengthSq);
+        vLengthSq = _mm_sqrt_ss(vTemp);
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(0, 0, 0, 0));
+        return vLengthSq;
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE3_INTRINSICS_), not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        // Perform the dot product on x and y
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        // vTemp has y splatted
+        let vTemp: XMVECTOR = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(1, 1, 1, 1));
+        // x+y
+        vLengthSq = _mm_add_ss(vLengthSq, vTemp);
+        vLengthSq = _mm_sqrt_ss(vLengthSq);
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(0, 0, 0, 0));
+        return vLengthSq;
+    }
+}
 
 /// Computes the length of a 2D vector.
 ///
@@ -6002,7 +6094,75 @@ pub fn XMVector2Length(
     }
 }
 
-// TODO: XMVector2NormalizeEst
+/// Estimates the normalized version of a 2D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2NormalizeEst>
+#[inline]
+pub fn XMVector2NormalizeEst(
+    V: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    {
+        let mut Result: XMVECTOR;
+        Result = XMVector2ReciprocalLength(V);
+        Result = XMVectorMultiply(V, Result);
+        return Result;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE4_INTRINSICS_))]
+    unsafe {
+        let vTemp: XMVECTOR = _mm_dp_ps(V, V, 0x3f);
+        let vResult: XMVECTOR = _mm_rsqrt_ps(vTemp);
+        return _mm_mul_ps(vResult, V);
+    }
+
+    #[cfg(all(_XM_SSE3_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        // Perform the dot product on x and y
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        // vTemp has y splatted
+        let vTemp: XMVECTOR = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(1, 1, 1, 1));
+        // x+y
+        vLengthSq = _mm_add_ss(vLengthSq, vTemp);
+        vLengthSq = _mm_rsqrt_ss(vLengthSq);
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(0, 0, 0, 0));
+        vLengthSq = _mm_mul_ps(vLengthSq, V);
+        return vLengthSq;
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE3_INTRINSICS_), not(_XM_SSE4_INTRINSICS_)))]
+    unsafe {
+        // Perform the dot product on x and y only
+        let mut vLengthSq: XMVECTOR = _mm_mul_ps(V, V);
+        let vTemp: XMVECTOR = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(1, 1, 1, 1));
+        vLengthSq = _mm_add_ss(vLengthSq, vTemp);
+        vLengthSq = XM_PERMUTE_PS!(vLengthSq, _MM_SHUFFLE(0, 0, 0, 0));
+        // Prepare for the division
+        let mut vResult: XMVECTOR = _mm_sqrt_ps(vLengthSq);
+        // Create zero with a single instruction
+        let mut vZeroMask: XMVECTOR = _mm_setzero_ps();
+        // Test for a divide by zero (Must be FP to detect -0.0)
+        vZeroMask = _mm_cmpneq_ps(vZeroMask, vResult);
+        // Failsafe on zero (Or epsilon) length planes
+        // If the length is infinity, set the elements to zero
+        vLengthSq = _mm_cmpneq_ps(vLengthSq, g_XMInfinity.v);
+        // Reciprocal mul to perform the normalization
+        vResult = _mm_div_ps(V, vResult);
+        // Any that are infinity, set to zero
+        vResult = _mm_and_ps(vResult, vZeroMask);
+        // Select qnan or result based on infinite length
+        let vTemp1: XMVECTOR = _mm_andnot_ps(vLengthSq, g_XMQNaN.v);
+        let vTemp2: XMVECTOR = _mm_and_ps(vResult, vLengthSq);
+        vResult = _mm_or_ps(vTemp1, vTemp2);
+        return vResult;
+    }
+}
 
 /// Returns the normalized version of a 2D vector.
 ///
@@ -6112,11 +6272,176 @@ pub fn XMVector2Normalize(
     }
 }
 
-// TODO: XMVector2ClampLength
-// TODO: XMVector2ClampLengthV
-// TODO: XMVector2Reflect
-// TODO: XMVector2Refract
-// TODO: XMVector2RefractV
+/// Clamps the length of a 2D vector to a given range.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2ClampLength>
+#[inline]
+pub fn XMVector2ClampLength(
+    V: FXMVECTOR,
+    LengthMin: f32,
+    LengthMax: f32,
+) -> XMVECTOR
+{
+    let ClampMax: XMVECTOR = XMVectorReplicate(LengthMax);
+    let ClampMin: XMVECTOR = XMVectorReplicate(LengthMin);
+    return XMVector2ClampLengthV(V, ClampMin, ClampMax);
+}
+
+/// Clamps the length of a 2D vector to a given range.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2ClampLengthV>
+#[inline]
+pub fn XMVector2ClampLengthV(
+    V: FXMVECTOR,
+    LengthMin: FXMVECTOR,
+    LengthMax: FXMVECTOR,
+) -> XMVECTOR
+{
+    unsafe {
+        debug_assert!((XMVectorGetY(LengthMin) == XMVectorGetX(LengthMin)));
+        debug_assert!((XMVectorGetY(LengthMax) == XMVectorGetX(LengthMax)));
+        debug_assert!(XMVector2GreaterOrEqual(LengthMin, g_XMZero.v));
+        debug_assert!(XMVector2GreaterOrEqual(LengthMax, g_XMZero.v));
+        debug_assert!(XMVector2GreaterOrEqual(LengthMax, LengthMin));
+
+        let LengthSq: XMVECTOR = XMVector2LengthSq(V);
+
+        // const
+        let Zero: XMVECTOR = XMVectorZero();
+
+        let RcpLength: XMVECTOR = XMVectorReciprocalSqrt(LengthSq);
+
+        let InfiniteLength: XMVECTOR = XMVectorEqualInt(LengthSq, g_XMInfinity.v);
+        let ZeroLength: XMVECTOR = XMVectorEqual(LengthSq, Zero);
+
+        let mut Length: XMVECTOR = XMVectorMultiply(LengthSq, RcpLength);
+
+        let mut Normal: XMVECTOR = XMVectorMultiply(V, RcpLength);
+
+        let Select: XMVECTOR = XMVectorEqualInt(InfiniteLength, ZeroLength);
+        Length = XMVectorSelect(LengthSq, Length, Select);
+        Normal = XMVectorSelect(LengthSq, Normal, Select);
+
+        let ControlMax: XMVECTOR = XMVectorGreater(Length, LengthMax);
+        let ControlMin: XMVECTOR = XMVectorLess(Length, LengthMin);
+
+        let mut ClampLength: XMVECTOR = XMVectorSelect(Length, LengthMax, ControlMax);
+        ClampLength = XMVectorSelect(ClampLength, LengthMin, ControlMin);
+
+        let mut Result: XMVECTOR = XMVectorMultiply(Normal, ClampLength);
+
+        // Preserve the original vector (with no precision loss) if the length falls within the given range
+        let Control: XMVECTOR = XMVectorEqualInt(ControlMax, ControlMin);
+        Result = XMVectorSelect(Result, V, Control);
+
+        return Result;
+    }
+}
+
+/// Reflects an incident 2D vector across a 2D normal vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2Reflect>
+#[inline]
+pub fn XMVector2Reflect(
+    Incident: FXMVECTOR,
+    Normal: FXMVECTOR,
+) -> XMVECTOR
+{
+    // Result = Incident - (2 * dot(Incident, Normal)) * Normal
+
+    let mut Result: XMVECTOR;
+    Result = XMVector2Dot(Incident, Normal);
+    Result = XMVectorAdd(Result, Result);
+    Result = XMVectorNegativeMultiplySubtract(Result, Normal, Incident);
+    return Result;
+}
+
+/// Refracts an incident 2D vector across a 2D normal vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2Refract>
+#[inline]
+pub fn XMVector2Refract(
+    Incident: FXMVECTOR,
+    Normal: FXMVECTOR,
+    RefractionIndex: f32,
+) -> XMVECTOR
+{
+    let Index: XMVECTOR = XMVectorReplicate(RefractionIndex);
+    return XMVector2RefractV(Incident, Normal, Index);
+}
+
+/// Refracts an incident 2D vector across a 2D normal vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2RefractV>
+#[inline]
+pub fn XMVector2RefractV(
+    Incident: FXMVECTOR,
+    Normal: FXMVECTOR,
+    RefractionIndex: FXMVECTOR,
+) -> XMVECTOR
+{
+    // Result = RefractionIndex * Incident - Normal * (RefractionIndex * dot(Incident, Normal) +
+    // sqrt(1 - RefractionIndex * RefractionIndex * (1 - dot(Incident, Normal) * dot(Incident, Normal))))
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let IDotN: f32 = (Incident.vector4_f32[0] * Normal.vector4_f32[0]) + (Incident.vector4_f32[1] * Normal.vector4_f32[1]);
+        // R = 1.0f - RefractionIndex * RefractionIndex * (1.0f - IDotN * IDotN)
+        let mut RY: f32 = 1.0 - (IDotN * IDotN);
+        let mut RX: f32 = 1.0 - (RY * RefractionIndex.vector4_f32[0] * RefractionIndex.vector4_f32[0]);
+        RY = 1.0 - (RY * RefractionIndex.vector4_f32[1] * RefractionIndex.vector4_f32[1]);
+        if (RX >= 0.0)
+        {
+            RX = (RefractionIndex.vector4_f32[0] * Incident.vector4_f32[0]) - (Normal.vector4_f32[0] * ((RefractionIndex.vector4_f32[0] * IDotN) + sqrtf(RX)));
+        }
+        else
+        {
+            RX = 0.0;
+        }
+        if (RY >= 0.0)
+        {
+            RY = (RefractionIndex.vector4_f32[1] * Incident.vector4_f32[1]) - (Normal.vector4_f32[1] * ((RefractionIndex.vector4_f32[1] * IDotN) + sqrtf(RY)));
+        }
+        else
+        {
+            RY = 0.0;
+        }
+
+        let mut vResult: XMVECTOR = uninitialized();
+        vResult.vector4_f32[0] = RX;
+        vResult.vector4_f32[1] = RY;
+        vResult.vector4_f32[2] = 0.0;
+        vResult.vector4_f32[3] = 0.0;
+        return vResult;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        // Result = RefractionIndex * Incident - Normal * (RefractionIndex * dot(Incident, Normal) +
+        // sqrt(1 - RefractionIndex * RefractionIndex * (1 - dot(Incident, Normal) * dot(Incident, Normal))))
+        // Get the 2D Dot product of Incident-Normal
+        let IDotN: XMVECTOR = XMVector2Dot(Incident, Normal);
+        // vTemp = 1.0f - RefractionIndex * RefractionIndex * (1.0f - IDotN * IDotN)
+        let mut vTemp: XMVECTOR = XM_FNMADD_PS!(IDotN, IDotN, g_XMOne.v);
+        vTemp = _mm_mul_ps(vTemp, RefractionIndex);
+        vTemp = XM_FNMADD_PS!(vTemp, RefractionIndex, g_XMOne.v);
+        // If any terms are <=0, sqrt() will fail, punt to zero
+        let vMask: XMVECTOR = _mm_cmpgt_ps(vTemp, g_XMZero.v);
+        // R = RefractionIndex * IDotN + sqrt(R)
+        vTemp = _mm_sqrt_ps(vTemp);
+        vTemp = XM_FMADD_PS!(RefractionIndex, IDotN, vTemp);
+        // Result = RefractionIndex * Incident - Normal * R
+        let mut vResult: XMVECTOR = _mm_mul_ps(RefractionIndex, Incident);
+        vResult = XM_FNMADD_PS!(vTemp, Normal, vResult);
+        vResult = _mm_and_ps(vResult, vMask);
+        return vResult;
+    }
+}
 
 /// Computes a vector perpendicular to a 2D vector.
 ///
@@ -6150,7 +6475,22 @@ pub fn XMVector2Orthogonal(
     }
 }
 
-// TODO: XMVector2AngleBetweenNormalsEst
+/// Estimates the radian angle between two normalized 2D vectors.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2AngleBetweenNormalsEst>
+#[inline]
+pub fn XMVector2AngleBetweenNormalsEst(
+    N1: FXMVECTOR,
+    N2: FXMVECTOR,
+) -> XMVECTOR
+{
+    unsafe {
+        let mut Result: XMVECTOR = XMVector2Dot(N1, N2);
+        Result = XMVectorClamp(Result, g_XMNegativeOne.v, g_XMOne.v);
+        Result = XMVectorACosEst(Result);
+        return Result;
+    }
+}
 
 /// Computes the radian angle between two normalized 2D vectors.
 ///
@@ -6934,8 +7274,6 @@ pub fn XMVector3InBounds(
     // NOTE: The source contains a fallback that does not seem to be reachable.
     // return XMComparisonAllInBounds(XMVector3InBoundsR(V, Bounds));
 }
-
-// TODO: XMVector3IsNaN
 
 /// Tests whether any component of a 3D vector is a NaN.
 ///
