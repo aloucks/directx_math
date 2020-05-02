@@ -259,7 +259,7 @@ pub fn XMVectorFalseInt() -> XMVECTOR {
     }
 }
 
-/// Replicates the x component of a vector to all of the components.
+/// Replicates the `x` component of a vector to all of the components.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatX>
 #[inline]
@@ -290,7 +290,7 @@ pub fn XMVectorSplatX(V: FXMVECTOR) -> XMVECTOR {
     }
 }
 
-/// Replicates the y component of a vector to all of the components.
+/// Replicates the `y` component of a vector to all of the components.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatY>
 #[inline]
@@ -316,7 +316,9 @@ pub fn XMVectorSplatY(V: FXMVECTOR) -> XMVECTOR {
     }
 }
 
-/// Replicate the z component of the vector
+/// Replicates the `z` component of a vector to all of the components.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatZ>
 #[inline]
 pub fn XMVectorSplatZ(V: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -340,7 +342,7 @@ pub fn XMVectorSplatZ(V: FXMVECTOR) -> XMVECTOR {
     }
 }
 
-/// Replicates the w component of a vector to all of the components.
+/// Replicates the `w` component of a vector to all of the components.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatW>
 #[inline]
