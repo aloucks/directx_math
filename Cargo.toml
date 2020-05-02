@@ -3,10 +3,10 @@ name = "directx_math"
 version = "0.0.0"
 authors = ["Aaron Loucks <aloucks@cofront.net>"]
 edition = "2018"
-description = "DirectX Math for Rust"
-license = "MIT OR Apache-2.0"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "DirectXMath for Rust"
+keywords = ["directx", "math", "simd", "matrix", "vector", "quaternion", "gamedev"]
+license = "MIT"
+readme = "README.md"
 
 [features]
 no_avx = []
