@@ -299,6 +299,8 @@ pub fn XMQuaternionNormalize(
 /// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionConjugate>
+///
+/// [`XMQuaternionConjugate`]: crate::quaternion::XMQuaternionConjugate
 #[inline]
 pub fn XMQuaternionConjugate(
     Q: FXMVECTOR,
@@ -507,7 +509,7 @@ pub fn XMQuaternionSlerpV(
     T: FXMVECTOR,
 ) -> FXMVECTOR
 {
-    // debug_assert!((XMVectorGetY(T) == XMVectorGetX(T)) && (XMVectorGetZ(T) == XMVectorGetX(T)) && (XMVectorGetW(T) == XMVectorGetX(T))));
+    debug_assert!((XMVectorGetY(T) == XMVectorGetX(T)) && (XMVectorGetZ(T) == XMVectorGetX(T)) && (XMVectorGetW(T) == XMVectorGetX(T)));
 
     #[cfg(any(_XM_NO_INTRINSICS_, _XM_ARM_NEON_INTRINSICS_))]
     unsafe {
@@ -603,7 +605,36 @@ pub fn XMQuaternionSlerpV(
 
 /// Interpolates between four unit quaternions, using spherical quadrangle interpolation.
 ///
+/// ## Parameters
+///
+/// `Q0` First unit quaternion.
+///
+/// `Q1` Second unit quaternion.
+///
+/// `Q2` Third unit quaternion.
+///
+/// `Q3` Fourth unit quaternion.
+///
+/// `t` Interpolation control factor.
+///
+/// ## Return value
+///
+/// Returns the interpolated quaternion. If `Q0`, `Q1`, `Q2`, and `Q3` are not
+/// all unit quaternions, the returned quaternion is undefined.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent
+/// quaternions, where the `X`, `Y`, and `Z` components are the vector part and the
+/// `W` component is the scalar part.
+///
+/// The use of this method requires some setup before its use. See [`XMQuaternionSquadSetup`] for details.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionSquad>
+///
+/// [`XMQuaternionSquadSetup`]: crate::quaternion::XMQuaternionSquadSetup
 #[inline]
 pub fn XMQuaternionSquad(
     Q0: FXMVECTOR,
@@ -619,7 +650,7 @@ pub fn XMQuaternionSquad(
 
 /// Interpolates between four unit quaternions, using spherical quadrangle interpolation.
 ///
-/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionSquad>
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionSquadV>
 #[inline]
 pub fn XMQuaternionSquadV(
     Q0: FXMVECTOR,
@@ -629,7 +660,7 @@ pub fn XMQuaternionSquadV(
     T: XMVECTOR,
 ) -> FXMVECTOR
 {
-    // debug_assert!((XMVectorGetY(T) == XMVectorGetX(T)) && (XMVectorGetZ(T) == XMVectorGetX(T)) && (XMVectorGetW(T) == XMVectorGetX(T)));
+    debug_assert!((XMVectorGetY(T) == XMVectorGetX(T)) && (XMVectorGetZ(T) == XMVectorGetX(T)) && (XMVectorGetW(T) == XMVectorGetX(T)));
 
     let mut TP: XMVECTOR = T;
 
@@ -648,6 +679,22 @@ pub fn XMQuaternionSquadV(
 
 /// Provides addresses of setup control points for spherical quadrangle interpolation.
 ///
+/// ## Parameters
+///
+/// `pA` Address of first setup quaternion.
+///
+/// `pB` Address of first setup quaternion.
+///
+/// `pC` Address of first setup quaternion.
+///
+/// `Q0` First quaternion.
+///
+/// `Q1` Second quaternion.
+///
+/// `Q2` Third quaternion.
+///
+/// `Q3` Fourth quaternion.
+///
 /// ## Remarks
 ///
 /// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent
@@ -655,9 +702,13 @@ pub fn XMQuaternionSquadV(
 /// `W` component is the scalar part.
 ///
 /// The results returned in `pA`, `pB`, and `pC` are used as the inputs to the
-/// `Q1`, `Q2`, and `Q3` parameters of XMQuaternionSquad.
+/// `Q1`, `Q2`, and `Q3` parameters of [`XMQuaternionSquad`].
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionSquadSetup>
+///
+/// [`XMQuaternionSquad`]: crate::quaternion::XMQuaternionSquad
 #[inline]
 pub fn XMQuaternionSquadSetup(
     pA: &mut XMVECTOR,
@@ -837,6 +888,8 @@ pub fn XMQuaternionBaryCentric(
 /// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionBaryCentricV>
+///
+/// [`XMQuaternionBaryCentric`]: crate::quaternion::XMQuaternionBaryCentric
 #[inline]
 pub fn XMQuaternionBaryCentricV(
     Q0: FXMVECTOR,
@@ -889,6 +942,8 @@ pub fn XMQuaternionBaryCentricV(
 /// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionIdentity>
+///
+/// [`XMQuaternionIdentity`]: crate::quaternion::XMQuaternionIdentity
 #[inline]
 pub fn XMQuaternionIdentity() -> FXMVECTOR
 {
@@ -899,6 +954,28 @@ pub fn XMQuaternionIdentity() -> FXMVECTOR
 
 
 /// Computes a rotation quaternion based on the pitch, yaw, and roll (Euler angles).
+///
+/// ## Parameters
+///
+/// `Angles` 3D vector containing the Euler angles in the order pitch, yaw, roll.
+///
+/// # Return value
+///
+/// Returns the rotation quaternion.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where
+/// the `X`, `Y`, and `Z` components are the vector part and the W component is the scalar part.
+///
+/// Angles are measured clockwise when looking along the rotation axis toward
+/// the origin. This is a **left-handed coordinate** system. To use **right-handed
+/// coordinates, negate all three angles**.
+///
+/// The order of transformations is roll first, then pitch, then yaw. The rotations are all
+/// applied in the global coordinate frame.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionRotationRollPitchYaw>
 #[inline]
@@ -914,6 +991,32 @@ pub fn XMQuaternionRotationRollPitchYaw(
 }
 
 /// Computes a rotation quaternion based on a vector containing the Euler angles (pitch, yaw, and roll).
+///
+/// ## Parameters
+///
+/// `Pitch` Angle of rotation around the `x`-axis, in radians.
+///
+/// `Yaw` Angle of rotation around the `y`-axis, in radians.
+///
+/// `Roll` Angle of rotation around the `z`-axis, in radians.
+///
+/// # Return value
+///
+/// Returns the rotation quaternion.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where
+/// the `X`, `Y`, and `Z` components are the vector part and the W component is the scalar part.
+///
+/// Angles are measured clockwise when looking along the rotation axis toward
+/// the origin. This is a **left-handed coordinate** system. To use **right-handed
+/// coordinates, negate all three angles**.
+///
+/// The order of transformations is roll first, then pitch, then yaw. The rotations are all
+/// applied in the global coordinate frame.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionRotationRollPitchYawFromVector>
 #[inline]
@@ -959,6 +1062,24 @@ pub fn XMQuaternionRotationRollPitchYawFromVector(
 
 /// Computes the rotation quaternion about a normal vector.
 ///
+/// ## Parameters
+///
+/// `NormalAxis` Normal vector describing the axis of rotation.
+///
+/// `Angle` Angle of rotation in radians. Angles are measured clockwise when
+/// looking along the rotation axis toward the origin.
+///
+/// ## Return value
+///
+/// Returns the rotation quaternion.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where
+/// the `X`, `Y`, and `Z` components are the vector part and the W component is the scalar part.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionRotationNormal>
 #[inline]
 pub fn XMQuaternionRotationNormal(
@@ -996,7 +1117,29 @@ pub fn XMQuaternionRotationNormal(
 
 /// Computes a rotation quaternion about an axis.
 ///
+/// ## Parameters
+///
+/// `Axis` 3D vector describing the axis of rotation.
+///
+/// `Angle` Angle of rotation in radians. Angles are measured clockwise when
+/// looking along the rotation axis toward the origin.
+///
+/// ## Return value
+///
+/// Returns the rotation quaternion.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where
+/// the `X`, `Y`, and `Z` components are the vector part and the W component is the scalar part.
+///
+/// If Axis is a normalized vector, it is faster to use [`XMQuaternionRotationNormal`]
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionRotationAxis>
+///
+/// [`XMQuaternionRotationNormal`]: crate::quaternion::XMQuaternionRotationNormal
 #[inline]
 pub fn XMQuaternionRotationAxis(
     Axis: XMVECTOR,
