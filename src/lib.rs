@@ -1431,27 +1431,27 @@ cast_m128!(XMVECTORU32);
 #[repr(transparent)]
 pub struct XMVector(pub XMVECTOR);
 
-#[cfg(_XM_NO_INTRINSICS_)]
-#[derive(Copy, Clone, Debug)]
-#[doc(hidden)]
-struct mm {
-    pub _11: f32,
-    pub _12: f32,
-    pub _13: f32,
-    pub _14: f32,
-    pub _21: f32,
-    pub _22: f32,
-    pub _23: f32,
-    pub _24: f32,
-    pub _31: f32,
-    pub _32: f32,
-    pub _33: f32,
-    pub _34: f32,
-    pub _41: f32,
-    pub _42: f32,
-    pub _43: f32,
-    pub _44: f32,
-}
+// #[cfg(_XM_NO_INTRINSICS_)]
+// #[derive(Copy, Clone, Debug)]
+// #[doc(hidden)]
+// struct RowColumn {
+//     pub _11: f32,
+//     pub _12: f32,
+//     pub _13: f32,
+//     pub _14: f32,
+//     pub _21: f32,
+//     pub _22: f32,
+//     pub _23: f32,
+//     pub _24: f32,
+//     pub _31: f32,
+//     pub _32: f32,
+//     pub _33: f32,
+//     pub _34: f32,
+//     pub _41: f32,
+//     pub _42: f32,
+//     pub _43: f32,
+//     pub _44: f32,
+// }
 
 // #[cfg(_XM_NO_INTRINSICS_)]
 // #[derive(Copy, Clone)]
@@ -1471,8 +1471,8 @@ pub union XMMATRIX {
     pub r: [XMVECTOR; 4],
     #[cfg(_XM_NO_INTRINSICS_)]
     m: [[f32; 4]; 4],
-    #[cfg(_XM_NO_INTRINSICS_)]
-    mm: mm,
+    // #[cfg(_XM_NO_INTRINSICS_)]
+    // rc: RowColumn,
 }
 
 impl std::fmt::Debug for XMMATRIX {
