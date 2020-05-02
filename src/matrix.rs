@@ -3106,6 +3106,18 @@ impl std::ops::Neg for XMMatrix {
     }
 }
 
+impl std::cmp::PartialEq for XMMatrix {
+    #[inline]
+    fn eq(&self, rhs: &Self) -> bool {
+        unsafe {
+            XMVector(self.r[0]) == XMVector(rhs.r[0]) &&
+            XMVector(self.r[1]) == XMVector(rhs.r[1]) &&
+            XMVector(self.r[2]) == XMVector(rhs.r[2]) &&
+            XMVector(self.r[3]) == XMVector(rhs.r[3])
+        }
+    }
+}
+
 impl std::fmt::Debug for XMMatrix {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let rows = unsafe {

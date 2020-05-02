@@ -1,68 +1,101 @@
 //! # DirectX Math for Rust
 //!
-//! <https://github.com/microsoft/DirectXMath>
+//! A pure rust translation of [DirectXMath], an all inline SIMD linear algebra library for use in
+//! games and graphics apps.
 //!
-//! <https://github.com/aloucks/directx_math>
+//! All functions and structs are exported at the crate root. Modules are organized according
+//! to the `C++` [reference documentation].
 //!
-//! ## Conversion Functions
+//! [DirectXMath]: https://github.com/microsoft/DirectXMath
+//! [reference documentation]: https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference
 //!
-//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-conversion>
 //!
-//! ## Matrix Functions
+//! # Example
+//! ```rust
+//! use directx_math::*;
 //!
-//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-matrix>
+//! let eye = XMVectorSet(10.0, 10.0, 10.0, 0.0);
+//! let focus = XMVectorSet(0.0, 0.0, 0.0, 0.0);
+//! let up = XMVectorSet(0.0, 1.0, 0.0, 0.0);
+//! let view = XMMatrixLookAtRH(eye, focus, up);
 //!
-//! ## Plane Functions
+//! let fov_y = XMConvertToRadians(65.0);
+//! let aspect_ratio = 1024.0 / 768.0;
+//! let near_z = 0.1;
+//! let far_z = 1000.0;
+//! let projection = XMMatrixPerspectiveFovRH(fov_y, aspect_ratio, near_z, far_z);
 //!
-//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-plane>
+//! let model = XMMatrixIdentity();
 //!
-//! ## Quaternion Functions
+//! let model_view_projection = XMMatrixMultiply(XMMatrixMultiply(model, &view), &projection);
 //!
-//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-quaternion>
+//! let model = XMMatrix(model);
+//! let view = XMMatrix(view);
+//! let projection = XMMatrix(projection);
 //!
-//! ## Scalar Functions
-//!
-//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-scalar>
-//!
-//! ## Vector Functions
-//!
-//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector>
-//!
-//! ## 2D Vector Functions
-//!
-//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector2>
-//!
-//! ## 3D Vector Functions
-//!
-//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector3>
-//!
-//! ## 4D Vector Functions
-//!
-//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector4>
-//!
-//! ## Template Functions
-//!
-//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-templates>
-//!
-//! ## Triangle Test Functions
-//!
-//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-triangletests>
-//!
-//! ## Utility Functions
-//!
-//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-utilities>
-//!
-//! ## Vector Accessor Functions
-//!
-//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-accessors>
-//!
-//! ## Vector Load Functions
-//!
-//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-load>
-//!
-//! ## Vector Store Functions
-//!
-//! <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-store>
+//! assert_eq!(XMMatrix(model_view_projection), model * view * projection);
+//! ```
+
+
+// ## Conversion Functions
+//
+// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-conversion>
+//
+// ## Matrix Functions
+//
+// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-matrix>
+//
+// ## Plane Functions
+//
+// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-plane>
+//
+// ## Quaternion Functions
+//
+// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-quaternion>
+//
+// ## Scalar Functions
+//
+// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-scalar>
+//
+// ## Vector Functions
+//
+// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector>
+//
+// ## 2D Vector Functions
+//
+// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector2>
+//
+// ## 3D Vector Functions
+//
+// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector3>
+//
+// ## 4D Vector Functions
+//
+// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector4>
+//
+// ## Template Functions
+//
+// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-templates>
+//
+// ## Triangle Test Functions
+//
+// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-triangletests>
+//
+// ## Utility Functions
+//
+// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-utilities>
+//
+// ## Vector Accessor Functions
+//
+// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-accessors>
+//
+// ## Vector Load Functions
+//
+// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-load>
+//
+// ## Vector Store Functions
+//
+// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-store>
 
 #![allow(non_snake_case)]
 #![allow(non_camel_case_types)]
@@ -415,37 +448,37 @@ pub use misc::*;
 pub use matrix::*;
 
 mod doc {
-    /// Color functions
-    ///
-    /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-color>
-    pub mod color {
-        // TODO: pub use crate::misc::XMColorSRGBToRGB;
-        // TODO: pub use crate::misc::XMColorRGBToSRGB;
-        // TODO: pub use crate::misc::XMColorAdjustContrast;
-        // TODO: pub use crate::misc::XMColorAdjustSaturation;
-        // TODO: pub use crate::misc::XMColorEqual;
-        // TODO: pub use crate::misc::XMColorGreater;
-        // TODO: pub use crate::misc::XMColorGreaterOrEqual;
-        // TODO: pub use crate::misc::XMColorHSLToRGB;
-        // TODO: pub use crate::misc::XMColorHSVToRGB;
-        // TODO: pub use crate::misc::XMColorIsInfinite;
-        // TODO: pub use crate::misc::XMColorIsNaN;
-        // TODO: pub use crate::misc::XMColorLess;
-        // TODO: pub use crate::misc::XMColorLessOrEqual;
-        // TODO: pub use crate::misc::XMColorModulate;
-        // TODO: pub use crate::misc::XMColorNegative;
-        // TODO: pub use crate::misc::XMColorNotEqual;
-        // TODO: pub use crate::misc::XMColorRGBToHSL;
-        // TODO: pub use crate::misc::XMColorRGBToHSV;
-        // TODO: pub use crate::misc::XMColorRGBToXYZ;
-        // TODO: pub use crate::misc::XMColorRGBToYUV;
-        // TODO: pub use crate::misc::XMColorRGBToYUV_HD;
-        // TODO: pub use crate::misc::XMColorSRGBToXYZ;
-        // TODO: pub use crate::misc::XMColorXYZToRGB;
-        // TODO: pub use crate::misc::XMColorXYZToSRGB;
-        // TODO: pub use crate::misc::XMColorYUVToRGB;
-        // TODO: pub use crate::misc::XMColorYUVToRGB_HD;
-    }
+    // /// Color functions
+    // ///
+    // /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-color>
+    // pub mod color {
+    //     // TODO: pub use crate::misc::XMColorSRGBToRGB;
+    //     // TODO: pub use crate::misc::XMColorRGBToSRGB;
+    //     // TODO: pub use crate::misc::XMColorAdjustContrast;
+    //     // TODO: pub use crate::misc::XMColorAdjustSaturation;
+    //     // TODO: pub use crate::misc::XMColorEqual;
+    //     // TODO: pub use crate::misc::XMColorGreater;
+    //     // TODO: pub use crate::misc::XMColorGreaterOrEqual;
+    //     // TODO: pub use crate::misc::XMColorHSLToRGB;
+    //     // TODO: pub use crate::misc::XMColorHSVToRGB;
+    //     // TODO: pub use crate::misc::XMColorIsInfinite;
+    //     // TODO: pub use crate::misc::XMColorIsNaN;
+    //     // TODO: pub use crate::misc::XMColorLess;
+    //     // TODO: pub use crate::misc::XMColorLessOrEqual;
+    //     // TODO: pub use crate::misc::XMColorModulate;
+    //     // TODO: pub use crate::misc::XMColorNegative;
+    //     // TODO: pub use crate::misc::XMColorNotEqual;
+    //     // TODO: pub use crate::misc::XMColorRGBToHSL;
+    //     // TODO: pub use crate::misc::XMColorRGBToHSV;
+    //     // TODO: pub use crate::misc::XMColorRGBToXYZ;
+    //     // TODO: pub use crate::misc::XMColorRGBToYUV;
+    //     // TODO: pub use crate::misc::XMColorRGBToYUV_HD;
+    //     // TODO: pub use crate::misc::XMColorSRGBToXYZ;
+    //     // TODO: pub use crate::misc::XMColorXYZToRGB;
+    //     // TODO: pub use crate::misc::XMColorXYZToSRGB;
+    //     // TODO: pub use crate::misc::XMColorYUVToRGB;
+    //     // TODO: pub use crate::misc::XMColorYUVToRGB_HD;
+    // }
 
     /// Vector data conversion functions
     ///
@@ -1147,26 +1180,26 @@ mod doc {
         // TODO: pub use crate::XMVerifyCPUSupport;
     }
 
-    pub mod structures {
-        // TODO
-    }
+    // pub mod structures {
+    //     // TODO
+    // }
 
-    /// Collision classes
-    ///
-    /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-directxmath-classes>
-    pub mod classes {
-        // TODO: pub use crate::collision::BoundingBox;
-        // TODO: pub use crate::collision::BoundingFrustum;
-        // TODO: pub use crate::collision::BoundingOrientedBox;
-        // TODO: pub use crate::collision::BoundingSphere;
-    }
+    // /// Collision classes
+    // ///
+    // /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-directxmath-classes>
+    // pub mod classes {
+    //     // TODO: pub use crate::collision::BoundingBox;
+    //     // TODO: pub use crate::collision::BoundingFrustum;
+    //     // TODO: pub use crate::collision::BoundingOrientedBox;
+    //     // TODO: pub use crate::collision::BoundingSphere;
+    // }
 
-    pub mod enumerations {
-        // TODO
-    }
-    pub mod types {
-        // TODO
-    }
+    // pub mod enumerations {
+    //     // TODO
+    // }
+    // pub mod types {
+    //     // TODO
+    // }
 }
 
 pub use doc::*;
@@ -1221,13 +1254,13 @@ pub type XM_PERMUTE_1W = Permute1W;
 
 /// Converts an angle measured in degrees into one measured in radians.
 ///
-/// https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMConvertToRadians
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMConvertToRadians>
 #[inline]
 pub fn XMConvertToRadians(fDegrees: f32) -> f32 { return fDegrees * (XM_PI / 180.0); }
 
 /// Converts an angle measured in radians into one measured in degrees.
 ///
-/// https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMConvertToDegrees
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMConvertToDegrees>
 #[inline]
 pub fn XMConvertToDegrees(fRadians: f32) -> f32 { return fRadians * (180.0 / XM_PI); }
 
@@ -1440,6 +1473,12 @@ pub union XMMATRIX {
     m: [[f32; 4]; 4],
     #[cfg(_XM_NO_INTRINSICS_)]
     mm: mm,
+}
+
+impl std::fmt::Debug for XMMATRIX {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        XMMatrix(*self).fmt(f)
+    }
 }
 
 pub type FXMMATRIX = XMMATRIX;

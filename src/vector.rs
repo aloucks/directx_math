@@ -5199,7 +5199,8 @@ pub fn XMVectorCatmullRom(
     }
 }
 
-
+/// Performs a Catmull-Rom interpolation, using the specified position vectors.
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorCatmullRomV>
 #[inline]
 pub fn XMVectorCatmullRomV(
@@ -10072,6 +10073,13 @@ impl std::ops::Neg for XMVector {
     #[inline]
     fn neg(self) -> Self::Output {
         XMVector(XMVectorNegate(*self))
+    }
+}
+
+impl std::cmp::PartialEq for XMVector {
+    #[inline]
+    fn eq(&self, rhs: &Self) -> bool {
+        XMVector4NearEqual(self.0, rhs.0, unsafe { g_XMEpsilon.v })
     }
 }
 
