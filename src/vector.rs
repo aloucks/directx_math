@@ -50,7 +50,9 @@ macro_rules! XM3PACK4INTO3 {
 
 // --
 
-/// Return a vector with all elements equaling zero
+/// Replicates a floating-point value referenced by pointer into all four components of a vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorZero>
 #[inline]
 pub fn XMVectorZero() -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -70,7 +72,9 @@ pub fn XMVectorZero() -> XMVECTOR {
     }
 }
 
-/// Initialize a vector with four floating point values
+/// Creates the zero vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSet>
 #[inline]
 pub fn XMVectorSet(
     x: f32,
@@ -95,7 +99,9 @@ pub fn XMVectorSet(
     }
 }
 
-/// Initialize a vector with four integer values
+/// Creates a vector with unsigned integer components.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSetInt>
 #[inline]
 pub fn XMVectorSetInt(
     x: u32,
@@ -121,7 +127,9 @@ pub fn XMVectorSetInt(
     }
 }
 
-/// Initialize a vector with a replicated floating point value
+/// Replicates a floating-point value into all four components of a vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorReplicate>
 #[inline]
 pub fn XMVectorReplicate(Value: f32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -145,9 +153,41 @@ pub fn XMVectorReplicate(Value: f32) -> XMVECTOR {
     }
 }
 
-// TODO: XMVectorReplicatePtr
+/// Replicates a floating-point value referenced by pointer into all four components of a vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorReplicatePtr>
+#[inline]
+pub fn XMVectorReplicatePtr(pValue: &f32) -> XMVECTOR {
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut vResult: XMVECTORF32 = mem::MaybeUninit::uninit().assume_init();
+        let Value = *pValue;
+        vResult.f[0] = Value;
+        vResult.f[1] = Value;
+        vResult.f[2] = Value;
+        vResult.f[3] = Value;
+        return vResult.v;
+    }
 
-/// Initialize a vector with a replicated integer value
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_AVX_INTRINSICS_)]
+    unsafe {
+        return _mm_broadcast_ss(pValue);
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_AVX_INTRINSICS_)))]
+    unsafe {
+        return _mm_load_ps1(pValue);
+    }
+}
+
+/// Replicates an integer value into all four components of a vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorReplicateInt>
 #[inline]
 pub fn XMVectorReplicateInt(Value: u32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -174,7 +214,9 @@ pub fn XMVectorReplicateInt(Value: u32) -> XMVECTOR {
 
 // TODO: XMVectorReplicateIntPtr
 
-/// Initialize a vector with all bits set (true mask)
+/// Returns a vector, each of whose components represents true (0xFFFFFFFF).
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorTrueInt>
 #[inline]
 pub fn XMVectorTrueInt() -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -195,7 +237,9 @@ pub fn XMVectorTrueInt() -> XMVECTOR {
     }
 }
 
-/// Initialize a vector with all bits clear (false mask)
+/// Returns the zero (false) vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorFalseInt>
 #[inline]
 pub fn XMVectorFalseInt() -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -215,7 +259,9 @@ pub fn XMVectorFalseInt() -> XMVECTOR {
     }
 }
 
-/// Replicate the x component of the vector
+/// Replicates the x component of a vector to all of the components.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatX>
 #[inline]
 pub fn XMVectorSplatX(V: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -244,7 +290,9 @@ pub fn XMVectorSplatX(V: FXMVECTOR) -> XMVECTOR {
     }
 }
 
-/// Replicate the y component of the vector
+/// Replicates the y component of a vector to all of the components.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatY>
 #[inline]
 pub fn XMVectorSplatY(V: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -292,7 +340,9 @@ pub fn XMVectorSplatZ(V: FXMVECTOR) -> XMVECTOR {
     }
 }
 
-/// Replicate the w component of the vector
+/// Replicates the w component of a vector to all of the components.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatW>
 #[inline]
 pub fn XMVectorSplatW(V: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -316,7 +366,9 @@ pub fn XMVectorSplatW(V: FXMVECTOR) -> XMVECTOR {
     }
 }
 
-/// Return a vector of 1.0f,1.0f,1.0f,1.0f
+/// Returns a vector, each of whose components are one.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatOne>
 #[inline]
 pub fn XMVectorSplatOne() -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -340,7 +392,9 @@ pub fn XMVectorSplatOne() -> XMVECTOR {
     }
 }
 
-/// Return a vector of INF,INF,INF,INF
+/// Returns a vector, each of whose components are infinity (0x7F800000).
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatInfinity>
 #[inline]
 pub fn XMVectorSplatInfinity() -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -364,7 +418,9 @@ pub fn XMVectorSplatInfinity() -> XMVECTOR {
     }
 }
 
-/// Return a vector of Q_NAN,Q_NAN,Q_NAN,Q_NAN
+/// Returns a vector, each of whose components are QNaN (0x7CF00000).
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatQNaN>
 #[inline]
 pub fn XMVectorSplatQNaN() -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -388,7 +444,9 @@ pub fn XMVectorSplatQNaN() -> XMVECTOR {
     }
 }
 
-/// Return a vector of 1.192092896e-7f,1.192092896e-7f,1.192092896e-7f,1.192092896e-7f
+/// Returns a vector, each of whose components are epsilon (`1.192092896e-7`).
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatEpsilon>
 #[inline]
 pub fn XMVectorSplatEpsilon() -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -412,7 +470,9 @@ pub fn XMVectorSplatEpsilon() -> XMVECTOR {
     }
 }
 
-/// Return a vector of -0.0f (0x80000000),-0.0f,-0.0f,-0.0f
+/// Returns a vector, each of whose components are the sign mask (`0x80000000`).
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatSignMask>
 #[inline]
 pub fn XMVectorSplatSignMask() -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -437,8 +497,9 @@ pub fn XMVectorSplatSignMask() -> XMVECTOR {
     }
 }
 
-/// Return a floating point value via an index. This is not a recommended
-/// function to use due to performance loss.
+/// Retrieve the value of one of the four components of an XMVECTOR Data Type containing floating-point data by index.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetByIndex>
 #[inline]
 pub fn XMVectorGetByIndex(V: XMVECTOR, i: usize) -> f32 {
     debug_assert!(i < 4);
@@ -461,7 +522,9 @@ pub fn XMVectorGetByIndex(V: XMVECTOR, i: usize) -> f32 {
     }
 }
 
-/// Return the X component in an FPU register.
+/// Retrieve the `x` component of an XMVECTOR Data Type.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetX>
 #[inline]
 pub fn XMVectorGetX(V: XMVECTOR) -> f32 {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -480,7 +543,9 @@ pub fn XMVectorGetX(V: XMVECTOR) -> f32 {
     }
 }
 
-/// Return the X component in an FPU register.
+/// Retrieve the `y` component of an XMVECTOR Data Type.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetY>
 #[inline]
 pub fn XMVectorGetY(V: XMVECTOR) -> f32 {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -500,7 +565,9 @@ pub fn XMVectorGetY(V: XMVECTOR) -> f32 {
     }
 }
 
-/// Return the Z component in an FPU register.
+/// Retrieve the `z` component of an XMVECTOR Data Type.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetZ>
 #[inline]
 pub fn XMVectorGetZ(V: XMVECTOR) -> f32 {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -520,7 +587,9 @@ pub fn XMVectorGetZ(V: XMVECTOR) -> f32 {
     }
 }
 
-/// Return the Z component in an FPU register.
+/// Retrieve the `w` component of an XMVECTOR Data Type.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetW>
 #[inline]
 pub fn XMVectorGetW(V: XMVECTOR) -> f32 {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -664,8 +733,9 @@ pub fn XMVectorGetWPtr(
     }
 }
 
-/// Return an integer value via an index. This is not a recommended
-/// function to use due to performance loss.
+/// Retrieve the value of one of the four components of an XMVECTOR Data Type containing integer data by index.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetIntByIndex>
 #[inline]
 pub fn XMVectorGetIntByIndex(V: XMVECTOR, i: usize) -> u32 {
     debug_assert!(i < 4);
@@ -688,7 +758,9 @@ pub fn XMVectorGetIntByIndex(V: XMVECTOR, i: usize) -> u32 {
     }
 }
 
-/// Return the X component in an integer register.
+/// Retrieve the `x` component of an XMVECTOR Data Type.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetIntX>
 #[inline]
 pub fn XMVectorGetIntX(V: XMVECTOR) -> u32 {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -707,7 +779,9 @@ pub fn XMVectorGetIntX(V: XMVECTOR) -> u32 {
     }
 }
 
-/// Return the Y component in an integer register.
+/// Retrieve the `y` component of an XMVECTOR Data Type.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetIntY>
 #[inline]
 pub fn XMVectorGetIntY(V: XMVECTOR) -> u32 {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -733,7 +807,9 @@ pub fn XMVectorGetIntY(V: XMVECTOR) -> u32 {
     }
 }
 
-/// Return the Z component in an integer register.
+/// Retrieve the `z` component of an XMVECTOR Data Type.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetIntZ>
 #[inline]
 pub fn XMVectorGetIntZ(V: XMVECTOR) -> u32 {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -759,7 +835,9 @@ pub fn XMVectorGetIntZ(V: XMVECTOR) -> u32 {
     }
 }
 
-/// Return the W component in an integer register.
+/// Retrieve the `w` component of an XMVECTOR Data Type.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetIntW>
 #[inline]
 pub fn XMVectorGetIntW(V: XMVECTOR) -> u32 {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -791,7 +869,9 @@ pub fn XMVectorGetIntW(V: XMVECTOR) -> u32 {
 // TODO: XMVectorGetIntZPtr
 // TODO: XMVectorGetIntWPtr
 
-/// Set a single indexed floating point component
+/// Use a floating-point object to set the value of one of the four components of an XMVECTOR Data Type containing integer data referenced by an index.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSetByIndex>
 #[inline]
 pub fn XMVectorSetByIndex(V: XMVECTOR, f: f32, i: usize) -> XMVECTOR {
     debug_assert!(i < 4);
@@ -804,7 +884,9 @@ pub fn XMVectorSetByIndex(V: XMVECTOR, f: f32, i: usize) -> XMVECTOR {
     }
 }
 
-/// Sets the X component of a vector to a passed floating point value
+/// Set the value of the `x` component of an XMVECTOR Data Type.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSetX>
 #[inline]
 pub fn XMVectorSetX(V: XMVECTOR, x: f32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -833,7 +915,9 @@ pub fn XMVectorSetX(V: XMVECTOR, x: f32) -> XMVECTOR {
     }
 }
 
-/// Sets the Y component of a vector to a passed floating point value
+/// Set the value of the `y` component of an XMVECTOR Data Type.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSetY>
 #[inline]
 pub fn XMVectorSetY(V: XMVECTOR, y: f32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -875,7 +959,9 @@ pub fn XMVectorSetY(V: XMVECTOR, y: f32) -> XMVECTOR {
     }
 }
 
-/// Sets the Z component of a vector to a passed floating point value
+/// Set the value of the `z` component of an XMVECTOR Data Type.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSetZ>
 #[inline]
 pub fn XMVectorSetZ(V: XMVECTOR, z: f32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -917,7 +1003,9 @@ pub fn XMVectorSetZ(V: XMVECTOR, z: f32) -> XMVECTOR {
     }
 }
 
-/// Sets the W component of a vector to a passed floating point value
+/// Set the value of the `w` component of an XMVECTOR Data Type.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSetW>
 #[inline]
 pub fn XMVectorSetW(V: XMVECTOR, w: f32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -965,7 +1053,9 @@ pub fn XMVectorSetW(V: XMVECTOR, w: f32) -> XMVECTOR {
 // TODO: XMVectorSetZPtr
 // TODO: XMVectorSetWPtr
 
-/// Sets a component of a vector to an integer passed by value
+/// Use an integer instance to set the value of one of the four components of an XMVECTOR Data Type containing integer data referenced by an index.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSetIntByIndex>
 #[inline]
 pub fn XMVectorSetIntByIndex(V: XMVECTOR, x: u32, i: usize) -> XMVECTOR {
     // debug_assert!(i < 4);
@@ -978,7 +1068,9 @@ pub fn XMVectorSetIntByIndex(V: XMVECTOR, x: u32, i: usize) -> XMVECTOR {
     }
 }
 
-/// Sets the X component of a vector to an integer passed by value
+/// Set the value of the `x` component of an XMVECTOR Data Type.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSetIntX>
 #[inline]
 pub fn XMVectorSetIntX(V: XMVECTOR, x: u32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -1007,7 +1099,9 @@ pub fn XMVectorSetIntX(V: XMVECTOR, x: u32) -> XMVECTOR {
     }
 }
 
-/// Sets the X component of a vector to an integer passed by value
+/// Set the value of the `y` component of an XMVECTOR Data Type.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSetIntY>
 #[inline]
 pub fn XMVectorSetIntY(V: XMVECTOR, y: u32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -1049,7 +1143,9 @@ pub fn XMVectorSetIntY(V: XMVECTOR, y: u32) -> XMVECTOR {
     }
 }
 
-/// Sets the Z component of a vector to an integer passed by value
+/// Set the value of the `z` component of an XMVECTOR Data Type.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSetIntZ>
 #[inline]
 pub fn XMVectorSetIntZ(V: XMVECTOR, z: u32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -1091,7 +1187,9 @@ pub fn XMVectorSetIntZ(V: XMVECTOR, z: u32) -> XMVECTOR {
     }
 }
 
-/// Sets the W component of a vector to an integer passed by value
+/// Set the value of the `w` component of an XMVECTOR Data Type.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSetIntW>
 #[inline]
 pub fn XMVectorSetIntW(V: XMVECTOR, w: u32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]

@@ -703,7 +703,7 @@ mod doc {
             pub use crate::vector::XMVectorReplicate;
             pub use crate::vector::XMVectorReplicateInt;
             // TODO: pub use crate::vector::XMVectorReplicateIntPtr;
-            // TODO: pub use crate::vector::XMVectorReplicatePtr;
+            pub use crate::vector::XMVectorReplicatePtr;
             pub use crate::vector::XMVectorSet;
             pub use crate::XMVectorSetBinaryConstant;
             pub use crate::vector::XMVectorSetInt;
