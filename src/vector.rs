@@ -214,7 +214,7 @@ pub fn XMVectorReplicateInt(Value: u32) -> XMVECTOR {
 
 // TODO: XMVectorReplicateIntPtr
 
-/// Returns a vector, each of whose components represents true (0xFFFFFFFF).
+/// Returns a vector, each of whose components represents true (`0xFFFFFFFF`).
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorTrueInt>
 #[inline]
@@ -394,7 +394,7 @@ pub fn XMVectorSplatOne() -> XMVECTOR {
     }
 }
 
-/// Returns a vector, each of whose components are infinity (0x7F800000).
+/// Returns a vector, each of whose components are infinity (`0x7F800000`).
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatInfinity>
 #[inline]
@@ -420,7 +420,7 @@ pub fn XMVectorSplatInfinity() -> XMVECTOR {
     }
 }
 
-/// Returns a vector, each of whose components are QNaN (0x7CF00000).
+/// Returns a vector, each of whose components are QNaN (`0x7CF00000`).
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatQNaN>
 #[inline]
