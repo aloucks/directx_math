@@ -182,6 +182,21 @@ mod inner {
         (r * (high - low)) + low
     }
 
+    fn range_u32(rng: &mut Pcg, low: u32, high: u32) -> u32 {
+        let r = random_f32(rng);
+        let (low, high) = (low as f32, high as f32);
+        let v = (r * (high - low)) + low;
+        let v: u32 = v.round() as u32;
+        assert!(v >= low as u32);
+        assert!(v <= high as u32);
+        v
+    }
+
+    pub fn random_vec4_permute(rng: &mut Pcg) -> u32 {
+        range_u32(rng, 0, 7)
+    }
+
+
     pub fn random_view_width(rng: &mut Pcg) -> f32 {
         range_f32(rng, 1024.0, 2560.0)
     }

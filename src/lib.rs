@@ -79,6 +79,9 @@
 #![deny(unused_mut)]
 #![deny(unused_assignments)]
 
+#![cfg_attr(nightly_specialization, feature(min_specialization))]
+#![cfg_attr(nightly_specialization, feature(specialization))]
+
 #[allow(unused_imports)]
 use std::mem;
 
@@ -1714,9 +1717,10 @@ pub fn XMMax<T: PartialOrd>(a: T, b: T) -> T {
 // specialization work-around on stable:
 // https://github.com/dtolnay/case-studies/blob/master/autoref-specialization/README.md
 //
+// Note that the specialization work-wround doesn't quite work when there is no
+// self receiver.
 
 // TODO: Internal / PermuteHelper template
-// TODO: XMVectorPermute template
 
 /// XMVectorPermute trait parameters
 pub unsafe trait Permute {
@@ -1812,9 +1816,6 @@ pub trait XMVectorPermute {
     ///
     /// This function is a template version of [`XMVectorPermute`] where the `Permute*` arguments are template values.
     ///
-    /// The trait based version may be more efficient with certain CPU features, and the specialized
-    /// cases may provide additional optimization.
-    ///
     /// ```rust
     /// # use directx_math::*;
     /// let a = XMVectorSet(1.0, 2.0, 3.0, 4.0);
@@ -1835,6 +1836,7 @@ pub trait XMVectorPermute {
     fn XMVectorPermute(V1: XMVECTOR, V2: XMVECTOR) -> XMVECTOR;
 }
 
+#[cfg(not(nightly_specialization))]
 impl<X: Permute, Y: Permute, Z: Permute, W: Permute> XMVectorPermute for (X, Y, Z, W) {
     const WhichX: bool = X::PERMUTE > 3;
     const WhichY: bool = Y::PERMUTE > 3;
@@ -1846,16 +1848,6 @@ impl<X: Permute, Y: Permute, Z: Permute, W: Permute> XMVectorPermute for (X, Y, 
     fn XMVectorPermute(V1: XMVECTOR, V2: XMVECTOR) -> XMVECTOR {
         #[cfg(any(_XM_SSE_INTRINSICS_, _XM_AVX_INTRINSICS_))]
         unsafe {
-            // PERFORMANCE: This should be const, but `if` isn't allowed in const context.
-            // let selectMask: XMVECTORU32 = XMVECTORU32 {
-            //     u: [
-            //         if Self::WhichX { 0xFFFFFFFF } else { 0 },
-            //         if Self::WhichY { 0xFFFFFFFF } else { 0 },
-            //         if Self::WhichZ { 0xFFFFFFFF } else { 0 },
-            //         if Self::WhichW { 0xFFFFFFFF } else { 0 },
-            //     ]
-            // };
-
             let shuffled1: XMVECTOR = XM_PERMUTE_PS!(V1, Self::Shuffle);
             let shuffled2: XMVECTOR = XM_PERMUTE_PS!(V2, Self::Shuffle);
 
@@ -1876,6 +1868,49 @@ impl<X: Permute, Y: Permute, Z: Permute, W: Permute> XMVectorPermute for (X, Y, 
         }
     }
 }
+
+// This is only implemented as a macro to hide it from rust-analyzer until
+// the specialization bug is fixed.
+//
+// https://github.com/rust-analyzer/rust-analyzer/issues/4264
+macro_rules! XMVectorPermute_nightly_specialization {
+    () => {
+        #[cfg(nightly_specialization)]
+        impl<X: Permute, Y: Permute, Z: Permute, W: Permute> XMVectorPermute for (X, Y, Z, W) {
+            default const WhichX: bool = X::PERMUTE > 3;
+            default const WhichY: bool = Y::PERMUTE > 3;
+            default const WhichZ: bool = Z::PERMUTE > 3;
+            default const WhichW: bool = W::PERMUTE > 3;
+            default const Shuffle: i32 = _MM_SHUFFLE(W::PERMUTE & 3, Z::PERMUTE & 3, Y::PERMUTE & 3, X::PERMUTE & 3);
+
+            #[inline]
+            default fn XMVectorPermute(V1: XMVECTOR, V2: XMVECTOR) -> XMVECTOR {
+                #[cfg(any(_XM_SSE_INTRINSICS_, _XM_AVX_INTRINSICS_))]
+                unsafe {
+                    let shuffled1: XMVECTOR = XM_PERMUTE_PS!(V1, Self::Shuffle);
+                    let shuffled2: XMVECTOR = XM_PERMUTE_PS!(V2, Self::Shuffle);
+
+                    let masked1: XMVECTOR = _mm_andnot_ps(Self::SelectMask.v, shuffled1);
+                    let masked2: XMVECTOR = _mm_and_ps(Self::SelectMask.v, shuffled2);
+
+                    return _mm_or_ps(masked1, masked2);
+                }
+
+                #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+                {
+                    unimplemented!()
+                }
+
+                #[cfg(_XM_NO_INTRINSICS_)]
+                {
+                    XMVectorPermute(V1, V2, X::PERMUTE, Y::PERMUTE, Z::PERMUTE, W::PERMUTE)
+                }
+            }
+        }
+    }
+}
+
+XMVectorPermute_nightly_specialization!();
 
 #[test]
 fn test_XMVectorPermuteTrait() {
@@ -1905,7 +1940,7 @@ fn test_XMVectorPermuteTrait() {
 /// let a = XMVectorSet(1.0, 2.0, 3.0, 4.0);
 /// let b = XMVectorSet(5.0, 6.0, 7.0, 8.0);
 ///
-/// let c = <&(Permute0X, Permute0Y, Permute0Z, Permute0W)>::XMVectorPermute(a, b);
+/// let c = <(Permute0X, Permute0Y, Permute0Z, Permute0W)>::XMVectorPermute(a, b);
 /// let d = XMVectorSet(1.0, 2.0, 3.0, 4.0);
 ///
 /// assert_eq!(XMVectorGetX(c), XMVectorGetX(d));
@@ -1913,7 +1948,8 @@ fn test_XMVectorPermuteTrait() {
 /// assert_eq!(XMVectorGetZ(c), XMVectorGetZ(d));
 /// assert_eq!(XMVectorGetW(c), XMVectorGetW(d));
 /// ```
-impl XMVectorPermute for &(Permute0X, Permute0Y, Permute0Z, Permute0W) {
+#[cfg(nightly_specialization)]
+impl XMVectorPermute for (Permute0X, Permute0Y, Permute0Z, Permute0W) {
     const WhichX: bool = Permute0X::PERMUTE > 3;
     const WhichY: bool = Permute0Y::PERMUTE > 3;
     const WhichZ: bool = Permute0Z::PERMUTE > 3;
@@ -1932,7 +1968,7 @@ impl XMVectorPermute for &(Permute0X, Permute0Y, Permute0Z, Permute0W) {
 /// let a = XMVectorSet(1.0, 2.0, 3.0, 4.0);
 /// let b = XMVectorSet(5.0, 6.0, 7.0, 8.0);
 ///
-/// let c = <&(Permute1X, Permute1Y, Permute1Z, Permute1W)>::XMVectorPermute(a, b);
+/// let c = <(Permute1X, Permute1Y, Permute1Z, Permute1W)>::XMVectorPermute(a, b);
 /// let d = XMVectorSet(5.0, 6.0, 7.0, 8.0);
 ///
 /// assert_eq!(XMVectorGetX(c), XMVectorGetX(d));
@@ -1940,7 +1976,8 @@ impl XMVectorPermute for &(Permute0X, Permute0Y, Permute0Z, Permute0W) {
 /// assert_eq!(XMVectorGetZ(c), XMVectorGetZ(d));
 /// assert_eq!(XMVectorGetW(c), XMVectorGetW(d));
 /// ```
-impl XMVectorPermute for &(Permute1X, Permute1Y, Permute1Z, Permute1W) {
+#[cfg(nightly_specialization)]
+impl XMVectorPermute for (Permute1X, Permute1Y, Permute1Z, Permute1W) {
     const WhichX: bool = Permute1X::PERMUTE > 3;
     const WhichY: bool = Permute1Y::PERMUTE > 3;
     const WhichZ: bool = Permute1Z::PERMUTE > 3;
@@ -1959,7 +1996,7 @@ impl XMVectorPermute for &(Permute1X, Permute1Y, Permute1Z, Permute1W) {
 /// let a = XMVectorSet(1.0, 2.0, 3.0, 4.0);
 /// let b = XMVectorSet(5.0, 6.0, 7.0, 8.0);
 ///
-/// let c = <&(Permute0X, Permute0Y, Permute1X, Permute1Y)>::XMVectorPermute(a, b);
+/// let c = <(Permute0X, Permute0Y, Permute1X, Permute1Y)>::XMVectorPermute(a, b);
 /// let d = XMVectorSet(1.0, 2.0, 5.0, 6.0);
 ///
 /// assert_eq!(XMVectorGetX(c), XMVectorGetX(d));
@@ -1967,7 +2004,8 @@ impl XMVectorPermute for &(Permute1X, Permute1Y, Permute1Z, Permute1W) {
 /// assert_eq!(XMVectorGetZ(c), XMVectorGetZ(d));
 /// assert_eq!(XMVectorGetW(c), XMVectorGetW(d));
 /// ```
-impl XMVectorPermute for &(Permute0X, Permute0Y, Permute1X, Permute1Y) {
+#[cfg(nightly_specialization)]
+impl XMVectorPermute for (Permute0X, Permute0Y, Permute1X, Permute1Y) {
     const WhichX: bool = Permute0X::PERMUTE > 3;
     const WhichY: bool = Permute0Y::PERMUTE > 3;
     const WhichZ: bool = Permute1X::PERMUTE > 3;
@@ -2003,7 +2041,7 @@ impl XMVectorPermute for &(Permute0X, Permute0Y, Permute1X, Permute1Y) {
 /// let a = XMVectorSet(1.0, 2.0, 3.0, 4.0);
 /// let b = XMVectorSet(5.0, 6.0, 7.0, 8.0);
 ///
-/// let c = <&(Permute1Z, Permute1W, Permute0Z, Permute0W)>::XMVectorPermute(a, b);
+/// let c = <(Permute1Z, Permute1W, Permute0Z, Permute0W)>::XMVectorPermute(a, b);
 /// let d = XMVectorSet(7.0, 8.0, 3.0, 4.0);
 ///
 /// assert_eq!(XMVectorGetX(c), XMVectorGetX(d));
@@ -2011,7 +2049,8 @@ impl XMVectorPermute for &(Permute0X, Permute0Y, Permute1X, Permute1Y) {
 /// assert_eq!(XMVectorGetZ(c), XMVectorGetZ(d));
 /// assert_eq!(XMVectorGetW(c), XMVectorGetW(d));
 /// ```
-impl XMVectorPermute for &(Permute1Z, Permute1W, Permute0Z, Permute0W) {
+#[cfg(nightly_specialization)]
+impl XMVectorPermute for (Permute1Z, Permute1W, Permute0Z, Permute0W) {
     const WhichX: bool = Permute1Z::PERMUTE > 3;
     const WhichY: bool = Permute1W::PERMUTE > 3;
     const WhichZ: bool = Permute0Z::PERMUTE > 3;
@@ -2081,7 +2120,6 @@ pub trait XMVectorSwizzle {
     ///
     /// This function is a template version of [`XMVectorSwizzle`] where the `Swizzle*` arguments are template values.
     ///
-    /// The trait based version is more efficient and the specialized cases provide additional optimization.
     ///
     /// ```rust
     /// # use directx_math::*;
@@ -2103,7 +2141,27 @@ pub trait XMVectorSwizzle {
 
 impl<X: Swizzle, Y: Swizzle, Z: Swizzle, W: Swizzle> XMVectorSwizzle for (X, Y, Z, W) {
     #[inline(always)]
+    #[cfg(not(nightly_specialization))]
     fn XMVectorSwizzle(V: XMVECTOR) -> XMVECTOR {
+        #[cfg(any(_XM_SSE_INTRINSICS_, _XM_AVX_INTRINSICS_))]
+        unsafe {
+            XM_PERMUTE_PS!(V, _MM_SHUFFLE(W::SWIZZLE, Z::SWIZZLE, Y::SWIZZLE, X::SWIZZLE))
+        }
+
+        #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+        {
+            unimplemented!()
+        }
+
+        #[cfg(_XM_NO_INTRINSICS_)]
+        {
+            XMVectorSwizzle(V, X::SWIZZLE, Y::SWIZZLE, Z::SWIZZLE, W::SWIZZLE)
+        }
+    }
+
+    #[inline(always)]
+    #[cfg(nightly_specialization)]
+    default fn XMVectorSwizzle(V: XMVECTOR) -> XMVECTOR {
         #[cfg(any(_XM_SSE_INTRINSICS_, _XM_AVX_INTRINSICS_))]
         unsafe {
             XM_PERMUTE_PS!(V, _MM_SHUFFLE(W::SWIZZLE, Z::SWIZZLE, Y::SWIZZLE, X::SWIZZLE))
@@ -2138,7 +2196,7 @@ fn test_XMVectorSwizzleTrait() {
 /// ```rust
 /// # use directx_math::*;
 /// let a = XMVectorSet(1.0, 2.0, 3.0, 4.0);
-/// let b = <&(SwizzleX, SwizzleY, SwizzleX, SwizzleY)>::XMVectorSwizzle(a);
+/// let b = <(SwizzleX, SwizzleY, SwizzleX, SwizzleY)>::XMVectorSwizzle(a);
 /// let c = XMVectorSet(1.0, 2.0, 1.0, 2.0);
 ///
 /// assert_eq!(XMVectorGetX(b), XMVectorGetX(c));
@@ -2146,7 +2204,8 @@ fn test_XMVectorSwizzleTrait() {
 /// assert_eq!(XMVectorGetZ(b), XMVectorGetZ(c));
 /// assert_eq!(XMVectorGetW(b), XMVectorGetW(c));
 /// ```
-impl XMVectorSwizzle for &(SwizzleX, SwizzleY, SwizzleX, SwizzleY) {
+#[cfg(nightly_specialization)]
+impl XMVectorSwizzle for (SwizzleX, SwizzleY, SwizzleX, SwizzleY) {
     #[inline(always)]
     fn XMVectorSwizzle(V: XMVECTOR) -> XMVECTOR {
         #[cfg(any(_XM_SSE_INTRINSICS_, _XM_AVX_INTRINSICS_))]
@@ -2175,7 +2234,7 @@ impl XMVectorSwizzle for &(SwizzleX, SwizzleY, SwizzleX, SwizzleY) {
 /// ```rust
 /// # use directx_math::*;
 /// let a = XMVectorSet(1.0, 2.0, 3.0, 4.0);
-/// let b = <&(SwizzleZ, SwizzleW, SwizzleZ, SwizzleW)>::XMVectorSwizzle(a);
+/// let b = <(SwizzleZ, SwizzleW, SwizzleZ, SwizzleW)>::XMVectorSwizzle(a);
 /// let c = XMVectorSet(3.0, 4.0, 3.0, 4.0);
 ///
 /// assert_eq!(XMVectorGetX(b), XMVectorGetX(c));
@@ -2183,7 +2242,8 @@ impl XMVectorSwizzle for &(SwizzleX, SwizzleY, SwizzleX, SwizzleY) {
 /// assert_eq!(XMVectorGetZ(b), XMVectorGetZ(c));
 /// assert_eq!(XMVectorGetW(b), XMVectorGetW(c));
 /// ```
-impl XMVectorSwizzle for &(SwizzleZ, SwizzleW, SwizzleZ, SwizzleW) {
+#[cfg(nightly_specialization)]
+impl XMVectorSwizzle for (SwizzleZ, SwizzleW, SwizzleZ, SwizzleW) {
     #[inline(always)]
     fn XMVectorSwizzle(V: XMVECTOR) -> XMVECTOR {
         #[cfg(any(_XM_SSE_INTRINSICS_, _XM_AVX_INTRINSICS_))]
@@ -2212,7 +2272,7 @@ impl XMVectorSwizzle for &(SwizzleZ, SwizzleW, SwizzleZ, SwizzleW) {
 /// ```rust
 /// # use directx_math::*;
 /// let a = XMVectorSet(1.0, 2.0, 3.0, 4.0);
-/// let b = <&(SwizzleX, SwizzleX, SwizzleY, SwizzleY)>::XMVectorSwizzle(a);
+/// let b = <(SwizzleX, SwizzleX, SwizzleY, SwizzleY)>::XMVectorSwizzle(a);
 /// let c = XMVectorSet(1.0, 1.0, 2.0, 2.0);
 ///
 /// assert_eq!(XMVectorGetX(b), XMVectorGetX(c));
@@ -2220,7 +2280,8 @@ impl XMVectorSwizzle for &(SwizzleZ, SwizzleW, SwizzleZ, SwizzleW) {
 /// assert_eq!(XMVectorGetZ(b), XMVectorGetZ(c));
 /// assert_eq!(XMVectorGetW(b), XMVectorGetW(c));
 /// ```
-impl XMVectorSwizzle for &(SwizzleX, SwizzleX, SwizzleY, SwizzleY) {
+#[cfg(nightly_specialization)]
+impl XMVectorSwizzle for (SwizzleX, SwizzleX, SwizzleY, SwizzleY) {
     #[inline(always)]
     fn XMVectorSwizzle(V: XMVECTOR) -> XMVECTOR {
         #[cfg(any(_XM_SSE_INTRINSICS_, _XM_AVX_INTRINSICS_))]
@@ -2249,7 +2310,7 @@ impl XMVectorSwizzle for &(SwizzleX, SwizzleX, SwizzleY, SwizzleY) {
 /// ```rust
 /// # use directx_math::*;
 /// let a = XMVectorSet(1.0, 2.0, 3.0, 4.0);
-/// let b = <&(SwizzleZ, SwizzleZ, SwizzleW, SwizzleW)>::XMVectorSwizzle(a);
+/// let b = <(SwizzleZ, SwizzleZ, SwizzleW, SwizzleW)>::XMVectorSwizzle(a);
 /// let c = XMVectorSet(3.0, 3.0, 4.0, 4.0);
 ///
 /// assert_eq!(XMVectorGetX(b), XMVectorGetX(c));
@@ -2257,7 +2318,8 @@ impl XMVectorSwizzle for &(SwizzleX, SwizzleX, SwizzleY, SwizzleY) {
 /// assert_eq!(XMVectorGetZ(b), XMVectorGetZ(c));
 /// assert_eq!(XMVectorGetW(b), XMVectorGetW(c));
 /// ```
-impl XMVectorSwizzle for &(SwizzleZ, SwizzleZ, SwizzleW, SwizzleW) {
+#[cfg(nightly_specialization)]
+impl XMVectorSwizzle for (SwizzleZ, SwizzleZ, SwizzleW, SwizzleW) {
     #[inline(always)]
     fn XMVectorSwizzle(V: XMVECTOR) -> XMVECTOR {
         #[cfg(any(_XM_SSE_INTRINSICS_, _XM_AVX_INTRINSICS_))]

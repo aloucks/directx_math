@@ -17,6 +17,7 @@ no_sse4 = []
 no_sse3 = []
 no_intrinsics = ["no_avx", "no_avx2", "no_fma3", "no_sse4", "no_sse3"]
 favor_intel = []
+specialization = [] # nightly-only feature; has no effect on the stable channel
 
 benchmarks = ["criterion", "pcg", "rand_core"]
 

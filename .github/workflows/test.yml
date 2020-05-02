@@ -28,6 +28,11 @@ jobs:
         with:
           command: test
           args: --features=no_intrinsics
+      - name: Build and test (with specialization)
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --features=no_intrinsics,specialization
 
   intrinsics:
     name: Intrinsics
@@ -59,3 +64,8 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
+      - name: Build and test (with specialization)
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --features=specialization

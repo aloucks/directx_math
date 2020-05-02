@@ -34,4 +34,17 @@ fn main() {
     if !intrinics {
         println!("cargo:rustc-cfg=_XM_NO_INTRINSICS_");
     }
+
+    if is_nightly() {
+        #[cfg(feature="specialization")]
+        println!("cargo:rustc-cfg=nightly_specialization");
+    }
+}
+
+fn is_nightly() -> bool {
+    use std::env;
+    let rustc = env::var("RUSTC").unwrap();
+    let output = std::process::Command::new(rustc).arg("--version").output().unwrap();
+    let output = String::from_utf8_lossy(&output.stdout);
+    output.contains("nightly")
 }

@@ -1241,7 +1241,7 @@ pub fn XMVectorSetIntW(V: XMVECTOR, w: u32) -> XMVECTOR {
 ///
 /// For the case of constant indices (E0, E1, E2, E3), it is much more efficent to use the template form of [`XMVectorSwizzle`].
 ///
-/// [`XMVectorSwizzle`]: ../trait.XMVectorSwizzle.html
+/// [`XMVectorSwizzle`]: trait@crate::XMVectorSwizzle
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSwizzle>
 #[inline]
@@ -1320,7 +1320,7 @@ fn test_XMVectorSwizzle() {
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorPermute>
 ///
-/// [`XMVectorPermute`]: ../trait.XMVectorPermute.html
+/// [`XMVectorPermute`]: trait@crate::XMVectorPermute
 #[inline]
 pub fn XMVectorPermute(
     V1: FXMVECTOR,
