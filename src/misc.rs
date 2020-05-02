@@ -573,8 +573,6 @@ pub fn XMQuaternionSquadSetup(
     *pC = SQ2;
 }
 
-// TODO: XMQuaternionBaryCentric
-
 /// Returns a point in barycentric coordinates, using the specified quaternions.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionBaryCentric>
@@ -1309,7 +1307,96 @@ pub fn XMPlaneFromPoints(
 
 // TODO: XMVerifyCPUSupport (NOTE: __cpuid)
 
-// TODO: XMFresnelTerm
+/// Calculates the Fresnel term for unpolarized light.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMFresnelTerm>
+#[inline]
+pub fn XMFresnelTerm(
+    CosIncidentAngle: FXMVECTOR,
+    RefractionIndex: FXMVECTOR,
+) -> FXMVECTOR
+{
+    debug_assert!(!XMVector4IsInfinite(CosIncidentAngle));
+
+    // Result = 0.5f * (g - c)^2 / (g + c)^2 * ((c * (g + c) - 1)^2 / (c * (g - c) + 1)^2 + 1) where
+    // c = CosIncidentAngle
+    // g = sqrt(c^2 + RefractionIndex^2 - 1)
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut G: XMVECTOR = XMVectorMultiplyAdd(RefractionIndex, RefractionIndex, g_XMNegativeOne.v);
+        G = XMVectorMultiplyAdd(CosIncidentAngle, CosIncidentAngle, G);
+        G = XMVectorAbs(G);
+        G = XMVectorSqrt(G);
+
+        let S: XMVECTOR = XMVectorAdd(G, CosIncidentAngle);
+        let D: XMVECTOR = XMVectorSubtract(G, CosIncidentAngle);
+
+        let mut V0: XMVECTOR = XMVectorMultiply(D, D);
+        let mut V1: XMVECTOR = XMVectorMultiply(S, S);
+        V1 = XMVectorReciprocal(V1);
+        V0 = XMVectorMultiply(g_XMOneHalf.v, V0);
+        V0 = XMVectorMultiply(V0, V1);
+
+        let mut V2: XMVECTOR = XMVectorMultiplyAdd(CosIncidentAngle, S, g_XMNegativeOne.v);
+        let mut V3: XMVECTOR = XMVectorMultiplyAdd(CosIncidentAngle, D, g_XMOne.v);
+        V2 = XMVectorMultiply(V2, V2);
+        V3 = XMVectorMultiply(V3, V3);
+        V3 = XMVectorReciprocal(V3);
+        V2 = XMVectorMultiplyAdd(V2, V3, g_XMOne.v);
+
+        let mut Result: XMVECTOR = XMVectorMultiply(V0, V2);
+
+        Result = XMVectorSaturate(Result);
+
+        return Result;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        // G = sqrt(abs((RefractionIndex^2-1) + CosIncidentAngle^2))
+        let mut G: XMVECTOR = _mm_mul_ps(RefractionIndex, RefractionIndex);
+        let mut vTemp: XMVECTOR = _mm_mul_ps(CosIncidentAngle, CosIncidentAngle);
+        G = _mm_sub_ps(G, g_XMOne.v);
+        vTemp = _mm_add_ps(vTemp, G);
+        // max((0-vTemp),vTemp) == abs(vTemp)
+        // The abs is needed to deal with refraction and cosine being zero
+        G = _mm_setzero_ps();
+        G = _mm_sub_ps(G, vTemp);
+        G = _mm_max_ps(G, vTemp);
+        // Last operation, the sqrt()
+        G = _mm_sqrt_ps(G);
+
+        // Calc G-C and G+C
+        let mut GAddC: XMVECTOR = _mm_add_ps(G, CosIncidentAngle);
+        let mut GSubC: XMVECTOR = _mm_sub_ps(G, CosIncidentAngle);
+        // Perform the term (0.5f *(g - c)^2) / (g + c)^2
+        let mut vResult: XMVECTOR = _mm_mul_ps(GSubC, GSubC);
+        vTemp = _mm_mul_ps(GAddC, GAddC);
+        vResult = _mm_mul_ps(vResult, g_XMOneHalf.v);
+        vResult = _mm_div_ps(vResult, vTemp);
+        // Perform the term ((c * (g + c) - 1)^2 / (c * (g - c) + 1)^2 + 1)
+        GAddC = _mm_mul_ps(GAddC, CosIncidentAngle);
+        GSubC = _mm_mul_ps(GSubC, CosIncidentAngle);
+        GAddC = _mm_sub_ps(GAddC, g_XMOne.v);
+        GSubC = _mm_add_ps(GSubC, g_XMOne.v);
+        GAddC = _mm_mul_ps(GAddC, GAddC);
+        GSubC = _mm_mul_ps(GSubC, GSubC);
+        GAddC = _mm_div_ps(GAddC, GSubC);
+        GAddC = _mm_add_ps(GAddC, g_XMOne.v);
+        // Multiply the two term parts
+        vResult = _mm_mul_ps(vResult, GAddC);
+        // Clamp to 0.0 - 1.0f
+        vResult = _mm_max_ps(vResult, g_XMZero.v);
+        vResult = _mm_min_ps(vResult, g_XMOne.v);
+        return vResult;
+    }
+}
 
 /// Determines if two floating-point values are nearly equal.
 ///

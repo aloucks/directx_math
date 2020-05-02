@@ -1140,7 +1140,7 @@ mod doc {
         pub use crate::XMComparisonAnyOutOfBounds;
         pub use crate::XMComparisonAnyTrue;
         pub use crate::XMComparisonMixed;
-        // TODO: pub use crate::XMFresnelTerm;
+        pub use crate::misc::XMFresnelTerm;
         // TODO: pub use crate::XMVerifyCPUSupport;
     }
 
