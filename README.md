@@ -8,24 +8,24 @@
 A pure rust translation of [DirectXMath], an all inline SIMD linear algebra library for use in
 games and graphics apps.
 
-:heavy_check_mark: = Implemented, :x: = Not yet implemented, :construction: = In progress
+✔️ = Implemented, ❌ = Not yet implemented, 🚧 = In progress
 
 ## Implementation status
 
 | API | Implemented |
 | --- | ------ |
-| Vector | :heavy_check_mark: |
-| Vector 2D | :heavy_check_mark: |
-| Vector 3D | :heavy_check_mark: |
-| Vector 4D | :heavy_check_mark: |
-| Quaternion | :heavy_check_mark: |
-| Matrix | :heavy_check_mark: |
-| Streaming Transforms | :x: |
-| Color | :x: |
-| Load/Store/Accessors | :heavy_check_mark: &dagger; |
-| Plane | :heavy_check_mark: |
-| Collision | :x: |
-| Documentation | :heavy_check_mark: :construction: &dagger;&dagger; |
+| Vector | ✔️ |
+| Vector 2D | ✔️ |
+| Vector 3D | ✔️ |
+| Vector 4D | ✔️ |
+| Quaternion | ✔️ |
+| Matrix | ✔️ |
+| Streaming Transforms | ❌ |
+| Color | ❌ |
+| Load/Store/Accessors | ✔️ &dagger; |
+| Plane | ✔️ |
+| Collision | ❌ |
+| Documentation | ✔️ 🚧 &dagger;&dagger; |
 
 &dagger; Some alternate forms of the load/store operations are not yet implemented.
 
@@ -35,7 +35,7 @@ games and graphics apps.
 
 | x86 / x86-64 | ARM | No intrinsics fallback |
 | ------------ | --- | ---------------------- |
-| :heavy_check_mark: | :x: (will fallback to no-intrinsics) | :heavy_check_mark: |
+| ✔️ | ❌ (will fallback to no-intrinsics) | ✔️ |
 
 Intrinsics may be disabled with the `no_intrinsics` feature. This is the implicit behavior
 if SIMD intrinsics are not available on the target architecture.
