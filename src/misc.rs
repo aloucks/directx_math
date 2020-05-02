@@ -61,6 +61,23 @@ pub fn XMQuaternionIsIdentity(
 
 /// Computes the dot product of two quaternions.
 ///
+/// ## Parameters
+///
+/// `Q1` First quaternion
+///
+/// `Q2` Second quaternion.
+///
+/// ## Return value
+///
+/// Returns a vector. The dot product between `Q1` and `Q2` is replicated into each component.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where
+/// the `X`, `Y`, and `Z` components are the vector part and the W component is the scalar part.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionDot>
 #[inline]
 pub fn XMQuaternionDot(
@@ -104,6 +121,8 @@ pub fn XMQuaternionDot(
 /// Result.w = (Q2.w * Q1.w) - (Q2.x * Q1.x) - (Q2.y * Q1.y) - (Q2.z * Q1.z);
 /// return Result;
 /// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionMultiply>
 ///
@@ -174,6 +193,21 @@ pub fn XMQuaternionMultiply(
 
 /// Computes the square of the magnitude of a quaternion.
 ///
+/// ## Parameters
+///
+/// `Q` Quaternion to measure.
+///
+/// ## Return value
+///
+/// Returns a vector. The square of the magnitude of `Q` is replicated into each component.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where
+/// the `X`, `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionLengthSq>
 #[inline]
 pub fn XMQuaternionLengthSq(
@@ -195,6 +229,21 @@ pub fn XMQuaternionReciprocalLength(
 }
 
 /// Computes the magnitude of a quaternion.
+///
+/// ## Parameters
+///
+/// `Q` Quaternion to measure.
+///
+/// ## Return value
+///
+/// Returns a vector. The magnitude of `Q` is replicated into each component.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where
+/// the `X`, `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionLength>
 #[inline]
@@ -229,6 +278,26 @@ pub fn XMQuaternionNormalize(
 
 /// Computes the conjugate of a quaternion.
 ///
+/// ## Parameters
+///
+/// `Q` The quaternion to conjugate.
+///
+/// ## Return value
+///
+/// Returns the conjugate of `Q`.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where
+/// the `X`, `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
+///
+/// Given a quaternion (`x`, `y`, `z`, `w`), the [`XMQuaternionConjugate`] function returns the
+/// quaternion (`-x`, `-y`, `-z`, `w`).
+///
+/// Use the [`XMQuaternionNormalize`] function for any quaternion input that is not already normalized.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionConjugate>
 #[inline]
 pub fn XMQuaternionConjugate(
@@ -262,6 +331,36 @@ pub fn XMQuaternionConjugate(
 }
 
 /// Computes the inverse of a quaternion.
+///
+/// ## Parameters
+///
+/// `Q` Quaternion to invert.
+///
+/// ## Return value
+///
+/// Returns the inverse of `Q`.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where
+/// the `X`, `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// float LengthSq = Q.x * Q.x + Q.y * Q.y + Q.z * Q.z + Q.w * Q.w;
+///
+/// Result.x = -Q.x / LengthSq;
+/// Result.y = -Q.y / LengthSq;
+/// Result.z = -Q.z / LengthSq;
+/// Result.w = Q.w / LengthSq;
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionInverse>
 #[inline]
@@ -317,6 +416,22 @@ pub fn XMQuaternionLn(
 
 /// Computes the exponential of a given pure quaternion.
 ///
+/// ## Parameters
+///
+/// `Q` Pure quaternion for which to compute the exponential. The w-component of the input
+/// quaternion is ignored in the calculation.
+///
+/// ## Return value
+///
+/// Returns the exponential of `Q`.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where
+/// the `X`, `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionExp>
 #[inline]
 pub fn XMQuaternionExp(
@@ -347,6 +462,28 @@ pub fn XMQuaternionExp(
 
 
 /// Interpolates between two unit quaternions, using spherical linear interpolation.
+///
+/// ## Parameters
+///
+/// `Q0` Unit quaternion to interpolate from.
+///
+/// `Q` Unit quaternion to interpolate to.
+///
+/// `t` Interpolation control factor.
+///
+/// ## Return value
+///
+/// Returns the interpolated quaternion. If `Q0` and `Q1` are not unit quaternions, the resulting
+/// interpolation is undefined.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where
+/// the `X`, `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
+///
+/// When `t` is `0.0`, the function returns `Q0`. When `t` is `1.0`, the function returns `Q1`.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionSlerp>
 #[inline]
@@ -575,6 +712,74 @@ pub fn XMQuaternionSquadSetup(
 
 /// Returns a point in barycentric coordinates, using the specified quaternions.
 ///
+/// ## Parameters
+///
+/// `Q0` First quaternion in the triangle.
+///
+/// `Q1` Second quaternion in the triangle.
+///
+/// `Q2` Third quaternion in the triangle.
+///
+/// `f` Weighting factor. See the remarks.
+///
+/// `g` Weighting factor. See the remarks.
+///
+/// ## Return value
+///
+/// Returns a quaternion in barycentric coordinates.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function.
+///
+/// ```text
+/// XMVECTOR Result;
+/// XMVECTOR QA, QB;
+/// float s = f + g;
+///
+/// if (s != 0.0f)
+/// {
+///     QA = XMQuaternionSlerp(Q0, Q1, s);
+///     QB = XMQuaternionSlerp(Q0, Q2, s);
+///     Result = XMQuaternionSlerp(QA, QB, g / s);
+/// }
+/// else
+/// {
+///     Result.x = Q0.x;
+///     Result.y = Q0.y;
+///     Result.z = Q0.z;
+///     Result.w = Q0.w;
+/// }
+///
+/// return Result;
+/// ```
+///
+/// Note that Barycentric coordinates work for 'flat' surfaces but not for 'curved' ones.
+/// This function is therefore a bit of a work-around. An alternative method for blending
+/// 3 quanterions is given by the following code:
+///
+/// ```text
+/// inline XMVECTOR XMQuaternionBlend(
+///   FXMVECTOR Q0,
+///   FXMVECTOR Q1,
+///   FXMVECTOR Q2,
+///   float w1,
+///   float w2
+/// )
+/// {
+///     // Note if you choose one of the three weights to be zero, you get a blend of two
+///     // quaternions.  This does not give you slerp of those quaternions.
+///     float w0 = 1.0f - w1 - w2;
+///     XMVECTOR Result = XMVector4Normalize(
+///         XMVectorScale(Q0, w0) +
+///         XMVectorScale(Q1, w1) +
+///         XMVectorScale(Q2, w2));
+///     return Result;
+/// }
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionBaryCentric>
 #[inline]
 pub fn XMQuaternionBaryCentric(
@@ -604,6 +809,32 @@ pub fn XMQuaternionBaryCentric(
 }
 
 /// Returns a point in barycentric coordinates, using the specified quaternions.
+///
+/// ## Parameters
+///
+/// `Q0` First quaternion in the triangle.
+///
+/// `Q1` Second quaternion in the triangle.
+///
+/// `Q2` Third quaternion in the triangle.
+///
+/// `F` Weighting factor. All components of this vector must be the same.
+///
+/// `G` Weighting factor. All components of this vector must be the same.
+///
+/// ## Return value
+///
+/// Returns a quaternion in barycentric coordinates.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where
+/// the `X`, `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
+///
+/// This function is identical to [`XMQuaternionBaryCentric`] except that `F` and `G` are supplied using
+/// a 4D vector instead of a **float** value.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionBaryCentricV>
 #[inline]
@@ -642,6 +873,20 @@ pub fn XMQuaternionBaryCentricV(
 }
 
 /// Returns the identity quaternion.
+///
+/// ## Return value
+///
+/// An XMVECTOR that is the identity quaternion.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where
+/// the `X`, `Y`, and `Z` components are the vector part and the W component is the scalar part.
+///
+/// Given a quaternion (`x`, `y`, `z`, `w`), the [`XMQuaternionIdentity`] function will return the
+/// quaternion (`0`, `0`, `0`, `1`).
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionIdentity>
 #[inline]
