@@ -1,10 +1,10 @@
 [package]
 name = "directx_math"
-version = "0.0.0"
+version = "0.1.0-alpha.1"
 authors = ["Aaron Loucks <aloucks@cofront.net>"]
 edition = "2018"
 description = "DirectXMath for Rust"
-keywords = ["math", "simd", "matrix", "vector", "quaternion", "gamedev", "directx"]
+keywords = ["math", "simd", "matrix", "vector", "quaternion"]
 repository = "https://github.com/aloucks/directx_math"
 license = "MIT"
 readme = "README.md"
