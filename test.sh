@@ -22,4 +22,6 @@ RUSTFLAGS="-C target-cpu=x86-64 -C target-feature=+sse3,+sse4.1" cargo test
 RUSTFLAGS="-C target-cpu=x86-64 -C target-feature=+sse3,+sse4.1,+avx" cargo test
 RUSTFLAGS="-C target-cpu=x86-64 -C target-feature=+sse3,+sse4.1,+avx,+fma" cargo test
 RUSTFLAGS="-C target-cpu=x86-64 -C target-feature=+sse3,+sse4.1,+avx,+fma,+avx2" cargo test
+RUSTFLAGS="-C target-cpu=x86-64" cargo +nightly test --features="specialization"
+RUSTFLAGS="-C target-cpu=x86-64" cargo +nightly test --features="specialization,no_intrinsics"
 

@@ -16,7 +16,7 @@ fn main() {
         #[cfg(all(target_feature="avx", not(feature="no_intrinsics"), not(feature="no_avx")))]
         println!("cargo:rustc-cfg=_XM_AVX_INTRINSICS_");
 
-        #[cfg(all(target_feature="fma", not(feature="no_intrinsics"), not(feature="no_fma3")))]
+        #[cfg(all(target_feature="fma", not(feature="no_intrinsics"), not(feature="no_fma")))]
         println!("cargo:rustc-cfg=_XM_FMA3_INTRINSICS_");
 
         #[cfg(all(target_feature="avx2", not(feature="no_intrinsics"), not(feature="no_avx2")))]

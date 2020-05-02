@@ -4,30 +4,38 @@ version = "0.0.0"
 authors = ["Aaron Loucks <aloucks@cofront.net>"]
 edition = "2018"
 description = "DirectXMath for Rust"
-keywords = ["directx", "math", "simd", "matrix", "vector", "quaternion", "gamedev"]
+keywords = ["math", "simd", "matrix", "vector", "quaternion", "gamedev", "directx"]
 repository = "https://github.com/aloucks/directx_math"
 license = "MIT"
 readme = "README.md"
 
 [features]
-no_avx = []
-no_avx2 = []
-no_fma3 = []
-no_sse4 = []
+# Disable specific intrinsics for testing
 no_sse3 = []
-no_intrinsics = ["no_avx", "no_avx2", "no_fma3", "no_sse4", "no_sse3"]
-favor_intel = []
-specialization = [] # nightly-only feature; has no effect on the stable channel
+no_sse4 = []
+no_avx = []
+no_fma = []
+no_avx2 = []
 
+# Disable all intrinsics
+no_intrinsics = ["no_sse3", "no_sse4", "no_avx", "no_fma", "no_avx2"]
+
+# Prefer intrinsics that may perform better on intel CPUs
+favor_intel = []
+
+# Enable specialization for trait based vector swizzle and permute.
+# This is a nightly-only feature and is ignored on the stable channel.
+specialization = []
+
+# Cargo does not support optional dev-dependencies. We specify these
+# here as regular, but optional, dependencies; and they are only used
+# for benchmarks. This allows tests to run without compiling all of
+# the dependencies for criterion.
+#
+# cargo --bench --features benchmarks
 benchmarks = ["criterion", "pcg", "rand_core"]
 
 [dependencies]
-# NOTE: Cargo does not support optional dev-dependencies. We specify these
-#       here as regular, but optional, dependencies; and they are only used
-#       for benchmarks. This allows tests to run without compiling all of
-#       the dependencies for criterion.
-#
-#       cargo --bench --features benchmarks 
 criterion = { version = "0.3", optional = true }
 pcg = { version = "3.0", optional = true }
 rand_core = { version = "0.5", optional = true }
