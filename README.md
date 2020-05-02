@@ -6,8 +6,7 @@
 A pure rust translation of [DirectXMath], an all inline SIMD linear algebra library for use in
 games and graphics apps.
 
-:heavy_check_mark: = Fully implemented, :white_check_mark: = Mostly implemented, :x: = Not yet 
-implemented, :construction: = Work in progress
+:heavy_check_mark: = Implemented, :x: = Not yet implemented, :construction: = In progress
 
 ## Implementation status
 
@@ -21,18 +20,20 @@ implemented, :construction: = Work in progress
 | Matrix | :heavy_check_mark: |
 | Streaming Transforms | :x: |
 | Color | :x: |
-| Load/Store/Accessors | :white_check_mark: |
+| Load/Store/Accessors | :heavy_check_mark: * |
 | Plane | :heavy_check_mark: |
 | Collision | :x: |
-| Documentation | :construction: ** |
+| Documentation | :heavy_check_mark: :construction: ** |
 
-** All functions have links to the official documentation.
+* Some alternate forms of the load/store operations are not yet implemented.
+
+** All functions have links to the [DirectXMath documentation].
 
 ## SIMD intrinsics
 
 | x86 / x86-64 | ARM | No intrinsics fallback |
 | ------------ | --- | ---------------------- |
-| :heavy_check_mark: | :x: (fallback to no-intinsics) | :heavy_check_mark: |
+| :heavy_check_mark: | :x: (will fallback to no-intinsics) | :heavy_check_mark: |
 
 `sse3`, `sse4.1`, `avx`, `fma`, and `avx2` instructions are be enabled automatically when the CPU
 target feature is configured.
@@ -53,4 +54,5 @@ are not available on the target architecture.
 
 [LICENSE-MIT]: LICENSE-MIT
 [DirectXMath]: https://github.com/microsoft/DirectXMath
+[DirectXMath documentation]: https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference
 
