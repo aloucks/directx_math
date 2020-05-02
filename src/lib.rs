@@ -515,20 +515,20 @@ mod doc {
     /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-plane>
     pub mod plane {
         pub use crate::misc::XMPlaneDot;
-        // TODO: pub use crate::misc::XMPlaneDotCoord;
-        // TODO: pub use crate::misc::XMPlaneDotNormal;
-        // TODO: pub use crate::misc::XMPlaneEqual;
-        // TODO: pub use crate::misc::XMPlaneFromPointNormal;
-        // TODO: pub use crate::misc::XMPlaneFromPoints;
-        // TODO: pub use crate::misc::XMPlaneIntersectLine;
-        // TODO: pub use crate::misc::XMPlaneIntersectPlane;
-        // TODO: pub use crate::misc::XMPlaneIsInfinite;
-        // TODO: pub use crate::misc::XMPlaneIsNaN;
-        // TODO: pub use crate::misc::XMPlaneNearEqual;
+        pub use crate::misc::XMPlaneDotCoord;
+        pub use crate::misc::XMPlaneDotNormal;
+        pub use crate::misc::XMPlaneEqual;
+        pub use crate::misc::XMPlaneFromPointNormal;
+        pub use crate::misc::XMPlaneFromPoints;
+        pub use crate::misc::XMPlaneIntersectLine;
+        pub use crate::misc::XMPlaneIntersectPlane;
+        pub use crate::misc::XMPlaneIsInfinite;
+        pub use crate::misc::XMPlaneIsNaN;
+        pub use crate::misc::XMPlaneNearEqual;
         pub use crate::misc::XMPlaneNormalize;
-        // TODO: pub use crate::misc::XMPlaneNormalizeEst;
-        // TODO: pub use crate::misc::XMPlaneNotEqual;
-        // TODO: pub use crate::misc::XMPlaneTransform;
+        pub use crate::misc::XMPlaneNormalizeEst;
+        pub use crate::misc::XMPlaneNotEqual;
+        pub use crate::misc::XMPlaneTransform;
         // TODO: pub use crate::misc::XMPlaneTransformStream;
     }
 

@@ -940,11 +940,67 @@ pub fn XMQuaternionToAxisAngle(
     *pAngle = 2.0 * XMScalarACos(XMVectorGetW(Q));
 }
 
-// TODO: XMPlaneEqual
-// TODO: XMPlaneNearEqual
-// TODO: XMPlaneNotEqual
-// TODO: XMPlaneIsNaN
-// TODO: XMPlaneIsInfinite
+/// Determines if two planes are equal.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneEqual>
+#[inline]
+pub fn XMPlaneEqual(
+    P1: FXMVECTOR,
+    P2: FXMVECTOR,
+) -> bool
+{
+    return XMVector4Equal(P1, P2);
+}
+
+
+/// Determines whether two planes are nearly equal.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneNearEqual>
+#[inline]
+pub fn XMPlaneNearEqual(
+    P1: FXMVECTOR,
+    P2: FXMVECTOR,
+    Epsilon: FXMVECTOR,
+) -> bool
+{
+    let NP1: XMVECTOR = XMPlaneNormalize(P1);
+    let NP2: XMVECTOR = XMPlaneNormalize(P2);
+    return XMVector4NearEqual(NP1, NP2, Epsilon);
+}
+
+/// Determines if two planes are equal.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneNotEqual>
+#[inline]
+pub fn XMPlaneNotEqual(
+    P1: FXMVECTOR,
+    P2: FXMVECTOR,
+) -> bool
+{
+    return XMVector4NotEqual(P1, P2);
+}
+
+/// Tests whether any of the coefficients of a plane is a NaN.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneIsNaN>
+#[inline]
+pub fn XMPlaneIsNaN(
+    P: FXMVECTOR,
+) -> bool
+{
+    return XMVector4IsNaN(P);
+}
+
+/// Tests whether any of the coefficients of a plane is positive or negative infinity.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneIsInfinite>
+#[inline]
+pub fn XMPlaneIsInfinite(
+    P: FXMVECTOR,
+) -> bool
+{
+    return XMVector4IsInfinite(P);
+}
 
 /// Calculates the dot product between an input plane and a 4D vector.
 ///
@@ -958,9 +1014,77 @@ pub fn XMPlaneDot(
     return XMVector4Dot(P, V);
 }
 
-// TODO: XMPlaneDotCoord
-// TODO: XMPlaneDotNormal
-// TODO: XMPlaneNormalizeEst
+/// Calculates the dot product between an input plane and a 3D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneDotCoord>
+#[inline]
+pub fn XMPlaneDotCoord(
+    P: FXMVECTOR,
+    V: FXMVECTOR,
+) -> XMVECTOR
+{
+    // Result = P[0] * V[0] + P[1] * V[1] + P[2] * V[2] + P[3]
+
+    unsafe {
+        let V3: XMVECTOR = XMVectorSelect(g_XMOne.v, V, g_XMSelect1110.v);
+        let Result: XMVECTOR = XMVector4Dot(P, V3);
+        return Result;
+    }
+}
+
+
+/// Calculates the dot product between the normal vector of a plane and a 3D vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneDotNormal>
+#[inline]
+pub fn XMPlaneDotNormal(
+    P: FXMVECTOR,
+    V: FXMVECTOR,
+) -> XMVECTOR
+{
+    return XMVector3Dot(P, V);
+}
+
+/// Estimates the coefficients of a plane so that coefficients of x, y, and z form a unit normal vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneNormalizeEst>
+#[inline]
+pub fn XMPlaneNormalizeEst(
+    P: FXMVECTOR,
+) -> XMVECTOR
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    {
+        let Result: XMVECTOR = XMVector3ReciprocalLengthEst(P);
+        return XMVectorMultiply(P, Result);
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        // Perform the dot product
+        let mut vDot: XMVECTOR = _mm_mul_ps(P, P);
+        // x=Dot.y, y=Dot.z
+        let mut vTemp: XMVECTOR = XM_PERMUTE_PS!(vDot, _MM_SHUFFLE(2, 1, 2, 1));
+        // Result.x = x+y
+        vDot = _mm_add_ss(vDot, vTemp);
+        // x=Dot.z
+        vTemp = XM_PERMUTE_PS!(vTemp, _MM_SHUFFLE(1, 1, 1, 1));
+        // Result.x = (x+y)+z
+        vDot = _mm_add_ss(vDot, vTemp);
+        // Splat x
+        vDot = XM_PERMUTE_PS!(vDot, _MM_SHUFFLE(0, 0, 0, 0));
+        // Get the reciprocal
+        vDot = _mm_rsqrt_ps(vDot);
+        // Get the reciprocal
+        vDot = _mm_mul_ps(vDot, P);
+        return vDot;
+    }
+}
 
 /// Normalizes the coefficients of a plane so that coefficients of x, y, and z form a unit normal vector.
 ///
@@ -1023,12 +1147,137 @@ pub fn XMPlaneNormalize(
     }
 }
 
-// TODO: XMPlaneIntersectLine
-// TODO: XMPlaneIntersectPlane
-// TODO: XMPlaneTransform
+/// Finds the intersection between a plane and a line.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneIntersectLine>
+#[inline]
+pub fn XMPlaneIntersectLine(
+    P: FXMVECTOR,
+    LinePoint1: FXMVECTOR,
+    LinePoint2: FXMVECTOR,
+) -> XMVECTOR
+{
+    unsafe {
+        let V1: XMVECTOR = XMVector3Dot(P, LinePoint1);
+        let V2: XMVECTOR = XMVector3Dot(P, LinePoint2);
+        let D: XMVECTOR = XMVectorSubtract(V1, V2);
+
+        let mut VT: XMVECTOR = XMPlaneDotCoord(P, LinePoint1);
+        VT = XMVectorDivide(VT, D);
+
+        let mut Point: XMVECTOR = XMVectorSubtract(LinePoint2, LinePoint1);
+        Point = XMVectorMultiplyAdd(Point, VT, LinePoint1);
+
+        // const
+        let Zero: XMVECTOR = XMVectorZero();
+        let Control: XMVECTOR = XMVectorNearEqual(D, Zero, g_XMEpsilon.v);
+
+        return XMVectorSelect(Point, g_XMQNaN.v, Control);
+    }
+}
+
+/// Finds the intersection of two planes.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneIntersectPlane>
+#[inline]
+pub fn XMPlaneIntersectPlane(
+    pLinePoint1: &mut FXMVECTOR,
+    pLinePoint2: &mut FXMVECTOR,
+    P1: FXMVECTOR,
+    P2: FXMVECTOR,
+)
+{
+    unsafe {
+        let V1: XMVECTOR = XMVector3Cross(P2, P1);
+
+        let LengthSq: XMVECTOR = XMVector3LengthSq(V1);
+
+        let V2: XMVECTOR = XMVector3Cross(P2, V1);
+
+        let P1W: XMVECTOR = XMVectorSplatW(P1);
+        let mut Point: XMVECTOR = XMVectorMultiply(V2, P1W);
+
+        let V3: XMVECTOR = XMVector3Cross(V1, P1);
+
+        let P2W: XMVECTOR = XMVectorSplatW(P2);
+        Point = XMVectorMultiplyAdd(V3, P2W, Point);
+
+        let LinePoint1: XMVECTOR = XMVectorDivide(Point, LengthSq);
+
+        let LinePoint2: XMVECTOR = XMVectorAdd(LinePoint1, V1);
+
+        let Control: XMVECTOR = XMVectorLessOrEqual(LengthSq, g_XMEpsilon.v);
+        *pLinePoint1 = XMVectorSelect(LinePoint1, g_XMQNaN.v, Control);
+        *pLinePoint2 = XMVectorSelect(LinePoint2, g_XMQNaN.v, Control);
+    }
+}
+
+/// Transforms a plane by a given matrix.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneTransform>
+#[inline]
+pub fn XMPlaneTransform(
+    P: FXMVECTOR,
+    M: FXMMATRIX,
+) -> XMVECTOR
+{
+    unsafe {
+        let W: XMVECTOR = XMVectorSplatW(P);
+        let Z: XMVECTOR = XMVectorSplatZ(P);
+        let Y: XMVECTOR = XMVectorSplatY(P);
+        let X: XMVECTOR = XMVectorSplatX(P);
+
+        let mut Result: XMVECTOR = XMVectorMultiply(W, M.r[3]);
+        Result = XMVectorMultiplyAdd(Z, M.r[2], Result);
+        Result = XMVectorMultiplyAdd(Y, M.r[1], Result);
+        Result = XMVectorMultiplyAdd(X, M.r[0], Result);
+        return Result;
+    }
+}
+
 // TODO: XMPlaneTransformStream
-// TODO: XMPlaneFromPointNormal
-// TODO: XMPlaneFromPoints
+
+/// Computes the equation of a plane constructed from a point in the plane and a normal vector.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneFromPointNormal>
+#[inline]
+pub fn XMPlaneFromPointNormal(
+    Point: FXMVECTOR,
+    Normal: FXMVECTOR,
+) -> XMVECTOR
+{
+    unsafe {
+        let mut W: XMVECTOR = XMVector3Dot(Point, Normal);
+        W = XMVectorNegate(W);
+        return XMVectorSelect(W, Normal, g_XMSelect1110.v);
+    }
+}
+
+/// Computes the equation of a plane constructed from three points in the plane.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneFromPoints>
+#[inline]
+pub fn XMPlaneFromPoints(
+    Point1: FXMVECTOR,
+    Point2: FXMVECTOR,
+    Point3: FXMVECTOR,
+) -> XMVECTOR
+{
+    unsafe {
+        let V21: XMVECTOR = XMVectorSubtract(Point1, Point2);
+        let V31: XMVECTOR = XMVectorSubtract(Point1, Point3);
+
+        let mut N: XMVECTOR = XMVector3Cross(V21, V31);
+        N = XMVector3Normalize(N);
+
+        let mut D: XMVECTOR = XMPlaneDotNormal(N, Point1);
+        D = XMVectorNegate(D);
+
+        let Result: XMVECTOR = XMVectorSelect(D, N, g_XMSelect1110.v);
+
+        return Result;
+    }
+}
 
 // TODO: XMColorEqual
 // TODO: XMColorNotEqual
