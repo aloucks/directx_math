@@ -6753,7 +6753,28 @@ pub fn XMVector2IntersectLine(
 
 /// Transforms a 2D vector by a matrix.
 ///
+/// ## Parameters
+///
+/// `V` 2D vector.
+///
+/// `M` Transformation matrix.
+///
+/// ## Return value
+///
+/// Returns the transformed vector.
+///
+/// ## Remarks
+///
+/// [`XMVector2Transform`] performs transformations by using the input matrix rows `0` and `1` for
+/// rotation and scaling, and row `3` for translation (effectively assuming row `2` is `0`). The
+/// `w` component of the input vector is assumed to be `0`. The `z` component of the output
+/// vector should be ignored and its `w` component may be non-homogeneous (`!= 1.0`).
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2Transform>
+///
+/// [`XMVector2Transform`]: crate::vector::XMVector2Transform
 #[inline]
 pub fn XMVector2Transform(
     V: FXMVECTOR,
@@ -6788,9 +6809,30 @@ pub fn XMVector2Transform(
 
 // TODO: XMVector2TransformStream
 
-/// Transforms a 2D vector by a given matrix, projecting the result back into w = 1.
+/// Transforms a 2D vector by a given matrix, projecting the result back into `w = 1`.
+///
+/// ## Parameters
+///
+/// `V` 2D vector.
+///
+/// `M` Transformation matrix.
+///
+/// ## Return value
+///
+/// Returns the transformed vector.
+///
+/// ## Remarks
+///
+/// [`XMVector2TransformCoord`] performs transformations by using the input matrix row `0` and row `1` for
+/// rotation and scaling, and row `3` for translation (effectively assuming row `2` is `0`). The `w`
+/// component of the input vector is assumed to be `1.0`. The `z` component of the returned vector
+/// should be ignored and its `w` component will have a value of `1.0`.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2TransformCoord>
+///
+/// [`XMVector2TransformCoord`]: crate::vector::XMVector2TransformCoord
 #[inline]
 pub fn XMVector2TransformCoord(
     V: FXMVECTOR,
@@ -6811,6 +6853,23 @@ pub fn XMVector2TransformCoord(
 // TODO: XMVector2TransformCoordStream
 
 /// Transforms a 2D vector by a matrix.
+///
+/// ## Parameters
+///
+/// `V` 2D normal vector.
+///
+/// `M` Transformation matrix.
+///
+/// ## Return value
+///
+/// Returns the transformed vector.
+///
+/// ## Remarks
+///
+/// XMVector2TransformNormal uses row `0` and `1` of the input transformation matrix for
+/// rotation and scaling. Rows `2` and `3` are ignored.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2TransformNormal>
 #[inline]
@@ -8298,7 +8357,27 @@ pub fn XMVector3InverseRotate(
 
 /// Transforms a 3D vector by a matrix.
 ///
+/// ## Parameters
+///
+/// `V` 3D vector.
+///
+/// `M` Transformation matrix.
+///
+/// ## Return value
+///
+/// Returns the transformed vector.
+///
+/// ## Remarks
+///
+/// [`XMVector3Transform`] ignores the `w` component of the input vector, and uses
+/// a value of `1` instead. The `w` component of the returned vector may be
+/// non-homogeneous (`!= 1.0`).
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3Transform>
+///
+/// [`XMVector3Transform`]: crate::vector::XMVector3Transform
 #[inline]
 pub fn XMVector3Transform(
     V: FXMVECTOR,
@@ -8335,9 +8414,29 @@ pub fn XMVector3Transform(
     }
 }
 
-/// Transforms a 3D vector by a given matrix, projecting the result back into w = 1.
+/// Transforms a 3D vector by a given matrix, projecting the result back into `w = 1`.
+///
+/// ## Parameters
+///
+/// `V` 3D vector.
+///
+/// `M` Transformation matrix.
+///
+/// ## Return value
+///
+/// Returns the transformed vector.
+///
+/// ## Remarks
+///
+/// [`XMVector3TransformCoord`] ignores the `w` component of the input vector,
+/// and uses a value of `1.0` instead. The `w` component of the returned vector
+/// will always be `1.0`.
+///
+/// Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3TransformCoord>
+///
+/// [`XMVector3TransformCoord`]: XMVector3TransformCoord
 #[inline]
 pub fn XMVector3TransformCoord(
     V: FXMVECTOR,
@@ -8363,7 +8462,26 @@ pub fn XMVector3TransformCoord(
 
 /// Transforms the 3D vector normal by the given matrix.
 ///
+/// ## Parameters
+///
+/// `V` 3D normal vector.
+///
+/// `M` Transformation matrix.
+///
+/// ## Return value
+///
+/// Returns the transformed vector.
+///
+/// ## Remarks
+///
+/// [`XMVector3TransformNormal`] performs transformations using the input matrix rows `0`, `1`,
+/// and `2` for rotation and scaling, and ignores row `3`.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3TransformNormal>
+///
+/// [`XMVector3TransformNormal`]: crate::vector::XMVector3TransformNormal
 #[inline]
 pub fn XMVector3TransformNormal(
     V: FXMVECTOR,

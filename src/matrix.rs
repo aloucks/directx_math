@@ -1220,6 +1220,22 @@ pub fn XMMatrixDeterminant(
 
 /// Breaks down a general 3D transformation matrix into its scalar, rotational, and translational components.
 ///
+/// ## Parameters
+///
+/// `outScale` Pointer to the output XMVECTOR that contains scaling factors applied along the `x`, `y`, and `z`-axes.
+///
+/// `outRotQuat` Pointer to the XMVECTOR quaternion that describes the rotation.
+///
+/// `outTrans` Pointer to the XMVECTOR vector that describes a translation along the `x`, `y`, and `z`-axes.
+///
+/// `M` Pointer to an input XMMATRIX matrix to decompose.
+///
+/// ## Return value
+///
+/// If the function succeeds, the return value is `true`. If the function fails, the return value is `false`.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixDecompose>
 #[inline]
 pub fn XMMatrixDecompose(
@@ -2173,6 +2189,22 @@ pub fn XMMatrixAffineTransformation2D(
 }
 
 /// Builds an affine transformation matrix.
+///
+/// ## Parameters
+///
+/// `Scaling` Vector of scaling factors for each dimension.
+///
+/// `RotationOrigin` Point identifying the center of rotation.
+///
+/// `RotationQuaternion` Rotation factors.
+///
+/// `Translation` Translation offsets.
+///
+/// ## Return value
+///
+/// Returns the affine transformation matrix, built from the scaling, rotation, and translation information.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixAffineTransformation>
 #[inline]
