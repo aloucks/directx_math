@@ -954,7 +954,7 @@ pub fn XMMatrixTranspose(
 ///
 /// ## Return value
 ///
-/// Returns the matrix inverse of M. If there is no inverse (that is, if the determinant is `0`), XMMatrixInverse
+/// Returns the matrix inverse of `M`. If there is no inverse (that is, if the determinant is `0`), XMMatrixInverse
 /// returns an infinite matrix.
 ///
 /// ## Reference
@@ -1279,11 +1279,11 @@ pub fn XMMatrixDeterminant(
 ///
 /// ## Parameters
 ///
-/// `outScale` Pointer to the output XMVECTOR that contains scaling factors applied along the `x`, `y`, and `z`-axes.
+/// `outScale` Pointer to the output XMVECTOR that contains scaling factors applied along the `x`, `y`, and `z-axes`.
 ///
 /// `outRotQuat` Pointer to the XMVECTOR quaternion that describes the rotation.
 ///
-/// `outTrans` Pointer to the XMVECTOR vector that describes a translation along the `x`, `y`, and `z`-axes.
+/// `outTrans` Pointer to the XMVECTOR vector that describes a translation along the `x`, `y`, and `z-axes`.
 ///
 /// `M` Pointer to an input XMMATRIX matrix to decompose.
 ///
@@ -1939,11 +1939,15 @@ pub fn XMMatrixRotationZ(
     }
 }
 
-/// Builds a rotation matrix based on a vector containing the Euler angles (pitch, yaw, and roll).
+/// Builds a rotation matrix based on a given `pitch`, `yaw`, and `roll` (Euler angles).
 ///
 /// ## Parameters
 ///
-/// `Angles` 3D vector containing the Euler angles in the order `pitch`, then `yaw`, and then `roll`.
+/// `Pitch` Angle of rotation around the `x-axis`, in radians.
+///
+/// `Yaw` Angle of rotation around the `y-axis`, in radians.
+///
+/// `Roll` Angle of rotation around the `z-axis`, in radians.
 ///
 /// ## Return value
 ///
@@ -1952,14 +1956,14 @@ pub fn XMMatrixRotationZ(
 /// ## Remarks
 ///
 /// Angles are measured clockwise when looking along the rotation axis toward the origin. **This is a left-handed
-/// coordinate system. To use right-handed coordinates, negate all three angles**.
+/// coordinate system. To use right-handed coordinates, negate all three angles.**
 ///
-/// The order of transformations is roll first, then pitch, and then yaw. The rotations are all applied
+/// The order of transformations is `roll` first, then `pitch`, and then `yaw`. The rotations are all applied
 /// in the global coordinate frame.
 ///
 /// ## Reference
 ///
-/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixRotationRollPitchYawFromVector>
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixRotationRollPitchYaw>
 #[inline]
 pub fn XMMatrixRotationRollPitchYaw(
     Pitch: f32,
@@ -1971,7 +1975,7 @@ pub fn XMMatrixRotationRollPitchYaw(
     return XMMatrixRotationRollPitchYawFromVector(Angles);
 }
 
-/// Builds a rotation matrix based on a vector containing the Euler angles (pitch, yaw, and roll).
+/// Builds a rotation matrix based on a vector containing the Euler angles (`pitch`, `yaw`, and `roll`).
 ///
 /// ## Parameters
 ///
@@ -1986,7 +1990,7 @@ pub fn XMMatrixRotationRollPitchYaw(
 /// Angles are measured clockwise when looking along the rotation axis toward the origin. **This is a left-handed
 /// coordinate system. To use right-handed coordinates, negate all three angles**.
 ///
-/// The order of transformations is roll first, then pitch, and then yaw. The rotations are all applied
+/// The order of transformations is `roll` first, then `pitch`, and then `yaw`. The rotations are all applied
 /// in the global coordinate frame.
 ///
 /// ## Reference
@@ -2107,11 +2111,14 @@ pub fn XMMatrixRotationNormal(
     }
 }
 
-/// Builds a rotation matrix based on a vector containing the Euler angles (pitch, yaw, and roll).
+/// Builds a matrix that rotates around an arbitrary axis.
 ///
 /// ## Parameters
 ///
-/// `Angles` 3D vector containing the Euler angles in the order `pitch`, then `yaw`, and then `roll`.
+/// `Axis` Vector describing the axis of rotation.
+///
+/// `Angle` Angle of rotation in radians. Angles are measured clockwise when looking along the rotation axis toward
+/// the origin.
 ///
 /// ## Return value
 ///
@@ -2119,15 +2126,14 @@ pub fn XMMatrixRotationNormal(
 ///
 /// ## Remarks
 ///
-/// Angles are measured clockwise when looking along the rotation axis toward the origin. **This is a left-handed
-/// coordinate system. To use right-handed coordinates, negate all three angles**.
-///
-/// The order of transformations is roll first, then pitch, and then yaw. The rotations are all applied
-/// in the global coordinate frame.
+/// If Axis is a normalized vector, it is faster to use the [`XMMatrixRotationNormal`] function to build this
+/// type of matrix.
 ///
 /// ## Reference
 ///
-/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixRotationRollPitchYawFromVector>
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixRotationAxis>
+///
+/// [`XMMatrixRotationNormal`]: crate::matrix::XMMatrixRotationNormal
 #[inline]
 pub fn XMMatrixRotationAxis(
     Axis: FXMVECTOR,
@@ -3013,7 +3019,7 @@ pub fn XMMatrixPerspectiveFovLH(
 ///
 /// `FovAngleY` Top-down field-of-view angle in radians.
 ///
-/// `AspectRatio` Aspect ratio of view-space X:Y.
+/// `AspectRatio` Aspect ratio of view-space `X:Y`.
 ///
 /// `NearZ` Distance to the near clipping plane. Must be greater than zero.
 ///

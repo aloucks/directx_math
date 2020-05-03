@@ -74,7 +74,7 @@ pub fn XMQuaternionIsIdentity(
 /// ## Remarks
 ///
 /// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where
-/// the `X`, `Y`, and `Z` components are the vector part and the W component is the scalar part.
+/// the `X`, `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
 ///
 /// ## Reference
 ///
@@ -456,7 +456,7 @@ pub fn XMQuaternionLn(
 ///
 /// ## Parameters
 ///
-/// `Q` Pure quaternion for which to compute the exponential. The w-component of the input
+/// `Q` Pure quaternion for which to compute the exponential. The `w`-component of the input
 /// quaternion is ignored in the calculation.
 ///
 /// ## Return value
@@ -970,7 +970,7 @@ pub fn XMQuaternionBaryCentricV(
 /// ## Remarks
 ///
 /// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where
-/// the `X`, `Y`, and `Z` components are the vector part and the W component is the scalar part.
+/// the `X`, `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
 ///
 /// Given a quaternion (`x`, `y`, `z`, `w`), the [`XMQuaternionIdentity`] function will return the
 /// quaternion (`0`, `0`, `0`, `1`).
@@ -989,27 +989,30 @@ pub fn XMQuaternionIdentity() -> FXMVECTOR
 }
 
 
-/// Computes a rotation quaternion based on the pitch, yaw, and roll (Euler angles).
+/// Computes a rotation quaternion based on the `pitch`, `yaw`, and `roll` (Euler angles).
 ///
 /// ## Parameters
 ///
-/// `Angles` 3D vector containing the Euler angles in the order pitch, yaw, roll.
+/// `Pitch` Angle of rotation around the `x-axis`, in radians.
 ///
-/// # Return value
+/// `Yaw` Angle of rotation around the `y-axis`, in radians.
+///
+/// `Roll` Angle of rotation around the `z-axis`, in radians.
+///
+/// ## Return value
 ///
 /// Returns the rotation quaternion.
 ///
 /// ## Remarks
 ///
-/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where
-/// the `X`, `Y`, and `Z` components are the vector part and the W component is the scalar part.
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where the `X`,
+/// `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
 ///
-/// Angles are measured clockwise when looking along the rotation axis toward
-/// the origin. This is a **left-handed coordinate** system. To use **right-handed
-/// coordinates, negate all three angles**.
+/// Angles are measured clockwise when looking along the rotation axis toward the origin. **This is a left-handed
+/// coordinate system. To use right-handed coordinates, negate all three angles.**
 ///
-/// The order of transformations is roll first, then pitch, then yaw. The rotations are all
-/// applied in the global coordinate frame.
+/// The order of transformations is `roll` first, then `pitch`, then `yaw`. The rotations are all applied in the
+/// global coordinate frame.
 ///
 /// ## Reference
 ///
@@ -1026,31 +1029,26 @@ pub fn XMQuaternionRotationRollPitchYaw(
     return Q;
 }
 
-/// Computes a rotation quaternion based on a vector containing the Euler angles (pitch, yaw, and roll).
+/// Computes a rotation quaternion based on a vector containing the Euler angles (`pitch`, `yaw`, and `roll`).
 ///
 /// ## Parameters
 ///
-/// `Pitch` Angle of rotation around the `x`-axis, in radians.
+/// `Angles` 3D vector containing the Euler angles in the order `pitch`, `yaw`, `roll`.
 ///
-/// `Yaw` Angle of rotation around the `y`-axis, in radians.
-///
-/// `Roll` Angle of rotation around the `z`-axis, in radians.
-///
-/// # Return value
+/// ## Return value
 ///
 /// Returns the rotation quaternion.
 ///
 /// ## Remarks
 ///
-/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where
-/// the `X`, `Y`, and `Z` components are the vector part and the W component is the scalar part.
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where the `X`,
+/// `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
 ///
-/// Angles are measured clockwise when looking along the rotation axis toward
-/// the origin. This is a **left-handed coordinate** system. To use **right-handed
-/// coordinates, negate all three angles**.
+/// Angles are measured clockwise when looking along the rotation axis toward the origin. **This is a left-handed
+/// coordinate system. To use right-handed coordinates, negate all three angles.**
 ///
-/// The order of transformations is roll first, then pitch, then yaw. The rotations are all
-/// applied in the global coordinate frame.
+/// The order of transformations is `roll` first, then `pitch`, then `yaw`. The rotations are all applied in the
+/// global coordinate frame.
 ///
 /// ## Reference
 ///
@@ -1112,7 +1110,7 @@ pub fn XMQuaternionRotationRollPitchYawFromVector(
 /// ## Remarks
 ///
 /// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where
-/// the `X`, `Y`, and `Z` components are the vector part and the W component is the scalar part.
+/// the `X`, `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
 ///
 /// ## Reference
 ///
@@ -1167,7 +1165,7 @@ pub fn XMQuaternionRotationNormal(
 /// ## Remarks
 ///
 /// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where
-/// the `X`, `Y`, and `Z` components are the vector part and the W component is the scalar part.
+/// the `X`, `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
 ///
 /// If Axis is a normalized vector, it is faster to use [`XMQuaternionRotationNormal`]
 ///
@@ -1434,7 +1432,7 @@ pub fn XMPlaneIsInfinite(
 ///
 /// ## Return value
 ///
-/// Returns the dot product of P and `V` replicated into each of the four components of the returned XMVECTOR.
+/// Returns the dot product of `P` and `V` replicated into each of the four components of the returned XMVECTOR.
 ///
 /// ## Remarks
 ///
@@ -1716,7 +1714,7 @@ pub fn XMPlaneIntersectPlane(
 /// ## Return value
 ///
 /// Returns the transformed plane as a 4D vector whose components are the plane coefficients (`A`, `B`, `C`, `D`)
-/// for the plane equation Ax+By+Cz+D=0.
+/// for the plane equation `Ax+By+Cz+D=0`.
 ///
 /// ## Reference
 ///
@@ -1947,7 +1945,7 @@ pub fn XMScalarNearEqual(
     return (fabsf(Delta) <= Epsilon);
 }
 
-/// Computes an angle between -`XM_PI` and `XM_PI`.
+/// Computes an angle between `-XM_PI` and `XM_PI`.
 ///
 /// ## Parameters
 ///
@@ -1955,8 +1953,8 @@ pub fn XMScalarNearEqual(
 ///
 /// ## Return value
 ///
-/// Returns an angle greater than or equal to -`XM_PI` and less than `XM_PI` that is congruent to `Value` modulo
-/// 2pi.
+/// Returns an angle greater than or equal to `-XM_PI` and less than `XM_PI` that is congruent to `Value` modulo
+/// `2 PI`.
 ///
 ///
 /// ## Reference
