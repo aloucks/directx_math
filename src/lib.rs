@@ -9,10 +9,10 @@
 //! [DirectXMath]: https://github.com/microsoft/DirectXMath
 //! [reference documentation]: https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions
 //!
-//! ## Row-major matrices
+//! ## Matrix multiplication order and memory layout
 //!
-//! DirectXMath uses **row-major** matrices, row vectors, and pre-multiplication. Handedness is determined by
-//! which function version is used (RH vs. LH).
+//! DirectXMath uses "row-major" matrices, row-vectors, and pre-multiplication. Handedness is determined by
+//! which function version is used (`RH` vs. `LH`). Multiplication order is the same as transformation order.
 //!
 //! **Row-major** multiplication order:
 //!
@@ -24,6 +24,16 @@
 //!
 //! ```text
 //! MVP = Projection * View * Model;
+//! ```
+//!
+//! When laid out in memory, the data elements `0` through `15` of a "row-major" matrix are in the
+//! same order as an [OpenGL "column-major" matrix]. The translation components of a transformation
+//! matrix occupy elements `12`, `13`, and `14`.
+//!
+//! For example, [`XMMatrixTranslation`]`(12.0, 13.0, 14.0)` results in the following `[f32; 16]`:
+//!
+//! ```text
+//! [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 12.0, 13.0, 14.0, 1.0]
 //! ```
 //!
 //! ## Example
@@ -53,7 +63,9 @@
 //! // row-major multiplication order is the same as the transformation order
 //! assert_eq!(XMMatrix(mvp), model * view * projection);
 //! ```
-
+//!
+//! [`XMMatrixTranslation`]: crate::matrix::XMMatrixTranslation
+//! [OpenGL "column-major" matrix]: https://steve.hollasch.net/cgindex/math/matrix/column-vec.html
 
 // ## Conversion Functions
 //
@@ -746,7 +758,7 @@ mod doc {
             pub use crate::vector::XMVectorInBounds;
             pub use crate::vector::XMVectorInBoundsR;
             pub use crate::vector::XMVectorLerp;
-            pub use crate::vector::XMVectorLerpV;            
+            pub use crate::vector::XMVectorLerpV;
         }
 
         /// Vector initialization
