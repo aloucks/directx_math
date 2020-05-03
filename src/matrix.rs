@@ -204,6 +204,18 @@ pub fn XMMatrixIsIdentity(
 
 /// Computes the product of two matrices.
 ///
+/// ## Parameters
+///
+/// `M1` First matrix to multiply.
+///
+/// `M2` Second matrix to multiply.
+///
+/// ## Return value
+///
+/// Returns the product of `M1` and `M2`.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixMultiply>
 #[inline]
 pub fn XMMatrixMultiply(
@@ -491,6 +503,18 @@ fn test_XMMatrixMultiply() {
 }
 
 /// Computes the transpose of the product of two matrices.
+///
+/// ## Parameters
+///
+/// `M1` First matrix to multiply.
+///
+/// `M2` Second matrix to multiply.
+///
+/// ## Return value
+///
+/// Returns the transpose of the product of `M1` and `M2`.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixMultiplyTranspose>
 #[inline]
@@ -828,6 +852,16 @@ fn test_XMMatrixMultiplyTranspose() {
 
 /// Computes the transpose of a matrix.
 ///
+/// ## Parameters
+///
+/// `M` Matrix to transpose.
+///
+/// ## Return value
+///
+/// Returns the transpose of M.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixTranspose>
 #[inline]
 pub fn XMMatrixTranspose(
@@ -911,6 +945,19 @@ pub fn XMMatrixTranspose(
 }
 
 /// Computes the inverse of a matrix.
+///
+/// ## Parameters
+///
+/// `pDeterminant` Address of a vector, each of whose components receives the determinant of `M`.
+///
+/// `M` Matrix to invert.
+///
+/// ## Return value
+///
+/// Returns the matrix inverse of M. If there is no inverse (that is, if the determinant is `0`), XMMatrixInverse
+/// returns an infinite matrix.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixInverse>
 #[inline]
@@ -1173,6 +1220,16 @@ pub fn XMMatrixVectorTensorProduct(
 }
 
 /// Computes the determinant of a matrix.
+///
+/// ## Parameters
+///
+/// `M` Matrix from which to compute the determinant.
+///
+/// ## Return value
+///
+/// Returns a vector. The determinant of `M` is replicated into each component.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixDeterminant>
 #[inline]
@@ -1654,7 +1711,18 @@ pub fn XMMatrixScalingFromVector(
     }
 }
 
-/// Builds a matrix that rotates around the x-axis.
+/// Builds a matrix that rotates around the `x-axis`.
+///
+/// ## Parameters
+///
+/// `Angle` Angle of rotation around the `x-axis`, in radians. Angles are measured clockwise when looking along the
+/// rotation axis toward the origin.
+///
+/// ## Return value
+///
+/// Returns the rotation matrix.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixRotationX>
 #[inline]
@@ -1719,7 +1787,18 @@ pub fn XMMatrixRotationX(
     }
 }
 
-/// Builds a matrix that rotates around the y-axis.
+/// Builds a matrix that rotates around the `y-axis`.
+///
+/// ## Parameters
+///
+/// `Angle` Angle of rotation around the `y-axis`, in radians. Angles are measured clockwise when looking along
+/// the rotation axis toward the origin.
+///
+/// ## Return value
+///
+/// Returns the rotation matrix.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixRotationY>
 #[inline]
@@ -1784,7 +1863,18 @@ pub fn XMMatrixRotationY(
     }
 }
 
-/// Builds a matrix that rotates around the z-axis.
+/// Builds a matrix that rotates around the `z-axis`.
+///
+/// ## Parameters
+///
+/// `Angle` Angle of rotation around the `z-axis`, in radians. Angles are measured clockwise when looking along
+/// the rotation axis toward the origin.
+///
+/// ## Return value
+///
+/// Returns the rotation matrix.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixRotationZ>
 #[inline]
@@ -1851,6 +1941,24 @@ pub fn XMMatrixRotationZ(
 
 /// Builds a rotation matrix based on a vector containing the Euler angles (pitch, yaw, and roll).
 ///
+/// ## Parameters
+///
+/// `Angles` 3D vector containing the Euler angles in the order `pitch`, then `yaw`, and then `roll`.
+///
+/// ## Return value
+///
+/// Returns the rotation matrix.
+///
+/// ## Remarks
+///
+/// Angles are measured clockwise when looking along the rotation axis toward the origin. **This is a left-handed
+/// coordinate system. To use right-handed coordinates, negate all three angles**.
+///
+/// The order of transformations is roll first, then pitch, and then yaw. The rotations are all applied
+/// in the global coordinate frame.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixRotationRollPitchYawFromVector>
 #[inline]
 pub fn XMMatrixRotationRollPitchYaw(
@@ -1865,6 +1973,24 @@ pub fn XMMatrixRotationRollPitchYaw(
 
 /// Builds a rotation matrix based on a vector containing the Euler angles (pitch, yaw, and roll).
 ///
+/// ## Parameters
+///
+/// `Angles` 3D vector containing the Euler angles in the order `pitch`, then `yaw`, and then `roll`.
+///
+/// ## Return value
+///
+/// Returns the rotation matrix.
+///
+/// ## Remarks
+///
+/// Angles are measured clockwise when looking along the rotation axis toward the origin. **This is a left-handed
+/// coordinate system. To use right-handed coordinates, negate all three angles**.
+///
+/// The order of transformations is roll first, then pitch, and then yaw. The rotations are all applied
+/// in the global coordinate frame.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixRotationRollPitchYawFromVector>
 #[inline]
 pub fn XMMatrixRotationRollPitchYawFromVector(
@@ -1876,6 +2002,19 @@ pub fn XMMatrixRotationRollPitchYawFromVector(
 }
 
 /// Builds a matrix that rotates around an arbitrary normal vector.
+///
+/// ## Parameters
+///
+/// `NormalAxis` Normal vector describing the axis of rotation.
+///
+/// `Angle` Angle of rotation in radians. Angles are measured clockwise when looking along the rotation axis toward
+/// the origin.
+///
+/// ## Return value
+///
+/// Returns the rotation matrix.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixRotationNormal>
 #[inline]
@@ -1970,6 +2109,24 @@ pub fn XMMatrixRotationNormal(
 
 /// Builds a rotation matrix based on a vector containing the Euler angles (pitch, yaw, and roll).
 ///
+/// ## Parameters
+///
+/// `Angles` 3D vector containing the Euler angles in the order `pitch`, then `yaw`, and then `roll`.
+///
+/// ## Return value
+///
+/// Returns the rotation matrix.
+///
+/// ## Remarks
+///
+/// Angles are measured clockwise when looking along the rotation axis toward the origin. **This is a left-handed
+/// coordinate system. To use right-handed coordinates, negate all three angles**.
+///
+/// The order of transformations is roll first, then pitch, and then yaw. The rotations are all applied
+/// in the global coordinate frame.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixRotationRollPitchYawFromVector>
 #[inline]
 pub fn XMMatrixRotationAxis(
@@ -1985,6 +2142,16 @@ pub fn XMMatrixRotationAxis(
 }
 
 /// Builds a rotation matrix from a quaternion.
+///
+/// ## Parameters
+///
+/// `Quaternion` Quaternion defining the rotation.
+///
+/// ## Return value
+///
+/// Returns the rotation matrix.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixRotationQuaternion>
 #[inline]
@@ -2077,6 +2244,26 @@ pub fn XMMatrixRotationQuaternion(
 
 /// Builds a 2D transformation matrix.
 ///
+/// ## Parameters
+///
+/// `ScalingOrigin` 2D vector describing the center of the scaling.
+///
+/// `ScalingOrientation` Scaling rotation factor.
+///
+/// `Scaling` 2D vector containing the scaling factors for the `x-axis` and `y-axis`.
+///
+/// `RotationOrigin` 2D vector describing the center of the rotation.
+///
+/// `Rotation` Angle of rotation, in radians.
+///
+/// `Translation` 2D vector describing the translation.
+///
+/// ## Return value
+///
+/// Returns the transformation matrix.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixTransformation2D>
 #[inline]
 pub fn XMMatrixTransformation2D(
@@ -2119,6 +2306,26 @@ pub fn XMMatrixTransformation2D(
 
 /// Builds a transformation matrix.
 ///
+/// ## Parameters
+///
+/// `ScalingOrigin` 3D vector describing the center of the scaling.
+///
+/// `ScalingOrientationQuaternion` Quaternion describing the orientation of the scaling.
+///
+/// `Scaling` 3D vector containing the scaling factors for the `x-axis`, `y-axis`, and `z-axis`.
+///
+/// `RotationOrigin` 3D vector describing the center of the rotation.
+///
+/// `RotationQuaternion` Quaternion describing the rotation around the origin indicated by RotationOrigin.
+///
+/// `Translation` 3D vector describing the translations along the `x-axis`, `y-axis`, and `z-axis`.
+///
+/// ## Return value
+///
+/// Returns the transformation matrix.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixTransformation>
 #[inline]
 pub fn XMMatrixTransformation(
@@ -2160,6 +2367,22 @@ pub fn XMMatrixTransformation(
 
 /// Builds a 2D affine transformation matrix in the xy plane.
 ///
+/// ## Parameters
+///
+/// `Scaling` 2D vector of scaling factors for the x-coordinate and y-coordinate.
+///
+/// `RotationOrigin` 2D vector describing the center of rotation.
+///
+/// `Rotation` Radian angle of rotation.
+///
+/// `Translation` 2D vector translation offsets.
+///
+/// ## Return value
+///
+/// Returns the 2D affine transformation matrix.
+///
+/// ## Reference
+//
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixAffineTransformation2D>
 #[inline]
 pub fn XMMatrixAffineTransformation2D(
@@ -2235,6 +2458,16 @@ pub fn XMMatrixAffineTransformation(
 
 /// Builds a transformation matrix designed to reflect vectors through a given plane.
 ///
+/// ## Parameters
+///
+/// `ReflectionPlane` Plane to reflect through.
+///
+/// ## Return value
+///
+/// Returns the transformation matrix.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixReflect>
 #[inline]
 pub fn XMMatrixReflect(
@@ -2266,6 +2499,23 @@ pub fn XMMatrixReflect(
 }
 
 /// Builds a transformation matrix that flattens geometry into a plane.
+///
+/// ## Parameters
+///
+/// `ShadowPlane` Reference plane.
+///
+/// `LightPosition` 4D vector describing the light's position. If the light's w-component is `0.0`, the ray from the origin
+/// to the light represents a directional light. If it is `1.0`, the light is a point light.
+///
+/// ## Return value
+///
+/// Returns the transformation matrix that flattens the geometry into the plane ShadowPlane.
+///
+/// ## Remarks
+///
+/// This function is useful for forming planar-projected shadows from a light source.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixShadow>
 #[inline]
@@ -2304,6 +2554,20 @@ pub fn XMMatrixShadow(
 
 /// Builds a view matrix for a left-handed coordinate system using a camera position, an up direction, and a focal point.
 ///
+/// ## Parameters
+///
+/// `EyePosition` Position of the camera.
+///
+/// `FocusPosition` Position of the focal point.
+///
+/// `UpDirection` Up direction of the camera, typically < `0.0`, `1.0`, `0.0` >.
+///
+/// ## Return value
+///
+/// Returns a view matrix that transforms a point from world space into view space.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixLookAtLH>
 #[inline]
 pub fn XMMatrixLookAtLH(
@@ -2318,6 +2582,20 @@ pub fn XMMatrixLookAtLH(
 
 /// Builds a view matrix for a right-handed coordinate system using a camera position, an up direction, and a focal point.
 ///
+/// ## Parameters
+///
+/// `EyePosition` Position of the camera.
+///
+/// `FocusPosition` Position of the focal point.
+///
+/// `UpDirection` Up direction of the camera, typically < `0.0`, `1.0`, `0.0` >.
+///
+/// ## Return value
+///
+/// Returns a view matrix that transforms a point from world space into view space.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixLookAtRH>
 #[inline]
 pub fn XMMatrixLookAtRH(
@@ -2331,6 +2609,20 @@ pub fn XMMatrixLookAtRH(
 }
 
 /// Builds a view matrix for a left-handed coordinate system using a camera position, an up direction, and a camera direction.
+///
+/// ## Parameters
+///
+/// `EyePosition` Position of the camera.
+///
+/// `EyeDirection` Direction of the camera.
+///
+/// `UpDirection` Up direction of the camera, typically < `0.0`, `1.0`, `0.0` >.
+///
+/// ## Return value
+///
+/// Returns a view matrix that transforms a point from world space into view space.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixLookToLH>
 #[inline]
@@ -2373,6 +2665,20 @@ pub fn XMMatrixLookToLH(
 
 /// Builds a view matrix for a right-handed coordinate system using a camera position, an up direction, and a camera direction.
 ///
+/// ## Parameters
+///
+/// `EyePosition` Position of the camera.
+///
+/// `EyeDirection` Direction of the camera.
+///
+/// `UpDirection` Up direction of the camera, typically < `0.0`, 1.0`, `0.0` >.
+///
+/// ## Return value
+///
+/// Returns a view matrix that transforms a point from world space into view space.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixLookToRH>
 #[inline]
 pub fn XMMatrixLookToRH(
@@ -2386,6 +2692,28 @@ pub fn XMMatrixLookToRH(
 }
 
 /// Builds a left-handed perspective projection matrix.
+///
+/// ## Parameters
+///
+/// `ViewWidth` Width of the frustum at the near clipping plane.
+///
+/// `ViewHeight` Height of the frustum at the near clipping plane.
+///
+/// `NearZ` Distance to the near clipping plane. Must be greater than zero.
+///
+/// `FarZ` Distance to the far clipping plane. Must be greater than zero.
+///
+/// ## Return value
+///
+/// Returns the perspective projection matrix.
+///
+/// ## Remarks
+///
+/// For typical usage, `NearZ` is less than `FarZ`. However, if you flip these values so `FarZ` is less than `NearZ`,
+/// the result is an inverted `z` buffer which can provide increased floating-point precision. `NearZ` and `FarZ`
+/// cannot be the same value.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixPerspectiveLH>
 #[inline]
@@ -2467,6 +2795,28 @@ pub fn XMMatrixPerspectiveLH(
 
 /// Builds a right-handed perspective projection matrix.
 ///
+/// ## Parameters
+///
+/// `ViewWidth` Width of the frustum at the near clipping plane.
+///
+/// `ViewHeight` Height of the frustum at the near clipping plane.
+///
+/// `NearZ` Distance to the near clipping plane. Must be greater than zero.
+///
+/// `FarZ` Distance to the far clipping plane. Must be greater than zero.
+///
+/// ## Return value
+///
+/// Returns the perspective projection matrix.
+///
+/// ## Remarks
+///
+/// For typical usage, `NearZ` is less than `FarZ`. However, if you flip these values so `FarZ` is less than `NearZ`,
+/// the result is an inverted `z` buffer which can provide increased floating-point precision. `NearZ` and `FarZ`
+/// cannot be the same value.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixPerspectiveRH>
 #[inline]
 pub fn XMMatrixPerspectiveRH(
@@ -2546,6 +2896,28 @@ pub fn XMMatrixPerspectiveRH(
 }
 
 /// Builds a left-handed perspective projection matrix based on a field of view.
+///
+/// ## Parameters
+///
+/// `FovAngleY` Top-down field-of-view angle in radians.
+///
+/// `AspectRatio` Aspect ratio of view-space `X:Y`.
+///
+/// `NearZ` Distance to the near clipping plane. Must be greater than zero.
+///
+/// `FarZ` Distance to the far clipping plane. Must be greater than zero.
+///
+/// ## Return value
+///
+/// Returns the perspective projection matrix.
+///
+/// ## Remarks
+///
+/// For typical usage, `NearZ` is less than `FarZ`. However, if you flip these values so `FarZ` is less than `NearZ`,
+/// the result is an inverted `z` buffer which can provide increased floating-point precision. `NearZ` and `FarZ`
+/// cannot be the same value.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixPerspectiveFovLH>
 #[inline]
@@ -2636,6 +3008,28 @@ pub fn XMMatrixPerspectiveFovLH(
 
 
 /// Builds a right-handed perspective projection matrix based on a field of view.
+///
+/// ## Parameters
+///
+/// `FovAngleY` Top-down field-of-view angle in radians.
+///
+/// `AspectRatio` Aspect ratio of view-space X:Y.
+///
+/// `NearZ` Distance to the near clipping plane. Must be greater than zero.
+///
+/// `FarZ` Distance to the far clipping plane. Must be greater than zero.
+///
+/// ## Return value
+///
+/// Returns the perspective projection matrix.
+///
+/// ## Remarks
+///
+/// For typical usage, `NearZ` is less than `FarZ`. However, if you flip these values so `FarZ` is less than `NearZ`,
+/// the result is an inverted `z` buffer which can provide increased floating-point precision. `NearZ` and `FarZ`
+/// cannot be the same value.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixPerspectiveFovRH>
 #[inline]
@@ -2728,6 +3122,26 @@ pub fn XMMatrixPerspectiveFovRH(
 
 /// Builds an orthogonal projection matrix for a left-handed coordinate system.
 ///
+/// ## Parameters
+///
+/// `ViewWidth` Width of the frustum at the near clipping plane.
+///
+/// `ViewHeight` Height of the frustum at the near clipping plane.
+///
+/// `NearZ` Distance to the near clipping plane.
+///
+/// `FarZ` Distance to the far clipping plane.
+///
+/// ## Return value
+///
+/// Returns the orthogonal projection matrix.
+///
+/// ## Remarks
+///
+/// All the parameters of XMMatrixOrthographicLH are distances in camera space.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixOrthographicLH>
 #[inline]
 pub fn XMMatrixOrthographicLH(
@@ -2803,6 +3217,26 @@ pub fn XMMatrixOrthographicLH(
 }
 
 /// Builds an orthogonal projection matrix for a right-handed coordinate system.
+///
+/// ## Parameters
+///
+/// `ViewWidth` Width of the frustum at the near clipping plane.
+///
+/// `ViewHeight` Height of the frustum at the near clipping plane.
+///
+/// `NearZ` Distance to the near clipping plane.
+///
+/// `FarZ` Distance to the far clipping plane.
+///
+/// ## Return value
+///
+/// Returns the orthogonal projection matrix.
+///
+/// ## Remarks
+///
+/// All the parameters of XMMatrixOrthographicRH are distances in camera space.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixOrthographicRH>
 #[inline]

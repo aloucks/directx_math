@@ -219,6 +219,21 @@ pub fn XMQuaternionLengthSq(
 
 /// Computes the reciprocal of the magnitude of a quaternion.
 ///
+/// ## Parameters
+///
+/// `Q` Quaternion to measure.
+///
+/// ## Return value
+///
+/// Returns the reciprocal of the magnitude of `Q`.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where the `X`,
+/// `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionReciprocalLength>
 #[inline]
 pub fn XMQuaternionReciprocalLength(
@@ -255,6 +270,27 @@ pub fn XMQuaternionLength(
 }
 
 /// Estimates the normalized version of a quaternion.
+///
+/// ## Parameters
+///
+/// `Q` A quaternion for which to estimate the normalized version.
+///
+/// ## Return value
+///
+/// An XMVECTOR union that is the estimate of the normalized version of a quaternion.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where the `X`,
+/// `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
+///
+/// This function internally calls the XMVector4NormalizeEstfunction.
+///
+/// `Est` functions offer increased performance at the expense of reduced accuracy. `Est` functions are appropriate
+/// for non-critical calculations where accuracy can be sacrificed for speed. The exact amount of lost accuracy
+/// and speed increase are platform dependent.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionNormalizeEst>
 #[inline]
@@ -1390,6 +1426,24 @@ pub fn XMPlaneIsInfinite(
 
 /// Calculates the dot product between an input plane and a 4D vector.
 ///
+/// ## Parameters
+///
+/// `P` XMVECTOR describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
+///
+/// `V` 4D vector to use in the dot product.
+///
+/// ## Return value
+///
+/// Returns the dot product of P and `V` replicated into each of the four components of the returned XMVECTOR.
+///
+/// ## Remarks
+///
+/// The XMPlaneDot function is useful for determining the plane's relationship with a homogeneous coordinate.
+/// For example, this function can be used to determine if a particular coordinate is on a particular plane,
+/// or on which side of a particular plane a particular coordinate lies.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneDot>
 #[inline]
 pub fn XMPlaneDot(
@@ -1432,6 +1486,23 @@ pub fn XMPlaneDotNormal(
 }
 
 /// Estimates the coefficients of a plane so that coefficients of x, y, and z form a unit normal vector.
+///
+/// ## Parameters
+///
+/// `P` XMVECTOR describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
+///
+/// ## Return value
+///
+/// Returns an estimation of the normalized plane as a 4D vector whose components are the plane coefficients
+/// (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
+///
+/// ## Remarks
+///
+/// `Est` functions offer increased performance at the expense of reduced accuracy. `Est` functions are appropriate
+/// for non-critical calculations where accuracy can be sacrificed for speed. The exact amount of lost accuracy
+/// and speed increase are platform dependent.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneNormalizeEst>
 #[inline]
@@ -1535,6 +1606,21 @@ pub fn XMPlaneNormalize(
 
 /// Finds the intersection between a plane and a line.
 ///
+/// ## Parameters
+///
+/// `P` XMVECTOR describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
+///
+/// `LinePoint1` 3D vector describing the first point on the line.
+///
+/// `LinePoint2` 3D vector describing the second point on the line.
+///
+/// ## Return value
+///
+/// Returns the intersection of the plane P and the line defined by `LinePoint1` and `LinePoint2`. If the line
+/// is parallel to the plane, all components of the returned vector are equal to `QNaN`.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneIntersectLine>
 #[inline]
 pub fn XMPlaneIntersectLine(
@@ -1563,6 +1649,27 @@ pub fn XMPlaneIntersectLine(
 }
 
 /// Finds the intersection of two planes.
+///
+/// ## Parameters
+///
+/// `pLinePoint1` Address of a 3D vector describing one point on the line of intersection. See remarks.
+///
+/// `pLinePoint2` Address of a 3D vector describing a second point on the line of intersection. See remarks.
+///
+/// `P1` XMVECTOR describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
+///
+/// `P2` XMVECTOR describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
+///
+/// ## Return value
+///
+/// None.
+///
+/// ## Remarks
+///
+/// If the planes are parallel to one another, all components of the returned point vectors are equal to
+/// QNaN.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneIntersectPlane>
 #[inline]
@@ -1599,6 +1706,19 @@ pub fn XMPlaneIntersectPlane(
 }
 
 /// Transforms a plane by a given matrix.
+///
+/// ## Parameters
+///
+/// `P` XMVECTOR describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation Ax+By+Cz+D=0.
+///
+/// `M` Transformation matrix.
+///
+/// ## Return value
+///
+/// Returns the transformed plane as a 4D vector whose components are the plane coefficients (`A`, `B`, `C`, `D`)
+/// for the plane equation Ax+By+Cz+D=0.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneTransform>
 #[inline]
@@ -1697,6 +1817,18 @@ pub fn XMPlaneFromPoints(
 
 /// Calculates the Fresnel term for unpolarized light.
 ///
+/// ## Parameters
+///
+/// `CosIncidentAngle` Vector consisting of the cosines of the incident angles.
+///
+/// `RefractionIndex` Vector consisting of the refraction indices of the materials corresponding to the incident angles.
+///
+/// ## Return value
+///
+/// Returns a vector containing the Fresnel term of each component.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMFresnelTerm>
 #[inline]
 pub fn XMFresnelTerm(
@@ -1788,6 +1920,21 @@ pub fn XMFresnelTerm(
 
 /// Determines if two floating-point values are nearly equal.
 ///
+/// ## Parameters
+///
+/// `S1` First floating-point value to compare.
+///
+/// `S2` Second floating-point value to compare.
+///
+/// `Epsilon` Tolerance to use when comparing `S1` and `S2`.
+///
+/// ## Return value
+///
+/// Returns `true` if the absolute value of the difference between `S1` and `S2` is less than or equal to `Epsilon`.
+/// Returns `false` otherwise.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarNearEqual>
 #[inline]
 pub fn XMScalarNearEqual(
@@ -1800,7 +1947,19 @@ pub fn XMScalarNearEqual(
     return (fabsf(Delta) <= Epsilon);
 }
 
-/// Computes an angle between -XM_PI and XM_PI.
+/// Computes an angle between -`XM_PI` and `XM_PI`.
+///
+/// ## Parameters
+///
+/// `Value` float value describing the radian angle.
+///
+/// ## Return value
+///
+/// Returns an angle greater than or equal to -`XM_PI` and less than `XM_PI` that is congruent to `Value` modulo
+/// 2pi.
+///
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarModAngle>
 #[inline]
