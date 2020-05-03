@@ -948,7 +948,8 @@ pub fn XMMatrixTranspose(
 ///
 /// ## Parameters
 ///
-/// `pDeterminant` Address of a vector, each of whose components receives the determinant of `M`.
+/// `pDeterminant` Address of a vector, each of whose components receives the determinant of `M`. This parameter may be `None`
+///  if the determinant is not desired.
 ///
 /// `M` Matrix to invert.
 ///
@@ -962,7 +963,7 @@ pub fn XMMatrixTranspose(
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixInverse>
 #[inline]
 pub fn XMMatrixInverse(
-    pDeterminant: &mut XMVECTOR,
+    pDeterminant: Option<&mut XMVECTOR>,
     M: FXMMATRIX,
 ) -> XMMATRIX
 {
@@ -1048,12 +1049,10 @@ pub fn XMMatrixInverse(
 
         let Determinant: XMVECTOR = XMVector4Dot(R.r[0], MT.r[0]);
 
-        // TODO: The pDeterminant parameter is optionally null. Should this
-        //       take an Option<&mut XMVECTOR> instead?
-
-        // if (pDeterminant != nullptr)
-        //     *pDeterminant = Determinant;
-        *pDeterminant = Determinant;
+        match pDeterminant {
+            Some(determinant) => *determinant = Determinant,
+            None => ()
+        };
 
         let Reciprocal: XMVECTOR = XMVectorReciprocal(Determinant);
 
@@ -1181,10 +1180,11 @@ pub fn XMMatrixInverse(
         C6 = XM_PERMUTE_PS!(C6, _MM_SHUFFLE(3, 1, 2, 0));
         // Get the determinant
         let mut vTemp: XMVECTOR = XMVector4Dot(C0, MT.r[0]);
-        // TODO: pDeterminant optional?
-        // if (pDeterminant != nullptr)
-        //     *pDeterminant = vTemp;
-        *pDeterminant = vTemp;
+
+        match pDeterminant {
+            Some(determinant) => *determinant = vTemp,
+            None => ()
+        };
 
         vTemp = _mm_div_ps(g_XMOne.v, vTemp);
         let mut mResult: XMMATRIX = mem::MaybeUninit::uninit().assume_init();

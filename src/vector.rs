@@ -8584,7 +8584,7 @@ pub fn XMVector3Unproject(
     let mut Transform: XMMATRIX = XMMatrixMultiply(*World, View);
     Transform = XMMatrixMultiply(Transform, &Projection);
     let mut det = unsafe { mem::MaybeUninit::uninit().assume_init() };
-    Transform = XMMatrixInverse(&mut det, Transform);
+    Transform = XMMatrixInverse(Some(&mut det), Transform);
 
     let Result: XMVECTOR = XMVectorMultiplyAdd(V, Scale, Offset);
 

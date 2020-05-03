@@ -49,8 +49,7 @@ benchmarks!({
     );
 
     fn _XMMatrixInverse(M: XMMATRIX) -> XMMATRIX {
-        let mut determinant = XMVectorZero();
-        XMMatrixInverse(&mut determinant, M)
+        XMMatrixInverse(None, M)
     }
 
     bench!(
