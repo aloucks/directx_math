@@ -537,6 +537,29 @@ pub fn XMQuaternionSlerp(
 
 /// Interpolates between two unit quaternions, using spherical linear interpolation.
 ///
+/// ## Parameters
+///
+/// `Q0` Unit quaternion to interpolate from.
+///
+/// `Q1` Unit quaternion to interpolate to.
+///
+/// `T` Interpolation control factor. All components of this vector must be the same.
+///
+/// ## Return value
+///
+/// Returns the interpolated quaternion. If `Q0` and `Q1` are not unit quaternions, the resulting interpolation
+/// is undefined.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where the `X`,
+/// `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
+///
+/// This function is identical to XMQuaternionSlerp except that `T` is supplied using a 4D vector instead
+/// of a **float** value.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionSlerpV>
 #[inline]
 pub fn XMQuaternionSlerpV(
@@ -685,6 +708,33 @@ pub fn XMQuaternionSquad(
 }
 
 /// Interpolates between four unit quaternions, using spherical quadrangle interpolation.
+///
+/// ## Parameters
+///
+/// `Q0` First unit quaternion.
+///
+/// `Q1` Second unit quaternion.
+///
+/// `Q2` Third unit quaternion.
+///
+/// `Q3` Fourth unit quaternion.
+///
+/// `T` Interpolation control factor. All components of this vector must be the same.
+///
+/// ## Return value
+///
+/// Returns the interpolated quaternion. If Q0, Q1, Q2, and Q3 are not unit quaternions, the resulting interpolation
+/// is undefined.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where the `X`,
+/// `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
+///
+/// This function is identical to XMQuaternionSquad except that `T` is supplied using a 4D vector instead
+/// of a **float** value.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionSquadV>
 #[inline]
@@ -1191,6 +1241,25 @@ pub fn XMQuaternionRotationAxis(
 
 /// Computes a rotation quaternion from a rotation matrix.
 ///
+/// ## Parameters
+///
+/// `M` Rotation matrix.
+///
+/// ## Return value
+///
+/// Returns the rotation quaternion.
+///
+/// ## Remarks
+///
+/// This function only uses the upper 3x3 portion of the XMMATRIX. Note if the input matrix contains scales,
+/// shears, or other non-rotation transformations in the upper 3x3 matrix, then the output of this function
+/// is ill-defined.
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where the `X`,
+/// `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionRotationMatrix>
 #[inline]
 pub fn XMQuaternionRotationMatrix(
@@ -1348,6 +1417,25 @@ pub fn XMQuaternionRotationMatrix(
 
 /// Computes an axis and angle of rotation about that axis for a given quaternion.
 ///
+/// ## Parameters
+///
+/// `pAxis` Address of a 3D vector describing the axis of rotation for the quaternion `Q`.
+///
+/// `pAngle` Address of float describing the radian angle of rotation for the quaternion `Q`.
+///
+/// `Q` Quaternion to measure.
+///
+/// ## Return value
+///
+/// None.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where the `X`,
+/// `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionToAxisAngle>
 #[inline]
 pub fn XMQuaternionToAxisAngle(
@@ -1362,6 +1450,26 @@ pub fn XMQuaternionToAxisAngle(
 
 /// Determines if two planes are equal.
 ///
+/// ## Parameters
+///
+/// `P1` XMVECTOR describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
+///
+/// `P2` XMVECTOR describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
+///
+/// ## Return value
+///
+/// Returns `true` if the two planes are equal and `false` otherwise.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function.
+///
+/// ```text
+/// return (P1.x == P2.x && P1.y == P2.y && P1.z == P2.z && P1.w == P2.w);
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneEqual>
 #[inline]
 pub fn XMPlaneEqual(
@@ -1375,7 +1483,29 @@ pub fn XMPlaneEqual(
 
 /// Determines whether two planes are nearly equal.
 ///
+/// ## Parameters
+///
+/// `P1` XMVECTOR describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
+///
+/// `P2` XMVECTOR describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
+///
+/// `Epsilon` An XMVECTOR that gives the component-wise tolerance to use when comparing `P1` and `P2`.
+///
+/// ## Return value
+///
+/// Returns `true` if P1 is nearly equal to P2 and `false` otherwise.
+///
+/// ## Remarks
+///
+/// The XMPlaneNearEqual function normalizes the `P1` and `P2` parameters before passing them, and the `Epsilon`
+/// parameter, to the [`XMVector4NearEqual`] function. For more information about how the calculation is performed,
+/// see the [`XMVector4NearEqual`] function.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneNearEqual>
+///
+/// [`XMVector4NearEqual`]: crate::vector::XMVector4NearEqual
 #[inline]
 pub fn XMPlaneNearEqual(
     P1: FXMVECTOR,
@@ -1390,6 +1520,26 @@ pub fn XMPlaneNearEqual(
 
 /// Determines if two planes are equal.
 ///
+/// ## Parameters
+///
+/// `P1` XMVECTOR describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
+///
+/// `P2` XMVECTOR describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
+///
+/// ## Return value
+///
+/// Returns `true` if the two planes are unequal and `false` otherwise.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function.
+///
+/// ```text
+/// return (P1.x != P2.x || P1.y != P2.y || P1.z != P2.z || P1.w != P2.w);
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneNotEqual>
 #[inline]
 pub fn XMPlaneNotEqual(
@@ -1402,6 +1552,16 @@ pub fn XMPlaneNotEqual(
 
 /// Tests whether any of the coefficients of a plane is a NaN.
 ///
+/// ## Parameters
+///
+/// `P` XMVECTOR describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
+///
+/// ## Return value
+///
+/// Returns `true` if any of the coefficients of the plane is a NaN, and `false` otherwise.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneIsNaN>
 #[inline]
 pub fn XMPlaneIsNaN(
@@ -1412,6 +1572,16 @@ pub fn XMPlaneIsNaN(
 }
 
 /// Tests whether any of the coefficients of a plane is positive or negative infinity.
+///
+/// ## Parameters
+///
+/// `P` XMVECTOR describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
+///
+/// ## Return value
+///
+/// Returns `true` if any of the coefficients of the plane is positive or negative infinity, and `false` otherwise.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneIsInfinite>
 #[inline]
@@ -1454,6 +1624,35 @@ pub fn XMPlaneDot(
 
 /// Calculates the dot product between an input plane and a 3D vector.
 ///
+/// ## Parameters
+///
+/// `P` XMVECTOR describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
+///
+/// `V` 3D vector to use in the dot product. The `w` component of `V` is always treated as if is `1.0`.
+///
+/// ## Return value
+///
+/// Returns the dot product between `P` and `V` replicated into each of the four components of the returned
+/// XMVECTOR.
+///
+/// ## Remarks
+///
+/// This function can be useful in finding the signed distance from a point to a plane. The following pseudocode
+/// demonstrates the operation of the function.
+///
+/// ```text
+/// XMVECTOR vectorOut;
+///
+/// vectorOut.x = P.x * V.x + P.y * V.y + P.z * V.z + P.w * 1.0f;
+/// vectorOut.y = P.x * V.x + P.y * V.y + P.z * V.z + P.w * 1.0f;
+/// vectorOut.z = P.x * V.x + P.y * V.y + P.z * V.z + P.w * 1.0f;
+/// vectorOut.w = P.x * V.x + P.y * V.y + P.z * V.z + P.w * 1.0f;
+///
+/// return vectorOut;
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneDotCoord>
 #[inline]
 pub fn XMPlaneDotCoord(
@@ -1472,6 +1671,35 @@ pub fn XMPlaneDotCoord(
 
 
 /// Calculates the dot product between the normal vector of a plane and a 3D vector.
+///
+/// ## Parameters
+///
+/// `P` XMVECTOR describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
+///
+/// `V` 3D vector to use in the dot product. The `w` component of `V` is always treated as if is 0.0f.
+///
+/// ## Return value
+///
+/// Returns the dot product between the normal vector of the plane and `V` replicated into each of the four
+/// components of the returned XMVECTOR.
+///
+/// ## Remarks
+///
+/// This function is useful for calculating the angle between the normal vector of the plane, and another
+/// normal vector. The following pseudocode demonstrates the operation of the function.
+///
+/// ```text
+/// XMVECTOR vectorOut;
+///
+/// vectorOut.x = P.x * V.x + P.y * V.y + P.z * V.z;
+/// vectorOut.y = P.x * V.x + P.y * V.y + P.z * V.z;
+/// vectorOut.z = P.x * V.x + P.y * V.y + P.z * V.z;
+/// vectorOut.w = P.x * V.x + P.y * V.y + P.z * V.z;
+///
+/// return vectorOut;
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneDotNormal>
 #[inline]
@@ -1542,6 +1770,35 @@ pub fn XMPlaneNormalizeEst(
 }
 
 /// Normalizes the coefficients of a plane so that coefficients of x, y, and z form a unit normal vector.
+///
+/// ## Parameters
+///
+/// `P` XMVECTOR describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
+///
+/// ## Return value
+///
+/// Returns the normalized plane as a 4D vector whose components are the plane coefficients (`A`, `B`, `C`, `D`)
+/// for the plane equation  `Ax+By+Cz+D=0`.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// float LengthSq = P.x * P.x + P.y * P.y + P.z * P.z;
+///
+/// float ReciprocalLength = 1.0f / sqrt(LengthSq);
+/// Result.x = P.x * ReciprocalLength;
+/// Result.y = P.y * ReciprocalLength;
+/// Result.z = P.z * ReciprocalLength;
+/// Result.w = P.w * ReciprocalLength;
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneNormalize>
 #[inline]
@@ -1707,7 +1964,7 @@ pub fn XMPlaneIntersectPlane(
 ///
 /// ## Parameters
 ///
-/// `P` XMVECTOR describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation Ax+By+Cz+D=0.
+/// `P` XMVECTOR describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
 ///
 /// `M` Transformation matrix.
 ///
@@ -1743,6 +2000,34 @@ pub fn XMPlaneTransform(
 
 /// Computes the equation of a plane constructed from a point in the plane and a normal vector.
 ///
+/// ## Parameters
+///
+/// `Point` 3D vector describing a point in the plane.
+///
+/// `Normal` 3D vector normal to the plane.
+///
+/// ## Return value
+///
+/// Returns a vector whose components are the coefficients of the plane (`A`, `B`, `C`, `D`) for the plane equation
+/// `Ax+By+Cz+D=0`.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = Normal.x;
+/// Result.y = Normal.y;
+/// Result.z = Normal.z;
+/// Result.w = -(Point.x * Normal.x + Point.y * Normal.y + Point.z * Normal.z);
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneFromPointNormal>
 #[inline]
 pub fn XMPlaneFromPointNormal(
@@ -1758,6 +2043,46 @@ pub fn XMPlaneFromPointNormal(
 }
 
 /// Computes the equation of a plane constructed from three points in the plane.
+///
+/// ## Parameters
+///
+/// `Point1` 3D vector describing a point in the plane.
+///
+/// `Point2` 3D vector describing a point in the plane.
+///
+/// `Point3` 3D vector describing a point in the plane.
+///
+/// ## Return value
+///
+/// Returns a vector whose components are the coefficients of the plane (`A`, `B`, `C`, `D`) for the plane equation
+/// `Ax+By+Cz+D=0`.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+/// XMVECTOR N;
+/// XMVECTOR D;
+///
+/// XMVECTOR V21 = XMVectorSubtract(Point1, Point2);
+/// XMVECTOR V31 = XMVectorSubtract(Point1, Point3);
+///
+/// N = XMVector3Cross(V21, V31);
+/// N = XMVector3Normalize(N);
+///
+/// D = XMPlaneDotNormal(N, Point1);
+///
+/// Result.x = N.x;
+/// Result.y = N.y;
+/// Result.z = N.z;
+/// Result.w = -D.w;
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneFromPoints>
 #[inline]
