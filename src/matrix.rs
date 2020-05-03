@@ -3,6 +3,16 @@ use std::mem;
 
 /// Tests whether any of the elements of a matrix are NaN.
 ///
+/// ## Parameters
+///
+/// `M` Matrix to test.
+///
+/// ## Return value
+///
+/// Returns `true` if any element of `M` is `NaN`, and `false` otherwise.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixIsNaN>
 #[inline]
 pub fn XMMatrixIsNaN(
@@ -75,6 +85,16 @@ fn test_XMMatrixIsNan() {
 
 /// Tests whether any of the elements of a matrix are infinite.
 ///
+/// ## Parameters
+///
+/// `M` Matrix to test.
+///
+/// ## Return value
+///
+/// Returns `true` if any element of `M` is either positive or negative infinity, and `false` otherwise.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixIsInfinite>
 #[inline]
 pub fn XMMatrixIsInfinite(
@@ -145,6 +165,16 @@ fn test_XMMatrixIsInfinite() {
 }
 
 /// Tests whether a matrix is the identity matrix.
+///
+/// ## Parameters
+///
+/// `M` Matrix to test.
+///
+/// ## Return value
+///
+/// Returns `true` if `M` is the identity matrix, and `false` otherwise.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixIsIdentity>
 #[inline]
@@ -1470,6 +1500,16 @@ fn test_XMMatrixDecompose() {
 
 /// Builds the identity matrix.
 ///
+/// ## Parameters
+///
+/// This function has no parameters.
+///
+/// ## Return value
+///
+/// Returns the identity matrix.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixIdentity>
 #[inline]
 pub fn XMMatrixIdentity() -> XMMATRIX
@@ -1485,6 +1525,46 @@ pub fn XMMatrixIdentity() -> XMMATRIX
 }
 
 /// Creates a matrix with float values.
+///
+/// ## Parameters
+///
+/// `m00` Value to assign to the `(0,0)` element.
+///
+/// `m01` Value to assign to the `(0,1)` element.
+///
+/// `m02` Value to assign to the `(0,2)` element.
+///
+/// `m03` Value to assign to the `(0,3)` element.
+///
+/// `m10` Value to assign to the `(1,0)` element.
+///
+/// `m11` Value to assign to the `(1,1)` element.
+///
+/// `m12` Value to assign to the `(1,2)` element.
+///
+/// `m13` Value to assign to the `(1,3)` element.
+///
+/// `m20` Value to assign to the `(2,0)` element.
+///
+/// `m21` Value to assign to the `(2,1)` element.
+///
+/// `m22` Value to assign to the `(2,2)` element.
+///
+/// `m23` Value to assign to the `(2,3)` element.
+///
+/// `m30` Value to assign to the `(3,0)` element.
+///
+/// `m31` Value to assign to the `(3,1)` element.
+///
+/// `m32` Value to assign to the `(3,2)` element.
+///
+/// `m33` Value to assign to the `(3,3)` element.
+///
+/// ## Return value
+///
+/// Returns the XMMATRIX with the specified elements.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixSet>
 #[inline]
@@ -1522,6 +1602,20 @@ pub fn XMMatrixSet(
 }
 
 /// Builds a translation matrix from the specified offsets.
+///
+/// ## Parameters
+///
+/// `OffsetX` Translation along the `x-axis`.
+///
+/// `OffsetY` Translation along the `y-axis`.
+///
+/// `OffsetZ` Translation along the `z-axis`.
+///
+/// ## Return value
+///
+/// Returns the translation matrix.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixTranslation>
 #[inline]
@@ -1569,6 +1663,16 @@ pub fn XMMatrixTranslation(
 
 /// Builds a translation matrix from a vector.
 ///
+/// ## Parameters
+///
+/// `Offset` 3D vector describing the translations along the `x-axis`, `y-axis`, and `z-axis`.
+///
+/// ## Return value
+///
+/// Returns the translation matrix.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixTranslationFromVector>
 #[inline]
 pub fn XMMatrixTranslationFromVector(
@@ -1612,6 +1716,20 @@ pub fn XMMatrixTranslationFromVector(
 }
 
 /// Builds a matrix that scales along the x-axis, y-axis, and z-axis.
+///
+/// ## Parameters
+///
+/// `ScaleX` Scaling factor along the `x-axis`.
+///
+/// `ScaleY` Scaling factor along the `y-axis`.
+///
+/// `ScaleZ` Scaling factor along the `z-axis`.
+///
+/// ## Return value
+///
+/// Returns the scaling matrix.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixScaling>
 #[inline]
@@ -1663,6 +1781,16 @@ pub fn XMMatrixScaling(
 }
 
 /// Builds a matrix that scales along the x-axis, y-axis, and z-axis.
+///
+/// ## Parameters
+///
+/// `Scale` 3D vector describing the scaling along the `x-axis`, `y-axis`, and `z-axis`.
+///
+/// ## Return value
+///
+/// Returns the scaling matrix.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixScalingFromVector>
 #[inline]
@@ -2677,7 +2805,7 @@ pub fn XMMatrixLookToLH(
 ///
 /// `EyeDirection` Direction of the camera.
 ///
-/// `UpDirection` Up direction of the camera, typically < `0.0`, 1.0`, `0.0` >.
+/// `UpDirection` Up direction of the camera, typically < `0.0`, `1.0`, `0.0` >.
 ///
 /// ## Return value
 ///

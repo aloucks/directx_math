@@ -2,6 +2,23 @@ use crate::*;
 
 /// Tests whether two quaternions are equal.
 ///
+/// ## Parameters
+///
+/// `Q1` First quaternion to test.
+///
+/// `Q2` Second quaternion to test.
+///
+/// ## Return value
+///
+/// Returns `true` if the quaternions are equal and `false` otherwise.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where the `X`,
+/// `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionEqual>
 #[inline]
 pub fn XMQuaternionEqual(
@@ -13,6 +30,23 @@ pub fn XMQuaternionEqual(
 }
 
 /// Tests whether two quaternions are not equal.
+///
+/// ## Parameters
+///
+/// `Q1` First quaternion to test.
+///
+/// `Q2` Second quaternion to test.
+///
+/// ## Return value
+///
+/// Returns `true` if the quaternions are unequal and `false` otherwise.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where the `X`,
+/// `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionNotEqual>
 #[inline]
@@ -26,6 +60,21 @@ pub fn XMQuaternionNotEqual(
 
 /// Test whether any component of a quaternion is a NaN.
 ///
+/// ## Parameters
+///
+/// `Q` Quaternion to test.
+///
+/// ## Return value
+///
+/// Returns `true` if any component of `Q` is a `NaN`, and `false` otherwise.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where the `X`,
+/// `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionIsNaN>
 #[inline]
 pub fn XMQuaternionIsNaN(
@@ -37,6 +86,21 @@ pub fn XMQuaternionIsNaN(
 
 /// Test whether any component of a quaternion is either positive or negative infinity.
 ///
+/// ## Parameters
+///
+/// `Q` Quaternion to test.
+///
+/// ## Return value
+///
+/// Returns `true` if any component of `Q` is positive or negative infinity, and `false` otherwise.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where the `X`,
+/// `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionIsInfinite>
 #[inline]
 pub fn XMQuaternionIsInfinite(
@@ -47,6 +111,21 @@ pub fn XMQuaternionIsInfinite(
 }
 
 /// Tests whether a specific quaternion is the identity quaternion.
+///
+/// ## Parameters
+///
+/// `Q` Quaternion to test.
+///
+/// ## Return value
+///
+/// Returns `true` if `Q` is the identity quaternion, or `false` otherwise.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where the `X`,
+/// `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionIsIdentity>
 #[inline]
@@ -303,6 +382,21 @@ pub fn XMQuaternionNormalizeEst(
 
 /// Computes the normalized version of a quaternion.
 ///
+/// ## Parameters
+///
+/// `Q` Quaternion to normalize.
+///
+/// ## Return value
+///
+/// Returns the normalized form of `Q`.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where the `X`,
+/// `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionNormalize>
 #[inline]
 pub fn XMQuaternionNormalize(
@@ -424,6 +518,22 @@ pub fn XMQuaternionInverse(
 }
 
 /// Computes the natural logarithm of a given unit quaternion.
+///
+/// ## Parameters
+///
+/// `Q` Unit quaternion for which to calculate the natural logarithm. If `Q` is not a unit quaternion, the returned
+/// value is undefined.
+///
+/// ## Return value
+///
+/// Returns the natural logarithm of `Q`.
+///
+/// ## Remarks
+///
+/// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where the `X`,
+/// `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionLn>
 #[inline]
@@ -555,12 +665,14 @@ pub fn XMQuaternionSlerp(
 /// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where the `X`,
 /// `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
 ///
-/// This function is identical to XMQuaternionSlerp except that `T` is supplied using a 4D vector instead
+/// This function is identical to [`XMQuaternionSlerp`] except that `T` is supplied using a 4D vector instead
 /// of a **float** value.
 ///
 /// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionSlerpV>
+///
+/// [`XMQuaternionSlerp`]: crate::quaternion::XMQuaternionSlerp
 #[inline]
 pub fn XMQuaternionSlerpV(
     Q0: FXMVECTOR,
@@ -731,12 +843,14 @@ pub fn XMQuaternionSquad(
 /// The DirectXMath quaternion functions use an XMVECTOR 4-vector to represent quaternions, where the `X`,
 /// `Y`, and `Z` components are the vector part and the `W` component is the scalar part.
 ///
-/// This function is identical to XMQuaternionSquad except that `T` is supplied using a 4D vector instead
+/// This function is identical to [`XMQuaternionSquad`] except that `T` is supplied using a 4D vector instead
 /// of a **float** value.
 ///
 /// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionSquadV>
+///
+/// [`XMQuaternionSquad`]: crate::quaternion::XMQuaternionSquad
 #[inline]
 pub fn XMQuaternionSquadV(
     Q0: FXMVECTOR,
@@ -1493,7 +1607,7 @@ pub fn XMPlaneEqual(
 ///
 /// ## Return value
 ///
-/// Returns `true` if P1 is nearly equal to P2 and `false` otherwise.
+/// Returns `true` if `P1` is nearly equal to `P2` and `false` otherwise.
 ///
 /// ## Remarks
 ///
@@ -1558,7 +1672,7 @@ pub fn XMPlaneNotEqual(
 ///
 /// ## Return value
 ///
-/// Returns `true` if any of the coefficients of the plane is a NaN, and `false` otherwise.
+/// Returns `true` if any of the coefficients of the plane is a `NaN`, and `false` otherwise.
 ///
 /// ## Reference
 ///
@@ -1676,7 +1790,7 @@ pub fn XMPlaneDotCoord(
 ///
 /// `P` XMVECTOR describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
 ///
-/// `V` 3D vector to use in the dot product. The `w` component of `V` is always treated as if is 0.0f.
+/// `V` 3D vector to use in the dot product. The `w` component of `V` is always treated as if is `0.0`.
 ///
 /// ## Return value
 ///

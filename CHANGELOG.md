@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Documentation updates
 
+### Changed
+- XMMatrixInverse now accepts `None` for the determinant, to match the upstream API
+
 ## [0.1.0-alpha.1] - 2020-05-02
 ### Added
 - Vector
