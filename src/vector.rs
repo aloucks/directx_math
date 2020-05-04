@@ -50,7 +50,7 @@ macro_rules! XM3PACK4INTO3 {
 
 // --
 
-/// Replicates a floating-point value referenced by pointer into all four components of a vector.
+/// Creates the zero vector.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorZero>
 #[inline]
@@ -72,7 +72,7 @@ pub fn XMVectorZero() -> XMVECTOR {
     }
 }
 
-/// Creates the zero vector.
+/// Creates a vector using four floating-point values.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSet>
 #[inline]
@@ -261,6 +261,16 @@ pub fn XMVectorFalseInt() -> XMVECTOR {
 
 /// Replicates the `x` component of a vector to all of the components.
 ///
+/// ## Parameters
+///
+/// `V` Vector from which to select the `x` component.
+///
+/// ## Return value
+///
+/// Returns a vector, all of whose components are equal to the `x` component of `V`.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatX>
 #[inline]
 pub fn XMVectorSplatX(V: FXMVECTOR) -> XMVECTOR {
@@ -292,6 +302,16 @@ pub fn XMVectorSplatX(V: FXMVECTOR) -> XMVECTOR {
 
 /// Replicates the `y` component of a vector to all of the components.
 ///
+/// ## Parameters
+///
+/// `V` Vector from which to select the `y` component.
+///
+/// ## Return value
+///
+/// Returns a vector, all of whose components are equal to the `y` component of `V`.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatY>
 #[inline]
 pub fn XMVectorSplatY(V: FXMVECTOR) -> XMVECTOR {
@@ -317,6 +337,16 @@ pub fn XMVectorSplatY(V: FXMVECTOR) -> XMVECTOR {
 }
 
 /// Replicates the `z` component of a vector to all of the components.
+///
+/// ## Parameters
+///
+/// `V` Vector from which to select the `z` component.
+///
+/// ## Return value
+///
+/// Returns a vector, all of whose components are equal to the `z` component of `V`.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatZ>
 #[inline]
@@ -344,6 +374,16 @@ pub fn XMVectorSplatZ(V: FXMVECTOR) -> XMVECTOR {
 
 /// Replicates the `w` component of a vector to all of the components.
 ///
+/// ## Parameters
+///
+/// `V` Vector from which to select the `w` component.
+///
+/// ## Return value
+///
+/// Returns a vector, all of whose components are equal to the `w` component of `V`.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatW>
 #[inline]
 pub fn XMVectorSplatW(V: FXMVECTOR) -> XMVECTOR {
@@ -369,6 +409,12 @@ pub fn XMVectorSplatW(V: FXMVECTOR) -> XMVECTOR {
 }
 
 /// Returns a vector, each of whose components are one.
+///
+/// ## Return value
+///
+/// Returns a vector, each of whose components is `1.0`.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatOne>
 #[inline]
@@ -396,6 +442,12 @@ pub fn XMVectorSplatOne() -> XMVECTOR {
 
 /// Returns a vector, each of whose components are infinity (`0x7F800000`).
 ///
+/// ## Return value
+///
+/// Returns a vector, each of whose components are infinity (`0x7F800000`).
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatInfinity>
 #[inline]
 pub fn XMVectorSplatInfinity() -> XMVECTOR {
@@ -422,6 +474,12 @@ pub fn XMVectorSplatInfinity() -> XMVECTOR {
 
 /// Returns a vector, each of whose components are QNaN (`0x7CF00000`).
 ///
+/// ## Return value
+///
+/// Returns a vector, each of whose components are `QNaN` (`0x7CF00000`)
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatQNaN>
 #[inline]
 pub fn XMVectorSplatQNaN() -> XMVECTOR {
@@ -447,6 +505,12 @@ pub fn XMVectorSplatQNaN() -> XMVECTOR {
 }
 
 /// Returns a vector, each of whose components are epsilon (`1.192092896e-7`).
+///
+/// ## Return value
+///
+/// Returns a vector, each of whose components is (`1.192092896e-7`).
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSplatEpsilon>
 #[inline]
@@ -526,6 +590,16 @@ pub fn XMVectorGetByIndex(V: XMVECTOR, i: usize) -> f32 {
 
 /// Retrieve the `x` component of an XMVECTOR Data Type.
 ///
+/// ## Parameters
+///
+/// `V` A valid 4D vector storing floating-point data
+///
+/// ## Return value
+///
+/// The value in the `x` component of the 4D vector storing floating-point data `V`
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetX>
 #[inline]
 pub fn XMVectorGetX(V: XMVECTOR) -> f32 {
@@ -546,6 +620,16 @@ pub fn XMVectorGetX(V: XMVECTOR) -> f32 {
 }
 
 /// Retrieve the `y` component of an XMVECTOR Data Type.
+///
+/// ## Parameters
+///
+/// `V` A valid 4D vector storing floating-point data
+///
+/// ## Return value
+///
+/// The value in the `y` component of the 4D vector storing floating-point data `V`
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetY>
 #[inline]
@@ -569,6 +653,16 @@ pub fn XMVectorGetY(V: XMVECTOR) -> f32 {
 
 /// Retrieve the `z` component of an XMVECTOR Data Type.
 ///
+/// ## Parameters
+///
+/// `V` A valid 4D vector storing floating-point data
+///
+/// ## Return value
+///
+/// The value in the `z` component of the 4D vector storing floating-point data `V`
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetZ>
 #[inline]
 pub fn XMVectorGetZ(V: XMVECTOR) -> f32 {
@@ -590,6 +684,16 @@ pub fn XMVectorGetZ(V: XMVECTOR) -> f32 {
 }
 
 /// Retrieve the `w` component of an XMVECTOR Data Type.
+///
+/// ## Parameters
+///
+/// `V` A valid 4D vector storing floating-point data
+///
+/// ## Return value
+///
+/// The value in the `w` component of the 4D vector storing floating-point data `V`
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetW>
 #[inline]
@@ -762,6 +866,16 @@ pub fn XMVectorGetIntByIndex(V: XMVECTOR, i: usize) -> u32 {
 
 /// Retrieve the `x` component of an XMVECTOR Data Type.
 ///
+/// ## Parameters
+///
+/// `V` A valid 4D vector storing integer data.
+///
+/// ## Return value
+///
+/// The value in the `x` component of the 4D vector storing integer data `V`.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetIntX>
 #[inline]
 pub fn XMVectorGetIntX(V: XMVECTOR) -> u32 {
@@ -782,6 +896,16 @@ pub fn XMVectorGetIntX(V: XMVECTOR) -> u32 {
 }
 
 /// Retrieve the `y` component of an XMVECTOR Data Type.
+///
+/// ## Parameters
+///
+/// `V` A valid 4D vector storing integer data.
+///
+/// ## Return value
+///
+/// The value in the `y` component of the 4D vector storing integer data `V`.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetIntY>
 #[inline]
@@ -811,6 +935,16 @@ pub fn XMVectorGetIntY(V: XMVECTOR) -> u32 {
 
 /// Retrieve the `z` component of an XMVECTOR Data Type.
 ///
+/// ## Parameters
+///
+/// `V` A valid 4D vector storing integer data.
+///
+/// ## Return value
+///
+/// The value in the `z` component of the 4D vector storing integer data `V`.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetIntZ>
 #[inline]
 pub fn XMVectorGetIntZ(V: XMVECTOR) -> u32 {
@@ -838,6 +972,16 @@ pub fn XMVectorGetIntZ(V: XMVECTOR) -> u32 {
 }
 
 /// Retrieve the `w` component of an XMVECTOR Data Type.
+///
+/// ## Parameters
+///
+/// `V` A valid 4D vector storing integer data.
+///
+/// ## Return value
+///
+/// The value in the `w` component of the 4D vector storing integer data `V`.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorGetIntW>
 #[inline]
@@ -888,6 +1032,20 @@ pub fn XMVectorSetByIndex(V: XMVECTOR, f: f32, i: usize) -> XMVECTOR {
 
 /// Set the value of the `x` component of an XMVECTOR Data Type.
 ///
+/// ## Parameters
+///
+/// `V` A valid 4D vector storing floating-point data.
+///
+/// `x` A floating-point value to be assigned to `x` of `V`.
+///
+/// ## Return value
+///
+/// An instance of XMVECTOR Data Type whose `x` component has been set to the floating-point value provided
+/// by the argument `x` to XMVectorSetX. All other components of the returned XMVECTOR Data Type instance
+/// have the same value as those of the input vector `V`.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSetX>
 #[inline]
 pub fn XMVectorSetX(V: XMVECTOR, x: f32) -> XMVECTOR {
@@ -918,6 +1076,20 @@ pub fn XMVectorSetX(V: XMVECTOR, x: f32) -> XMVECTOR {
 }
 
 /// Set the value of the `y` component of an XMVECTOR Data Type.
+///
+/// ## Parameters
+///
+/// `V` A valid 4D vector storing floating-point data.
+///
+/// `y` A floating-point value to be assigned to `y` of `V`.
+///
+/// ## Return value
+///
+/// An instance of XMVECTOR Data Type whose `y` component has been set to the floating-point value provided
+/// by the argument `y` to XMVectorSetY. All other components of the returned XMVECTOR Data Type instance
+/// have the same value as those of the input vector `V`.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSetY>
 #[inline]
@@ -963,6 +1135,20 @@ pub fn XMVectorSetY(V: XMVECTOR, y: f32) -> XMVECTOR {
 
 /// Set the value of the `z` component of an XMVECTOR Data Type.
 ///
+/// ## Parameters
+///
+/// `V` A valid 4D vector storing floating-point data.
+///
+/// `z` A floating-point value to be assigned to `z` of `V`.
+///
+/// ## Return value
+///
+/// An instance of XMVECTOR Data Type whose `z` component has been set to the floating-point value provided
+/// by the argument `z` to XMVectorSetZ. All other components of the returned XMVECTOR Data Type instance
+/// have the same value as those of the input vector `V`.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSetZ>
 #[inline]
 pub fn XMVectorSetZ(V: XMVECTOR, z: f32) -> XMVECTOR {
@@ -1006,6 +1192,20 @@ pub fn XMVectorSetZ(V: XMVECTOR, z: f32) -> XMVECTOR {
 }
 
 /// Set the value of the `w` component of an XMVECTOR Data Type.
+///
+/// ## Parameters
+///
+/// `V` A valid 4D vector storing floating-point data.
+///
+/// `w` A floating-point value to be assigned to `w` of `V`.
+///
+/// ## Return value
+///
+/// An instance of XMVECTOR Data Type whose `w` component has been set to the floating-point value provided
+/// by the argument `w` to XMVectorSetW. All other components of the returned XMVECTOR Data Type instance
+/// have the same value as those of the input vector `V`.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSetW>
 #[inline]
@@ -1072,6 +1272,16 @@ pub fn XMVectorSetIntByIndex(V: XMVECTOR, x: u32, i: usize) -> XMVECTOR {
 
 /// Set the value of the `x` component of an XMVECTOR Data Type.
 ///
+/// ## Parameters
+///
+/// `V` A valid 4D vector storing integer data.
+///
+/// `x` An integer value to be assigned to `x` of `V`.
+///
+/// ## Return value
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSetIntX>
 #[inline]
 pub fn XMVectorSetIntX(V: XMVECTOR, x: u32) -> XMVECTOR {
@@ -1102,6 +1312,16 @@ pub fn XMVectorSetIntX(V: XMVECTOR, x: u32) -> XMVECTOR {
 }
 
 /// Set the value of the `y` component of an XMVECTOR Data Type.
+///
+/// ## Parameters
+///
+/// `V` A valid 4D vector storing integer data.
+///
+/// `y` An integer value to be assigned to `y` of `V`.
+///
+/// ## Return value
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSetIntY>
 #[inline]
@@ -1147,6 +1367,16 @@ pub fn XMVectorSetIntY(V: XMVECTOR, y: u32) -> XMVECTOR {
 
 /// Set the value of the `z` component of an XMVECTOR Data Type.
 ///
+/// ## Parameters
+///
+/// `V` A valid 4D vector storing integer data.
+///
+/// `z` An integer value to be assigned to `z` of `V`.
+///
+/// ## Return value
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSetIntZ>
 #[inline]
 pub fn XMVectorSetIntZ(V: XMVECTOR, z: u32) -> XMVECTOR {
@@ -1190,6 +1420,16 @@ pub fn XMVectorSetIntZ(V: XMVECTOR, z: u32) -> XMVECTOR {
 }
 
 /// Set the value of the `w` component of an XMVECTOR Data Type.
+///
+/// ## Parameters
+///
+/// `V` A valid 4D vector storing integer data.
+///
+/// `w` An integer value to be assigned to `w` of `V`.
+///
+/// ## Return value
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSetIntW>
 #[inline]
@@ -1241,11 +1481,60 @@ pub fn XMVectorSetIntW(V: XMVECTOR, w: u32) -> XMVECTOR {
 
 /// Swizzles a vector.
 ///
-/// For the case of constant indices (E0, E1, E2, E3), it is much more efficent to use the template form of [`XMVectorSwizzle`].
+/// ## Parameters
 ///
-/// [`XMVectorSwizzle`]: trait@crate::XMVectorSwizzle
+/// `V` Vector to swizzle.
+///
+/// `E0` Index that describes which component of `V` to place in the `x-component` of the swizzled vector. A
+/// value of `0` selects the `x-component`, `1` selects the `y-component`, `2` selects the `z-component`,
+/// and `3` selects the `w-component`.
+///
+/// `E1` Index that describes which component of `V` to place in the `y-component` of the swizzled vector. A
+/// value of `0` selects the `x-component`, `1` selects the `y-component`, `2` selects the `z-component`,
+/// and `3` selects the `w-component`.
+///
+/// `E2` Index that describes which component of `V` to place in the `z-component` of the swizzled vector. A
+/// value of `0` selects the `x-component`, `1` selects the `y-component`, `2` selects the `z-component`,
+/// and `3` selects the `w-component`.
+///
+/// `E3` Index that describes which component of `V` to place in the `w-component` of the swizzled vector. A
+/// value of `0` selects the `x-component`, `1` selects the `y-component`, `2` selects the `z-component`,
+/// and `3` selects the `w-component`.
+///
+/// ## Return value
+///
+/// Returns the swizzled XMVECTOR.
+///
+/// ## Remarks
+///
+/// The following code demonstrates how this function might be used.
+///
+/// ```
+/// # use directx_math::*;
+/// let v = XMVectorSet(10.0, 20.0, 30.0, 40.0);
+/// let result = XMVectorSwizzle(v, 3, 3, 0, 2);
+/// ```
+///
+/// The swizzled vector (result) will be <`40.0`, `40.0`, `10.0`, `30.0`>.
+///
+/// `XM_SWIZZLE_X`, `XM_SWIZZLE_Y`, `XM_SWIZZLE_Z`, and `XM_SWIZZLE_W` are constants which evaluate to
+/// `0`, `1`, `2`, and `3` respectively for use with XMVectorSwizzle. This is identical to `XM_PERMUTE_0X`,
+/// `XM_PERMUTE_0Y`, `XM_PERMUTE_0Z`, and `XM_PERMUTE_0W`.
+///
+/// For the case of constant indices (`E0`, `E1`, `E2`, `E3`), it is much more efficent to use the template
+/// form of [`XMVectorSwizzle`]:
+///
+/// ```
+/// # use directx_math::*;
+/// let v = XMVectorSet(10.0, 20.0, 30.0, 40.0);
+/// let result = <(SwizzleW, SwizzleW, SwizzleX, SwizzleZ)>::XMVectorSwizzle(v);
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSwizzle>
+///
+/// [`XMVectorSwizzle`]: trait@crate::XMVectorSwizzle
 #[inline]
 pub fn XMVectorSwizzle(
     V: FXMVECTOR,
@@ -7398,6 +7687,28 @@ pub fn XMVector3LessOrEqual(
 
 /// Tests whether the components of a 3D vector are within set bounds.
 ///
+/// ## Parameters
+///
+/// `V` 3D vector to test.
+///
+/// `Bounds` 3D vector that determines the bounds.
+///
+/// ## Return value
+///
+/// Returns `true` if both the `x`, `y`, and `z-component`s of `V` are within the set bounds, and `false` otherwise.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```
+// return (V.x <= Bounds.x && V.x >= -Bounds.x) &&
+//        (V.y <= Bounds.y && V.y >= -Bounds.y) &&
+//        (V.z <= Bounds.z && V.z >= -Bounds.z);
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3InBounds>
 #[inline]
 pub fn XMVector3InBounds(
@@ -8067,6 +8378,34 @@ pub fn XMVector3ClampLengthV(
 
 /// Reflects an incident 3D vector across a 3D normal vector.
 ///
+/// ## Parameters
+///
+/// `Incident` 3D incident vector to reflect.
+///
+/// `Normal` 3D normal vector to reflect the incident vector across.
+///
+/// ## Return value
+///
+/// Returns the reflected incident angle.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+/// 
+/// float s = 2.0f * ( Incident.x * Normal.x + Incident.y * Normal.y + Incident.z * Normal.z );
+/// 
+/// Result.x = Incident.x - s * Normal.x;
+/// Result.y = Incident.y - s * Normal.y;
+/// Result.z = Incident.z - s * Normal.z;
+/// Result.w = undefined;
+/// 
+/// return Result;
+/// ```
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3Reflect>
 #[inline]
 pub fn XMVector3Reflect(
@@ -8084,6 +8423,55 @@ pub fn XMVector3Reflect(
 }
 
 /// Refracts an incident 3D vector across a 3D normal vector.
+///
+/// ## Parameters
+///
+/// `Incident` 3D incident vector to refract.
+///
+/// `Normal` 3D normal vector to refract the incident vector through.
+///
+/// `RefractionIndex` Index of refraction. See remarks.
+///
+/// ## Return value
+///
+/// Returns the refracted incident vector. If the refraction index and the angle between the incident vector
+/// and the normal are such that the result is a total internal reflection, the function will return a vector
+/// of the form < `0.0`, `0.0`, `0.0`, undefined >.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+/// 
+/// float t = ( Incident.x * Normal.x + Incident.y * Normal.y + Incident.z * Normal.z );
+/// float r = 1.0f - RefractionIndex * RefractionIndex * (1.0f - t * t);
+/// 
+/// if (r < 0.0f) // Total internal reflection
+/// {
+/// 	Result.x = 0.0f;
+/// 	Result.y = 0.0f;
+/// 	Result.z = 0.0f;
+/// }
+/// else
+/// {
+/// 	float s = RefractionIndex * t + sqrt(r);
+/// 	Result.x = RefractionIndex * Incident.x - s * Normal.x;
+/// 	Result.y = RefractionIndex * Incident.y - s * Normal.y;
+/// 	Result.z = RefractionIndex * Incident.z - s * Normal.z;
+/// }
+/// 
+/// Result.w = undefined;
+/// 
+/// return Result;
+/// ```
+///
+/// The index of refraction is the ratio of the index of refraction of the medium containing the incident
+/// vector to the index of refraction of the medium being entered (where the index of refraction of a medium
+/// is itself the ratio of the speed of light in a vacuum to the speed of light in the medium).
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3Refract>
 #[inline]
@@ -8270,6 +8658,20 @@ pub fn XMVector3AngleBetweenVectors(
 }
 
 /// Computes the minimum distance between a line and a point.
+///
+/// ## Parameters
+///
+/// `LinePoint1` 3D vector describing a point on the line.
+///
+/// `LinePoint2` 3D vector describing a point on the line.
+///
+/// `Point` 3D vector describing the reference point.
+///
+/// ## Return value
+///
+/// Returns a vector. The minimum distance between the line and the point is replicated to each of the components.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3LinePointDistance>
 #[inline]
