@@ -470,6 +470,7 @@ mod convert;
 mod globals;
 mod misc;
 mod matrix;
+pub mod collision;
 
 pub use vector::*;
 pub use convert::*;
@@ -1377,7 +1378,7 @@ macro_rules! cast_m128 {
         impl $Name {
             #[cfg(_XM_SSE_INTRINSICS_)]
             #[allow(dead_code)]
-            #[inline]
+            #[inline(always)]
             fn m128i(self) -> __m128i {
                 unsafe {
                     _mm_castps_si128(self.v)
@@ -1386,7 +1387,7 @@ macro_rules! cast_m128 {
 
             #[cfg(_XM_SSE_INTRINSICS_)]
             #[allow(dead_code)]
-            #[inline]
+            #[inline(always)]
             fn m128d(self) -> __m128d {
                 unsafe {
                     _mm_castps_pd(self.v)
@@ -1395,8 +1396,26 @@ macro_rules! cast_m128 {
 
             #[cfg(_XM_SSE_INTRINSICS_)]
             #[allow(dead_code)]
-            #[inline]
+            #[inline(always)]
             fn m128(self) -> __m128 {
+                unsafe {
+                    self.v
+                }
+            }
+
+            #[cfg(_XM_SSE_INTRINSICS_)]
+            #[allow(dead_code)]
+            #[inline(always)]
+            fn v(self) -> __m128 {
+                unsafe {
+                    self.v
+                }
+            }
+
+            #[cfg(_XM_NO_INTRINSICS_)]
+            #[allow(dead_code)]
+            #[inline(always)]
+            fn v(self) -> __vector4 {
                 unsafe {
                     self.v
                 }
@@ -1791,7 +1810,7 @@ pub fn XMMax<T: PartialOrd>(a: T, b: T) -> T {
 // TODO: Internal / PermuteHelper template
 
 /// XMVectorPermute trait parameters
-pub unsafe trait Permute {
+pub unsafe trait Permute: private::Sealed {
     const PERMUTE: u32;
 }
 
@@ -1838,7 +1857,7 @@ unsafe impl Permute for Permute1W {
 }
 
 /// Permutes the components of two vectors to create a new vector.
-pub trait XMVectorPermute {
+pub trait XMVectorPermute: private::Sealed {
     #[doc(hidden)]
     const WhichX: bool;
     #[doc(hidden)]
@@ -2155,7 +2174,7 @@ impl XMVectorPermute for (Permute1Z, Permute1W, Permute0Z, Permute0W) {
 // TODO: XMVectorSwizzle template specializations: _XM_ARM_NEON_INTRINSICS_
 
 /// XMVectorSwizzle trait parameters
-pub unsafe trait Swizzle {
+pub unsafe trait Swizzle: private::Sealed {
     const SWIZZLE: u32;
 }
 
@@ -2181,7 +2200,7 @@ unsafe impl Swizzle for SwizzleW {
 }
 
 /// Swizzles a vector
-pub trait XMVectorSwizzle {
+pub trait XMVectorSwizzle: private::Sealed {
     /// Swizzles a vector.
     ///
     /// # Remarks
@@ -2409,6 +2428,11 @@ impl XMVectorSwizzle for (SwizzleZ, SwizzleZ, SwizzleW, SwizzleW) {
             XMVectorSwizzle(V, X::SWIZZLE, Y::SWIZZLE, Z::SWIZZLE, W::SWIZZLE)
         }
     }
+}
+
+mod private {
+    pub trait Sealed {}
+    impl<T> Sealed for T {}
 }
 
 // TODO: XMVectorSwizzle template specializations: _XM_SSE3_INTRINSICS_

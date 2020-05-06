@@ -24,7 +24,7 @@ games and graphics apps.
 | Color | ❌ |
 | Load/Store/Accessors | ✔️ &dagger; |
 | Plane | ✔️ |
-| Collision | ❌ |
+| Collision | 🚧 |
 | Documentation | ✔️ 🚧 &dagger;&dagger; |
 
 &dagger; Some alternate forms of the load/store operations are not yet implemented.
