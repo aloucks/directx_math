@@ -7701,7 +7701,7 @@ pub fn XMVector3LessOrEqual(
 ///
 /// The following pseudocode demonstrates the operation of the function:
 ///
-/// ```
+/// ```text
 // return (V.x <= Bounds.x && V.x >= -Bounds.x) &&
 //        (V.y <= Bounds.y && V.y >= -Bounds.y) &&
 //        (V.z <= Bounds.z && V.z >= -Bounds.z);
