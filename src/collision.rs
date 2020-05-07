@@ -2907,7 +2907,7 @@ impl CreateFromPoints for BoundingOrientedBox {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-createfrompoints>
     fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl Iterator<Item=&'a XMFLOAT3> + Clone) {
         // TODO: Determine the best way to handle an empty set of points
-        
+
         // assert(Count > 0);
         // assert(pPoints != nullptr);
 
@@ -3163,17 +3163,71 @@ impl CreateFromMatrix for BoundingFrustum {
     }
 }
 
+//-----------------------------------------------------------------------------
+// Build the 6 frustum planes from a frustum.
+//
+// The intended use for these routines is for fast culling to a view frustum.
+// When the volume being tested against a view frustum is small relative to the
+// view frustum it is usually either inside all six planes of the frustum
+// (CONTAINS) or outside one of the planes of the frustum (DISJOINT). If neither
+// of these cases is true then it may or may not be intersecting the frustum
+// (INTERSECTS)
+//-----------------------------------------------------------------------------
 impl BoundingFrustum {
     pub fn GetPlanes(
         &self,
-        _NearPlane: Option<&mut XMVECTOR>,
-        _FarPlane: Option<&mut XMVECTOR>,
-        _RightPlane: Option<&mut XMVECTOR>,
-        _LeftPlane: Option<&mut XMVECTOR>,
-        _TopPlane: Option<&mut XMVECTOR>,
-        _BottomPlane: Option<&mut XMVECTOR>,
+        NearPlane: Option<&mut XMVECTOR>,
+        FarPlane: Option<&mut XMVECTOR>,
+        RightPlane: Option<&mut XMVECTOR>,
+        LeftPlane: Option<&mut XMVECTOR>,
+        TopPlane: Option<&mut XMVECTOR>,
+        BottomPlane: Option<&mut XMVECTOR>,
     ) {
-        todo!()
+        // Load origin and orientation of the frustum.
+        let vOrigin: XMVECTOR = XMLoadFloat3(&self.Origin);
+        let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        if let Some(NearPlane) = NearPlane
+        {
+            let mut vNearPlane: XMVECTOR = XMVectorSet(0.0, 0.0, -1.0, self.Near);
+            vNearPlane = internal::XMPlaneTransform(vNearPlane, vOrientation, vOrigin);
+            *NearPlane = XMPlaneNormalize(vNearPlane);
+        }
+
+        if let Some(FarPlane) = FarPlane
+        {
+            let mut vFarPlane: XMVECTOR = XMVectorSet(0.0, 0.0, 1.0, -self.Far);
+            vFarPlane = internal::XMPlaneTransform(vFarPlane, vOrientation, vOrigin);
+            *FarPlane = XMPlaneNormalize(vFarPlane);
+        }
+
+        if let Some(RightPlane) = RightPlane
+        {
+            let mut vRightPlane: XMVECTOR = XMVectorSet(1.0, 0.0, -self.RightSlope, 0.0);
+            vRightPlane = internal::XMPlaneTransform(vRightPlane, vOrientation, vOrigin);
+            *RightPlane = XMPlaneNormalize(vRightPlane);
+        }
+
+        if let Some(LeftPlane) = LeftPlane
+        {
+            let mut vLeftPlane: XMVECTOR = XMVectorSet(-1.0, 0.0, self.LeftSlope, 0.0);
+            vLeftPlane = internal::XMPlaneTransform(vLeftPlane, vOrientation, vOrigin);
+            *LeftPlane = XMPlaneNormalize(vLeftPlane);
+        }
+
+        if let Some(TopPlane) = TopPlane
+        {
+            let mut vTopPlane: XMVECTOR = XMVectorSet(0.0, 1.0, -self.TopSlope, 0.0);
+            vTopPlane = internal::XMPlaneTransform(vTopPlane, vOrientation, vOrigin);
+            *TopPlane = XMPlaneNormalize(vTopPlane);
+        }
+
+        if let Some(BottomPlane) = BottomPlane
+        {
+            let mut vBottomPlane: XMVECTOR = XMVectorSet(0.0, -1.0, self.BottomSlope, 0.0);
+            vBottomPlane = internal::XMPlaneTransform(vBottomPlane, vOrientation, vOrigin);
+            *BottomPlane = XMPlaneNormalize(vBottomPlane);
+        }
     }
 
     pub fn GetCorners(&self, Corners: &mut [XMFLOAT3; BoundingFrustum::CORNER_COUNT]) {
