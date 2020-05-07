@@ -53,3 +53,7 @@ harness = false
 [[bench]]
 name = "vector"
 harness = false
+
+[[bench]]
+name = "collision"
+harness = false

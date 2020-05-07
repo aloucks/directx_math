@@ -1550,6 +1550,17 @@ macro_rules! xm_struct {
             )*
         }
 
+        impl $Name {
+            #[inline(always)]
+            pub fn set($($field: $type),*) -> $Name {
+                $Name {
+                    $(
+                        $field,
+                    )*
+                }
+            }
+        }
+
         impl From<[$type; $length]> for $Name {
             fn from(a: [$type; $length]) -> $Name {
                 unsafe { std::mem::transmute(a) }

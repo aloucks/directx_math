@@ -108,6 +108,7 @@ mod inner {
     use pcg::Pcg;
     use rand_core::RngCore;
     use directx_math::*;
+    use directx_math::collision::*;
 
     pub fn random_f32(rng: &mut Pcg) -> f32 {
         (rng.next_u32() & 0xffffff) as f32 / 16777216.0
@@ -222,6 +223,49 @@ mod inner {
 
     pub fn random_aspect_ratio(rng: &mut Pcg) -> f32 {
         random_view_width(rng) / random_view_height(rng)
+    }
+
+    pub fn random_obb(rng: &mut Pcg) -> BoundingOrientedBox {
+        let extent = range_f32(rng, 0.5, 2.0);
+        let center = range_f32(rng, -10.0, 10.0);
+        let Center = XMFLOAT3::set(center, center, center);
+        let Extents = XMFLOAT3::set(extent, extent, extent);
+        let mut Orientation = XMFLOAT4::set(0.0, 0.0, 0.0, 0.0);
+        XMStoreFloat4(&mut Orientation, random_quat(rng));
+        BoundingOrientedBox {
+            Center,
+            Extents,
+            Orientation,
+        }
+    }
+
+    pub fn random_aabb(rng: &mut Pcg) -> BoundingBox {
+        let extent = range_f32(rng, 0.5, 2.0);
+        let center = range_f32(rng, -10.0, 10.0);
+        let Center = XMFLOAT3::set(center, center, center);
+        let Extents = XMFLOAT3::set(extent, extent, extent);
+        BoundingBox {
+            Center,
+            Extents,
+        }
+    }
+
+    pub fn random_sphere(rng: &mut Pcg) -> BoundingSphere {
+        let Radius = range_f32(rng, 0.5, 2.0);
+        let center = range_f32(rng, -10.0, 10.0);
+        let Center = XMFLOAT3::set(center, center, center);
+        BoundingSphere {
+            Center,
+            Radius,
+        }
+    }
+
+    pub fn random_ray(rng: &mut Pcg) -> Ray {
+        let origin = range_f32(rng, -10.0, 10.0);
+        let Origin = XMVectorSet(origin, origin, origin, 0.0);
+        let Direction = XMVector3Normalize(random_vec3(rng));
+        let Dist = range_f32(rng, 0.1, 10.0);
+        (Origin, Direction, Dist)
     }
 
     pub const ZERO: XMVECTOR = unsafe { XMVECTORF32 { f: [0.0, 0.0, 0.0, 0.0] }.v };

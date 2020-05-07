@@ -3,6 +3,7 @@
 use crate::*;
 
 #[repr(C)]
+#[derive(Copy, Clone, Debug)]
 pub enum ContainmentType {
     DISJOINT = 0,
     INTERSECTS = 1,
@@ -10,20 +11,25 @@ pub enum ContainmentType {
 }
 
 #[repr(C)]
+#[derive(Copy, Clone, Debug)]
 pub enum PlaneIntersectionType {
     FRONT = 0,
     INTERSECTING = 1,
     BACK = 2,
 }
 
+use ContainmentType::{DISJOINT, INTERSECTS, CONTAINS};
+use PlaneIntersectionType::{FRONT, INTERSECTING, BACK};
 
 /// The corners (vertices) of a triangle: `V0`, `V1`, and `V2`.
 pub type Triangle = (XMVECTOR, XMVECTOR, XMVECTOR);
 
+/// 3D Vector
 pub type Point = XMVECTOR;
 
 pub type Plane = XMVECTOR;
 
+/// Unit 3D Vector
 pub type Direction = XMVECTOR;
 
 /// `(Origin, Direction, Dist)`
@@ -36,6 +42,7 @@ pub type Direction = XMVECTOR;
 pub type Ray = (Point, Direction, f32);
 
 #[repr(C)]
+#[derive(Copy, Clone, Debug)]
 pub struct BoundingSphere {
     // Center of the sphere.
     pub Center: XMFLOAT3,
@@ -45,6 +52,7 @@ pub struct BoundingSphere {
 }
 
 #[repr(C)]
+#[derive(Copy, Clone, Debug)]
 pub struct BoundingBox {
     // Center of the box.
     pub Center: XMFLOAT3,
@@ -58,6 +66,7 @@ impl BoundingBox {
 }
 
 #[repr(C)]
+#[derive(Copy, Clone, Debug)]
 pub struct BoundingOrientedBox {
     // Center of the box.
     pub Center: XMFLOAT3,
@@ -116,8 +125,8 @@ pub trait Contains<T> {
     fn Contains(&self, other: T) -> ContainmentType;
 }
 
-pub trait Intersects<T> {
-    fn Intersects(&self, other: T) -> bool;
+pub trait Intersects<T, U = bool> {
+    fn Intersects(&self, other: T) -> U;
 }
 
 pub trait ContainedBy {
@@ -127,7 +136,8 @@ pub trait ContainedBy {
         Plane1: FXMVECTOR,
         Plane2: GXMVECTOR,
         Plane3: HXMVECTOR,
-        Plane4: HXMVECTOR
+        Plane4: HXMVECTOR,
+        Plane5: HXMVECTOR,
     ) -> ContainmentType;
 }
 
@@ -144,7 +154,7 @@ pub trait CreateFromBoundingOrientedBox: Sized {
 }
 
 pub trait CreateFromPoints: Sized {
-    fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl Iterator<Item=&'a XMFLOAT3>);
+    fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl Iterator<Item=&'a XMFLOAT3> + Clone);
 }
 
 pub trait CreateFromFrustum: Sized {
@@ -155,7 +165,11 @@ pub trait CreateFromSphere: Sized {
     fn CreateFromSphere(Out: &mut Self, fr: &BoundingSphere);
 }
 
-const g_BoxOffset: [XMVECTORF32; 8] = [
+pub trait CreateFromMatrix: Sized {
+    fn CreateFromMatrix(Out: &mut Self, Projection: FXMMATRIX);
+}
+
+const g_BoxOffset: [XMVECTORF32; BoundingBox::CORNER_COUNT] = [
     XMVECTORF32 { f: [ -1.0, -1.0,  1.0, 0.0 ] },
     XMVECTORF32 { f: [  1.0, -1.0,  1.0, 0.0 ] },
     XMVECTORF32 { f: [  1.0,  1.0,  1.0, 0.0 ] },
@@ -761,11 +775,7 @@ impl Contains<Triangle> for BoundingSphere {
         DistanceSquared = XMVector3LengthSq(XMVectorSubtract(V2, vCenter));
         Inside = XMVectorAndInt(Inside, XMVectorLessOrEqual(DistanceSquared, RadiusSquared));
 
-        if (XMVector3EqualInt(Inside, XMVectorTrueInt())) {
-            ContainmentType::CONTAINS
-        } else {
-            ContainmentType::INTERSECTS
-        }
+        return if (XMVector3EqualInt(Inside, XMVectorTrueInt())) { CONTAINS } else { INTERSECTS }
     }
 }
 
@@ -773,8 +783,20 @@ impl Contains<&BoundingSphere> for BoundingSphere {
     /// Tests whether the BoundingSphere contains a specified BoundingSphere.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-contains(constboundingsphere_)>
-    fn Contains(&self, _sh: &BoundingSphere) -> ContainmentType {
-        todo!()
+    fn Contains(&self, sh: &BoundingSphere) -> ContainmentType {
+        let Center1: XMVECTOR = XMLoadFloat3(&self.Center);
+        let r1: f32 = self.Radius;
+
+        let Center2: XMVECTOR = XMLoadFloat3(&sh.Center);
+        let r2: f32 = sh.Radius;
+
+        let V: XMVECTOR = XMVectorSubtract(Center2, Center1);
+
+        let Dist: XMVECTOR = XMVector3Length(V);
+
+        let d: f32 = XMVectorGetX(Dist);
+        
+        return if (r1 + r2 >= d) { if (r1 - r2 >= d) { CONTAINS } else { INTERSECTS } } else { DISJOINT }
     }
 }
 
@@ -782,8 +804,29 @@ impl Contains<&BoundingBox> for BoundingSphere {
     /// Tests whether the BoundingSphere contains a specified BoundingBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-contains(constboundingbox_)>
-    fn Contains(&self, _box: &BoundingBox) -> ContainmentType {
-        todo!()
+    fn Contains(&self, box_: &BoundingBox) -> ContainmentType {
+        if (!box_.Intersects(self)) {
+            return DISJOINT;
+        }
+
+        let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vRadius: XMVECTOR = XMVectorReplicatePtr(&self.Radius);
+        let RadiusSq: XMVECTOR = XMVectorMultiply(vRadius, vRadius);
+
+        let boxCenter: XMVECTOR = XMLoadFloat3(&box_.Center);
+        let boxExtents: XMVECTOR = XMLoadFloat3(&box_.Extents);
+
+        let mut InsideAll: XMVECTOR = XMVectorTrueInt();
+
+        let offset: XMVECTOR = XMVectorSubtract(boxCenter, vCenter);
+
+        for i in 0 .. BoundingBox::CORNER_COUNT {
+            let C: XMVECTOR = XMVectorMultiplyAdd(boxExtents, g_BoxOffset[i].v(), offset);
+            let d: XMVECTOR = XMVector3LengthSq(C);
+            InsideAll = XMVectorAndInt(InsideAll, XMVectorLessOrEqual(d, RadiusSq));
+        }
+
+        return if (XMVector3EqualInt(InsideAll, XMVectorTrueInt())) { CONTAINS } else { INTERSECTS };
     }
 }
 
@@ -791,8 +834,30 @@ impl Contains<&BoundingOrientedBox> for BoundingSphere {
     /// Tests whether the BoundingSphere contains the specified BoundingOrientedBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-contains(constboundingorientedbox_)>
-    fn Contains(&self, _box: &BoundingOrientedBox) -> ContainmentType {
-        todo!()
+    fn Contains(&self, box_: &BoundingOrientedBox) -> ContainmentType {
+        if (!box_.Intersects(self)) {
+            return DISJOINT;
+        }
+
+        let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vRadius: XMVECTOR = XMVectorReplicatePtr(&self.Radius);
+        let RadiusSq: XMVECTOR = XMVectorMultiply(vRadius, vRadius);
+
+        let boxCenter: XMVECTOR = XMLoadFloat3(&box_.Center);
+        let boxExtents: XMVECTOR = XMLoadFloat3(&box_.Extents);
+        let boxOrientation: XMVECTOR = XMLoadFloat4(&box_.Orientation);
+
+        debug_assert!(internal::XMQuaternionIsUnit(boxOrientation));
+
+        let mut InsideAll: XMVECTOR = XMVectorTrueInt();
+
+        for i in 0 .. BoundingOrientedBox::CORNER_COUNT {
+            let C: XMVECTOR = XMVectorAdd(XMVector3Rotate(XMVectorMultiply(boxExtents, g_BoxOffset[i].v()), boxOrientation), boxCenter);
+            let d: XMVECTOR = XMVector3LengthSq(XMVectorSubtract(vCenter, C));
+            InsideAll = XMVectorAndInt(InsideAll, XMVectorLessOrEqual(d, RadiusSq));
+        }
+
+        return if (XMVector3EqualInt(InsideAll, XMVectorTrueInt())) { CONTAINS } else { INTERSECTS };
     }
 }
 
@@ -800,8 +865,46 @@ impl Contains<&BoundingFrustum> for BoundingSphere {
     /// Tests whether the BoundingSphere contains the specified BoundingFrustum.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-contains(constboundingfrustum_)>
-    fn Contains(&self, _fr: &BoundingFrustum) -> ContainmentType {
-        todo!()
+    fn Contains(&self, fr: &BoundingFrustum) -> ContainmentType {
+        if (!fr.Intersects(self)) {
+            return DISJOINT;
+        }
+
+        let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vRadius: XMVECTOR = XMVectorReplicatePtr(&self.Radius);
+        let RadiusSq: XMVECTOR = XMVectorMultiply(vRadius, vRadius);
+
+        let vOrigin: XMVECTOR = XMLoadFloat3(&fr.Origin);
+        let vOrientation: XMVECTOR = XMLoadFloat4(&fr.Orientation);
+
+        debug_assert!(internal::XMQuaternionIsUnit(vOrientation));
+
+        // Build the corners of the frustum.
+        let vRightTop: XMVECTOR = XMVectorSet(fr.RightSlope, fr.TopSlope, 1.0, 0.0);
+        let vRightBottom: XMVECTOR = XMVectorSet(fr.RightSlope, fr.BottomSlope, 1.0, 0.0);
+        let vLeftTop: XMVECTOR = XMVectorSet(fr.LeftSlope, fr.TopSlope, 1.0, 0.0);
+        let vLeftBottom: XMVECTOR = XMVectorSet(fr.LeftSlope, fr.BottomSlope, 1.0, 0.0);
+        let vNear: XMVECTOR = XMVectorReplicatePtr(&fr.Near);
+        let vFar: XMVECTOR = XMVectorReplicatePtr(&fr.Far);
+
+        let mut Corners: [XMVECTOR; BoundingFrustum::CORNER_COUNT] = unsafe { uninitialized() };
+        Corners[0] = XMVectorMultiply(vRightTop, vNear);
+        Corners[1] = XMVectorMultiply(vRightBottom, vNear);
+        Corners[2] = XMVectorMultiply(vLeftTop, vNear);
+        Corners[3] = XMVectorMultiply(vLeftBottom, vNear);
+        Corners[4] = XMVectorMultiply(vRightTop, vFar);
+        Corners[5] = XMVectorMultiply(vRightBottom, vFar);
+        Corners[6] = XMVectorMultiply(vLeftTop, vFar);
+        Corners[7] = XMVectorMultiply(vLeftBottom, vFar);
+
+        let mut InsideAll: XMVECTOR = XMVectorTrueInt();
+        for i in 0..BoundingFrustum::CORNER_COUNT {
+            let C: XMVECTOR = XMVectorAdd(XMVector3Rotate(Corners[i], vOrientation), vOrigin);
+            let d: XMVECTOR = XMVector3LengthSq(XMVectorSubtract(vCenter, C));
+            InsideAll = XMVectorAndInt(InsideAll, XMVectorLessOrEqual(d, RadiusSq));
+        }
+
+        return if (XMVector3EqualInt(InsideAll, XMVectorTrueInt())) { CONTAINS } else { INTERSECTS };
     }
 }
 
@@ -809,49 +912,199 @@ impl Intersects<&BoundingSphere> for BoundingSphere {
     /// Tests the BoundingSphere for intersection with a BoundingSphere.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-intersects>
-    fn Intersects(&self, _sh: &BoundingSphere) -> bool { todo!() }
+    fn Intersects(&self, sh: &BoundingSphere) -> bool { 
+        // Load A.
+        let vCenterA: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vRadiusA: XMVECTOR = XMVectorReplicatePtr(&self.Radius);
+
+        // Load B.
+        let vCenterB: XMVECTOR = XMLoadFloat3(&sh.Center);
+        let vRadiusB: XMVECTOR = XMVectorReplicatePtr(&sh.Radius);
+
+        // Distance squared between centers.
+        let Delta: XMVECTOR = XMVectorSubtract(vCenterB, vCenterA);
+        let DistanceSquared: XMVECTOR = XMVector3LengthSq(Delta);
+
+        // Sum of the radii squared.
+        let mut RadiusSquared: XMVECTOR = XMVectorAdd(vRadiusA, vRadiusB);
+        RadiusSquared = XMVectorMultiply(RadiusSquared, RadiusSquared);
+
+        return XMVector3LessOrEqual(DistanceSquared, RadiusSquared);
+    }
 }
 
 impl Intersects<&BoundingBox> for BoundingSphere {
     /// Tests the BoundingSphere for intersection with a BoundingBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-intersects(constboundingbox_)>
-    fn Intersects(&self, _box: &BoundingBox) -> bool { todo!() }
+    fn Intersects(&self, box_: &BoundingBox) -> bool { 
+        return box_.Intersects(self);
+    }
 }
 
 impl Intersects<&BoundingOrientedBox> for BoundingSphere {
     /// Test the BoundingSphere for intersection with a BoundingOrientedBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-intersects(constboundingorientedbox_)>
-    fn Intersects(&self, _box: &BoundingOrientedBox) -> bool { todo!() }
+    fn Intersects(&self, box_: &BoundingOrientedBox) -> bool { 
+        return box_.Intersects(self);
+    }
 }
 
 impl Intersects<&BoundingFrustum> for BoundingSphere {
     /// Test the BoundingSphere for intersection with a BoundingFrustum.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-intersects(constboundingfrustum_)>
-    fn Intersects(&self, _box: &BoundingFrustum) -> bool { todo!() }
+    fn Intersects(&self, fr: &BoundingFrustum) -> bool { 
+        return fr.Intersects(self);
+    }
 }
 
 impl Intersects<Triangle> for BoundingSphere {
     /// Tests the BoundingSphere for intersection with a triangle.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-intersects(fxmvector_fxmvector_fxmvector)>
-    fn Intersects(&self, (_V0, _V1, _V2): Triangle) -> bool { todo!() }
+    fn Intersects(&self, (V0, V1, V2): Triangle) -> bool { 
+        // Load the sphere.
+        let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vRadius: XMVECTOR = XMVectorReplicatePtr(&self.Radius);
+
+        // Compute the plane of the triangle (has to be normalized).
+        let N: XMVECTOR = XMVector3Normalize(XMVector3Cross(XMVectorSubtract(V1, V0), XMVectorSubtract(V2, V0)));
+
+        // Assert that the triangle is not degenerate.
+        debug_assert!(!XMVector3Equal(N, XMVectorZero()));
+
+        // Find the nearest feature on the triangle to the sphere.
+        let Dist: XMVECTOR = XMVector3Dot(XMVectorSubtract(vCenter, V0), N);
+
+        // If the center of the sphere is farther from the plane of the triangle than
+        // the radius of the sphere, then there cannot be an intersection.
+        let mut NoIntersection: XMVECTOR = XMVectorLess(Dist, XMVectorNegate(vRadius));
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorGreater(Dist, vRadius));
+
+        // Project the center of the sphere onto the plane of the triangle.
+        let mut Point: XMVECTOR = XMVectorNegativeMultiplySubtract(N, Dist, vCenter);
+
+        // Is it inside all the edges? If so we intersect because the distance
+        // to the plane is less than the radius.
+        let mut Intersection: XMVECTOR = internal::PointOnPlaneInsideTriangle(Point, V0, V1, V2);
+
+        // Find the nearest point on each edge.
+        let RadiusSq: XMVECTOR = XMVectorMultiply(vRadius, vRadius);
+
+        // Edge 0,1
+        Point = internal::PointOnLineSegmentNearestPoint(V0, V1, vCenter);
+
+        // If the distance to the center of the sphere to the point is less than
+        // the radius of the sphere then it must intersect.
+        Intersection = XMVectorOrInt(Intersection, XMVectorLessOrEqual(XMVector3LengthSq(XMVectorSubtract(vCenter, Point)), RadiusSq));
+
+        // Edge 1,2
+        Point = internal::PointOnLineSegmentNearestPoint(V1, V2, vCenter);
+
+        // If the distance to the center of the sphere to the point is less than
+        // the radius of the sphere then it must intersect.
+        Intersection = XMVectorOrInt(Intersection, XMVectorLessOrEqual(XMVector3LengthSq(XMVectorSubtract(vCenter, Point)), RadiusSq));
+
+        // Edge 2,0
+        Point = internal::PointOnLineSegmentNearestPoint(V2, V0, vCenter);
+
+        // If the distance to the center of the sphere to the point is less than
+        // the radius of the sphere then it must intersect.
+        Intersection = XMVectorOrInt(Intersection, XMVectorLessOrEqual(XMVector3LengthSq(XMVectorSubtract(vCenter, Point)), RadiusSq));
+
+        return XMVector4EqualInt(XMVectorAndCInt(Intersection, NoIntersection), XMVectorTrueInt());        
+    }
 }
 
-impl Intersects<Plane> for BoundingSphere {
+impl Intersects<Plane, PlaneIntersectionType> for BoundingSphere {
     /// Tests the BoundingSphere for intersection with a Plane.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-intersects(fxmvector)>
-    fn Intersects(&self, _Plane: Plane) -> bool { todo!() }
+    fn Intersects(&self, Plane: Plane) -> PlaneIntersectionType { 
+        debug_assert!(internal::XMPlaneIsUnit(Plane));
+
+        // Load the sphere.
+        let mut vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vRadius: XMVECTOR = XMVectorReplicatePtr(&self.Radius);
+
+        // Set w of the center to one so we can dot4 with a plane.
+        // TODO: template
+        vCenter = XMVectorInsert(vCenter, XMVectorSplatOne(), 0, 0, 0, 0, 1);
+
+        let mut Outside: XMVECTOR = unsafe { uninitialized() };
+        let mut Inside: XMVECTOR = unsafe { uninitialized() };
+        internal::FastIntersectSpherePlane(vCenter, vRadius, Plane, &mut Outside, &mut Inside);
+
+        // If the sphere is outside any plane it is outside.
+        if (XMVector4EqualInt(Outside, XMVectorTrueInt())) {
+            return FRONT;
+        }
+
+        // If the sphere is inside all planes it is inside.
+        if (XMVector4EqualInt(Inside, XMVectorTrueInt())) {
+            return BACK;
+        }
+
+        // The sphere is not inside all planes or outside a plane it intersects.
+        return INTERSECTING;
+    }
 }
 
-impl Intersects<Ray> for BoundingSphere {
+pub type RayMut<'a> = (Point, Direction, &'a mut f32);
+
+impl Intersects<RayMut<'_>> for BoundingSphere {
     /// Tests the BoundingSphere for intersection with a ray.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-intersects(fxmvector_fxmvector_float_)>
-    fn Intersects(&self, (_Origin, _Direction, _Dist): Ray) -> bool { todo!() }
+    fn Intersects(&self, (Origin, Direction, Dist): RayMut<'_>) -> bool { 
+        debug_assert!(internal::XMVector3IsUnit(Direction));
+
+        let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vRadius: XMVECTOR = XMVectorReplicatePtr(&self.Radius);
+
+        // l is the vector from the ray origin to the center of the sphere.
+        let l: XMVECTOR = XMVectorSubtract(vCenter, Origin);
+
+        // s is the projection of the l onto the ray direction.
+        let s: XMVECTOR = XMVector3Dot(l, Direction);
+
+        let l2: XMVECTOR = XMVector3Dot(l, l);
+
+        let r2: XMVECTOR = XMVectorMultiply(vRadius, vRadius);
+
+        // m2 is squared distance from the center of the sphere to the projection.
+        let m2: XMVECTOR = XMVectorNegativeMultiplySubtract(s, s, l2);
+
+        let mut NoIntersection: XMVECTOR;
+
+        // If the ray origin is outside the sphere and the center of the sphere is
+        // behind the ray origin there is no intersection.
+        NoIntersection = XMVectorAndInt(XMVectorLess(s, XMVectorZero()), XMVectorGreater(l2, r2));
+
+        // If the squared distance from the center of the sphere to the projection
+        // is greater than the radius squared the ray will miss the sphere.
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorGreater(m2, r2));
+
+        // The ray hits the sphere, compute the nearest intersection point.
+        let q: XMVECTOR = XMVectorSqrt(XMVectorSubtract(r2, m2));
+        let t1: XMVECTOR = XMVectorSubtract(s, q);
+        let t2: XMVECTOR = XMVectorAdd(s, q);
+
+        let OriginInside: XMVECTOR = XMVectorLessOrEqual(l2, r2);
+        let t: XMVECTOR = XMVectorSelect(t1, t2, OriginInside);
+
+        if (XMVector4NotEqualInt(NoIntersection, XMVectorTrueInt()))
+        {
+            // Store the x-component to *pDist.
+            XMStoreFloat(Dist, t);
+            return true;
+        }
+
+        *Dist = 0.0;
+        return false;
+    }
 }
 
 impl ContainedBy for BoundingSphere {
@@ -860,14 +1113,63 @@ impl ContainedBy for BoundingSphere {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-containedby>
     fn ContainedBy(
         &self,
-        _Plane0: FXMVECTOR,
-        _Plane1: FXMVECTOR,
-        _Plane2: GXMVECTOR,
-        _Plane3: HXMVECTOR,
-        _Plane4: HXMVECTOR
+        Plane0: FXMVECTOR,
+        Plane1: FXMVECTOR,
+        Plane2: GXMVECTOR,
+        Plane3: HXMVECTOR,
+        Plane4: HXMVECTOR,
+        Plane5: HXMVECTOR,
     ) -> ContainmentType
     {
-        todo!()
+        // Load the sphere.
+        let mut vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vRadius: XMVECTOR = XMVectorReplicatePtr(&self.Radius);
+
+        // Set w of the center to one so we can dot4 with a plane.
+        // TODO: template
+        vCenter = XMVectorInsert(vCenter, XMVectorSplatOne(), 0, 0, 0, 0, 1);
+
+        let mut Outside: XMVECTOR = unsafe { uninitialized() };
+        let mut Inside: XMVECTOR = unsafe { uninitialized() };
+
+        // Test against each plane.
+        internal::FastIntersectSpherePlane(vCenter, vRadius, Plane0, &mut Outside, &mut Inside);
+
+        let mut AnyOutside: XMVECTOR = Outside;
+        let mut AllInside: XMVECTOR = Inside;
+
+        internal::FastIntersectSpherePlane(vCenter, vRadius, Plane1, &mut Outside, &mut Inside);
+        AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+        AllInside = XMVectorAndInt(AllInside, Inside);
+
+        internal::FastIntersectSpherePlane(vCenter, vRadius, Plane2, &mut Outside, &mut Inside);
+        AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+        AllInside = XMVectorAndInt(AllInside, Inside);
+
+        internal::FastIntersectSpherePlane(vCenter, vRadius, Plane3, &mut Outside, &mut Inside);
+        AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+        AllInside = XMVectorAndInt(AllInside, Inside);
+
+        internal::FastIntersectSpherePlane(vCenter, vRadius, Plane4, &mut Outside, &mut Inside);
+        AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+        AllInside = XMVectorAndInt(AllInside, Inside);
+
+        internal::FastIntersectSpherePlane(vCenter, vRadius, Plane5, &mut Outside, &mut Inside);
+        AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+        AllInside = XMVectorAndInt(AllInside, Inside);
+
+        // If the sphere is outside any plane it is outside.
+        if (XMVector4EqualInt(AnyOutside, XMVectorTrueInt())) {
+            return DISJOINT;
+        }
+
+        // If the sphere is inside all planes it is inside.
+        if (XMVector4EqualInt(AllInside, XMVectorTrueInt())) {
+            return CONTAINS;
+        }
+
+        // The sphere is not inside all planes or outside a plane, it may intersect.
+        return INTERSECTS;
     }
 }
 
@@ -875,8 +1177,43 @@ impl CreateMerged for BoundingSphere {
     /// Creates a BoundingSphere that contains the two specified BoundingSphere objects.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-createmerged>
-    fn CreateMerged(_Out: &mut Self, _B1: &Self, _B2: &Self) {
-        todo!()
+    fn CreateMerged(Out: &mut Self, S1: &Self, S2: &Self) {
+        let Center1: XMVECTOR = XMLoadFloat3(&S1.Center);
+        let r1: f32 = S1.Radius;
+
+        let Center2: XMVECTOR = XMLoadFloat3(&S2.Center);
+        let r2: f32 = S2.Radius;
+
+        let V: XMVECTOR = XMVectorSubtract(Center2, Center1);
+
+        let Dist: XMVECTOR = XMVector3Length(V);
+
+        let d: f32 = XMVectorGetX(Dist);
+
+        if (r1 + r2 >= d)
+        {
+            if (r1 - r2 >= d)
+            {
+                *Out = *S1;
+                return;
+            }
+            else if (r2 - r1 >= d)
+            {
+                *Out = *S2;
+                return;
+            }
+        }
+
+        let N: XMVECTOR = XMVectorDivide(V, Dist);
+
+        let t1: f32 = XMMin(-r1, d - r2);
+        let t2: f32 = XMMax(r1, d + r2);
+        let t_5: f32 = (t2 - t1) * 0.5;
+
+        let NCenter: XMVECTOR = XMVectorAdd(Center1, XMVectorMultiply(N, XMVectorReplicate(t_5 + t1)));
+
+        XMStoreFloat3(&mut Out.Center, NCenter);
+        Out.Radius = t_5;
     }
 }
 
@@ -885,21 +1222,179 @@ impl CreateFromBoundingBox for BoundingSphere {
     /// Creates a BoundingSphere containing the specified BoundingBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-createfromboundingbox>
-    fn CreateFromBoundingBox(_Out: &mut Self, _box_: &BoundingBox) { todo!() }
+    fn CreateFromBoundingBox(Out: &mut Self, box_: &BoundingBox) {
+        Out.Center = box_.Center;
+        let vExtents: XMVECTOR = XMLoadFloat3(&box_.Extents);
+        Out.Radius = XMVectorGetX(XMVector3Length(vExtents));
+    }
 }
 
 impl CreateFromBoundingOrientedBox for BoundingSphere {
     /// Creates a BoundingSphere containing the specified BoundingOrientedBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-createfromboundingbox(boundingsphere__constboundingorientedbox_)>
-    fn CreateFromBoundingBox(_Out: &mut Self, _box_: &BoundingOrientedBox) { todo!() }
+    fn CreateFromBoundingBox(Out: &mut Self, box_: &BoundingOrientedBox) {
+        // Bounding box orientation is irrelevant because a sphere is rotationally invariant
+        Out.Center = box_.Center;
+        let vExtents: XMVECTOR = XMLoadFloat3(&box_.Extents);
+        Out.Radius = XMVectorGetX(XMVector3Length(vExtents));
+    }
 }
 
 impl CreateFromPoints for BoundingSphere {
     /// Creates a new BoundingSphere from a list of points.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-createfrompoints>
-    fn CreateFromPoints<'a>(_Out: &mut Self, _pPoints: impl Iterator<Item=&'a XMFLOAT3>) { todo!() }
+    fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl Iterator<Item=&'a XMFLOAT3> + Clone) {
+        // assert(Count > 0);
+        // assert(pPoints);
+
+        // Find the points with minimum and maximum x, y, and z
+        // XMVECTOR MinX, MaxX, MinY, MaxY, MinZ, MaxZ;
+
+        // MinX = MaxX = MinY = MaxY = MinZ = MaxZ = XMLoadFloat3(pPoints);
+
+        let mut MinX = g_XMZero.v();
+        let mut MaxX = g_XMZero.v();
+        let mut MinY = g_XMZero.v();
+        let mut MaxY = g_XMZero.v();
+        let mut MinZ = g_XMZero.v();
+        let mut MaxZ = g_XMZero.v();
+
+        // NOTE: We clone the iterator because it's reused down below.
+        for (i, pPoint) in pPoints.clone().enumerate()
+        {
+            // XMVECTOR Point = XMLoadFloat3(reinterpret_cast<const XMFLOAT3*>(reinterpret_cast<const uint8_t*>(pPoints) + i * Stride));
+            let Point = XMLoadFloat3(pPoint);
+
+            if i == 0 {
+                MinX = Point;
+                MaxX = Point;
+                MinY = Point;
+                MaxY = Point;
+                MinZ = Point;
+                MaxZ = Point;
+            }
+
+            let px: f32 = XMVectorGetX(Point);
+            let py: f32 = XMVectorGetY(Point);
+            let pz: f32 = XMVectorGetZ(Point);
+
+            if (px < XMVectorGetX(MinX)) {
+                MinX = Point;
+            }
+
+            if (px > XMVectorGetX(MaxX)) {
+                MaxX = Point;
+            }
+
+            if (py < XMVectorGetY(MinY)) {
+                MinY = Point;
+            }
+
+            if (py > XMVectorGetY(MaxY)) {
+                MaxY = Point;
+            }
+
+            if (pz < XMVectorGetZ(MinZ)) {
+                MinZ = Point;
+            }
+
+            if (pz > XMVectorGetZ(MaxZ)) {
+                MaxZ = Point;
+            }
+        }
+
+        // Use the min/max pair that are farthest apart to form the initial sphere.
+        let DeltaX: XMVECTOR = XMVectorSubtract(MaxX, MinX);
+        let DistX: XMVECTOR = XMVector3Length(DeltaX);
+
+        let DeltaY: XMVECTOR = XMVectorSubtract(MaxY, MinY);
+        let DistY: XMVECTOR = XMVector3Length(DeltaY);
+
+        let DeltaZ: XMVECTOR = XMVectorSubtract(MaxZ, MinZ);
+        let DistZ: XMVECTOR = XMVector3Length(DeltaZ);
+
+        let mut vCenter: XMVECTOR;
+        let mut vRadius: XMVECTOR;
+
+        if (XMVector3Greater(DistX, DistY))
+        {
+            if (XMVector3Greater(DistX, DistZ))
+            {
+                // Use min/max x.
+                vCenter = XMVectorLerp(MaxX, MinX, 0.5);
+                vRadius = XMVectorScale(DistX, 0.5);
+            }
+            else
+            {
+                // Use min/max z.
+                vCenter = XMVectorLerp(MaxZ, MinZ, 0.5);
+                vRadius = XMVectorScale(DistZ, 0.5);
+            }
+        }
+        else // Y >= X
+        {
+            if (XMVector3Greater(DistY, DistZ))
+            {
+                // Use min/max y.
+                vCenter = XMVectorLerp(MaxY, MinY, 0.5);
+                vRadius = XMVectorScale(DistY, 0.5);
+            }
+            else
+            {
+                // Use min/max z.
+                vCenter = XMVectorLerp(MaxZ, MinZ, 0.5);
+                vRadius = XMVectorScale(DistZ, 0.5);
+            }
+        }
+
+        // Add any points not inside the sphere.
+        for pPoint in pPoints
+        {
+            let Point: XMVECTOR = XMLoadFloat3(pPoint);
+
+            let Delta: XMVECTOR = XMVectorSubtract(Point, vCenter);
+
+            let Dist: XMVECTOR = XMVector3Length(Delta);
+
+            if (XMVector3Greater(Dist, vRadius))
+            {
+                // Adjust sphere to include the new point.
+                vRadius = XMVectorScale(XMVectorAdd(vRadius, Dist), 0.5);
+                vCenter = XMVectorAdd(vCenter, XMVectorMultiply(XMVectorSubtract(XMVectorReplicate(1.0), XMVectorDivide(vRadius, Dist)), Delta));
+            }
+        }
+
+        XMStoreFloat3(&mut Out.Center, vCenter);
+        XMStoreFloat(&mut Out.Radius, vRadius);
+    }
+}
+
+#[test]
+fn test_BoundingSphere_CreateFromPoints() {
+    let points = [
+        XMFLOAT3 { x:  1.0, y: 0.0, z:  1.0 },
+        XMFLOAT3 { x: -1.0, y: 0.0, z: -1.0 },
+    ];
+
+    let mut out: BoundingSphere = unsafe { uninitialized() };
+    BoundingSphere::CreateFromPoints(&mut out, points.iter());
+
+    assert_eq!(0.0, out.Center.x);
+    assert_eq!(0.0, out.Center.y);
+    assert_eq!(0.0, out.Center.z);
+    assert_eq!(2.0f32.sqrt(), out.Radius);
+
+    let points = [];
+
+    let mut out: BoundingSphere = unsafe { uninitialized() };
+    BoundingSphere::CreateFromPoints(&mut out, points.iter());
+
+    assert_eq!(0.0, out.Center.x);
+    assert_eq!(0.0, out.Center.y);
+    assert_eq!(0.0, out.Center.z);
+    assert_eq!(0.0, out.Radius); // NOTE: The DirectXMath source asserts points.len > 0
 }
 
 impl CreateFromFrustum for BoundingSphere {
@@ -911,36 +1406,111 @@ impl CreateFromFrustum for BoundingSphere {
 // BoundingBox ----------------------------------------------------------------
 
 impl BoundingBox {
-    pub fn GetCorners(&self, _Corners: &mut [XMFLOAT3; 8]) {
-        todo!()
+    pub fn GetCorners(&self, Corners: &mut [XMFLOAT3; BoundingBox::CORNER_COUNT]) {
+        // Load the box
+        let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+
+        for i in 0..BoundingBox::CORNER_COUNT
+        {
+            let C: XMVECTOR = XMVectorMultiplyAdd(vExtents, g_BoxOffset[i].v(), vCenter);
+            XMStoreFloat3(&mut Corners[i], C);
+        }
     }
 }
 
 impl MatrixTransform for BoundingBox {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-transform>
-    fn Transform(&self, _Out: &mut Self, _M: FXMMATRIX) {
-        todo!()
+    fn Transform(&self, Out: &mut Self, M: FXMMATRIX) {
+        // Load center and extents.
+        let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+
+        // Compute and transform the corners and find new min/max bounds.
+        let mut Corner: XMVECTOR = XMVectorMultiplyAdd(vExtents, g_BoxOffset[0].v(), vCenter);
+        Corner = XMVector3Transform(Corner, M);
+
+        let mut Min: XMVECTOR = Corner;
+        let mut Max: XMVECTOR = Corner;
+
+        for i in 1 .. BoundingBox::CORNER_COUNT
+        {
+            Corner = XMVectorMultiplyAdd(vExtents, g_BoxOffset[i].v(), vCenter);
+            Corner = XMVector3Transform(Corner, M);
+
+            Min = XMVectorMin(Min, Corner);
+            Max = XMVectorMax(Max, Corner);
+        }
+
+        // Store center and extents.
+        XMStoreFloat3(&mut Out.Center, XMVectorScale(XMVectorAdd(Min, Max), 0.5));
+        XMStoreFloat3(&mut Out.Extents, XMVectorScale(XMVectorSubtract(Max, Min), 0.5));
     }
 }
 
 impl DecomposedTransform for BoundingBox {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-transform(BoundingBox__float_fxmvector_fxmvector)>
-    fn Transform(&self, _Out: &mut Self, _Scale: f32, _Rotation: FXMVECTOR, _Translation: FXMVECTOR) {
-        todo!()
+    fn Transform(&self, Out: &mut Self, Scale: f32, Rotation: FXMVECTOR, Translation: FXMVECTOR) {
+        debug_assert!(internal::XMQuaternionIsUnit(Rotation));
+
+        // Load center and extents.
+        let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+
+        let VectorScale: XMVECTOR = XMVectorReplicate(Scale);
+
+        // Compute and transform the corners and find new min/max bounds.
+        let mut Corner: XMVECTOR = XMVectorMultiplyAdd(vExtents, g_BoxOffset[0].v(), vCenter);
+        Corner = XMVectorAdd(XMVector3Rotate(XMVectorMultiply(Corner, VectorScale), Rotation), Translation);
+
+        let mut Min: XMVECTOR = Corner;
+        let mut Max: XMVECTOR = Corner;
+
+        for i in 1 .. BoundingBox::CORNER_COUNT
+        {
+            Corner = XMVectorMultiplyAdd(vExtents, g_BoxOffset[i].v(), vCenter);
+            Corner = XMVectorAdd(XMVector3Rotate(XMVectorMultiply(Corner, VectorScale), Rotation), Translation);
+
+            Min = XMVectorMin(Min, Corner);
+            Max = XMVectorMax(Max, Corner);
+        }
+
+        // Store center and extents.
+        XMStoreFloat3(&mut Out.Center, XMVectorScale(XMVectorAdd(Min, Max), 0.5));
+        XMStoreFloat3(&mut Out.Extents, XMVectorScale(XMVectorSubtract(Max, Min), 0.5));
     }
 }
 
 impl Contains<Point> for BoundingBox {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-contains>
-    fn Contains(&self, _Point: Point) -> ContainmentType {
-        todo!()
+    fn Contains(&self, Point: Point) -> ContainmentType {
+        let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+
+        return if XMVector3InBounds(XMVectorSubtract(Point, vCenter), vExtents) { CONTAINS } else { DISJOINT };
     }
 }
 
 impl Contains<Triangle> for BoundingBox {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-contains(fxmvector_fxmvector_fxmvector)>
-    fn Contains(&self, (_V0, _V1, _V2): Triangle) -> ContainmentType {
-        todo!()
+    fn Contains(&self, (V0, V1, V2): Triangle) -> ContainmentType {
+        if (!self.Intersects((V0, V1, V2))) {
+            return DISJOINT;
+        }
+
+        let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+
+        let mut d: XMVECTOR = XMVectorAbs(XMVectorSubtract(V0, vCenter));
+        let mut Inside: XMVECTOR = XMVectorLessOrEqual(d, vExtents);
+
+        d = XMVectorAbs(XMVectorSubtract(V1, vCenter));
+        Inside = XMVectorAndInt(Inside, XMVectorLessOrEqual(d, vExtents));
+
+        d = XMVectorAbs(XMVectorSubtract(V2, vCenter));
+        Inside = XMVectorAndInt(Inside, XMVectorLessOrEqual(d, vExtents));
+
+        return if (XMVector3EqualInt(Inside, XMVectorTrueInt())) { CONTAINS } else { INTERSECTS };
     }
 }
 
@@ -948,8 +1518,46 @@ impl Contains<&BoundingSphere> for BoundingBox {
     /// Tests whether the BoundingBox contains a specified BoundingSphere.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-contains(constboundingsphere_)>
-    fn Contains(&self, _sh: &BoundingSphere) -> ContainmentType {
-        todo!()
+    fn Contains(&self, sh: &BoundingSphere) -> ContainmentType {
+        let SphereCenter: XMVECTOR = XMLoadFloat3(&sh.Center);
+        let SphereRadius: XMVECTOR = XMVectorReplicatePtr(&sh.Radius);
+
+        let BoxCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let BoxExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+
+        let BoxMin: XMVECTOR = XMVectorSubtract(BoxCenter, BoxExtents);
+        let BoxMax: XMVECTOR = XMVectorAdd(BoxCenter, BoxExtents);
+
+        // Find the distance to the nearest point on the box.
+        // for each i in (x, y, z)
+        // if (SphereCenter(i) < BoxMin(i)) d2 += (SphereCenter(i) - BoxMin(i)) ^ 2
+        // else if (SphereCenter(i) > BoxMax(i)) d2 += (SphereCenter(i) - BoxMax(i)) ^ 2
+
+        let mut d: XMVECTOR = XMVectorZero();
+
+        // Compute d for each dimension.
+        let LessThanMin: XMVECTOR = XMVectorLess(SphereCenter, BoxMin);
+        let GreaterThanMax: XMVECTOR = XMVectorGreater(SphereCenter, BoxMax);
+
+        let MinDelta: XMVECTOR = XMVectorSubtract(SphereCenter, BoxMin);
+        let MaxDelta: XMVECTOR = XMVectorSubtract(SphereCenter, BoxMax);
+
+        // Choose value for each dimension based on the comparison.
+        d = XMVectorSelect(d, MinDelta, LessThanMin);
+        d = XMVectorSelect(d, MaxDelta, GreaterThanMax);
+
+        // Use a dot-product to square them and sum them together.
+        let d2: XMVECTOR = XMVector3Dot(d, d);
+
+        if (XMVector3Greater(d2, XMVectorMultiply(SphereRadius, SphereRadius))) {
+            return DISJOINT;
+        }
+
+        let mut InsideAll: XMVECTOR = XMVectorLessOrEqual(XMVectorAdd(BoxMin, SphereRadius), SphereCenter);
+        InsideAll = XMVectorAndInt(InsideAll, XMVectorLessOrEqual(SphereCenter, XMVectorSubtract(BoxMax, SphereRadius)));
+        InsideAll = XMVectorAndInt(InsideAll, XMVectorGreater(XMVectorSubtract(BoxMax, BoxMin), SphereRadius));
+
+        return if (XMVector3EqualInt(InsideAll, XMVectorTrueInt())) { CONTAINS } else { INTERSECTS };
     }
 }
 
@@ -957,8 +1565,30 @@ impl Contains<&BoundingBox> for BoundingBox {
     /// Tests whether the BoundingBox contains a specified BoundingBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-contains(constboundingbox_)>
-    fn Contains(&self, _box: &BoundingBox) -> ContainmentType {
-        todo!()
+    fn Contains(&self, box_: &BoundingBox) -> ContainmentType {
+        let CenterA: XMVECTOR = XMLoadFloat3(&self.Center);
+        let ExtentsA: XMVECTOR = XMLoadFloat3(&self.Extents);
+
+        let CenterB: XMVECTOR = XMLoadFloat3(&box_.Center);
+        let ExtentsB: XMVECTOR = XMLoadFloat3(&box_.Extents);
+
+        let MinA: XMVECTOR = XMVectorSubtract(CenterA, ExtentsA);
+        let MaxA: XMVECTOR = XMVectorAdd(CenterA, ExtentsA);
+
+        let MinB: XMVECTOR = XMVectorSubtract(CenterB, ExtentsB);
+        let MaxB: XMVECTOR = XMVectorAdd(CenterB, ExtentsB);
+
+        // for each i in (x, y, z) if a_min(i) > b_max(i) or b_min(i) > a_max(i) then return false
+        let Disjoint: XMVECTOR = XMVectorOrInt(XMVectorGreater(MinA, MaxB), XMVectorGreater(MinB, MaxA));
+
+        if (internal::XMVector3AnyTrue(Disjoint)) {
+            return DISJOINT;
+        }
+
+        // for each i in (x, y, z) if a_min(i) <= b_min(i) and b_max(i) <= a_max(i) then A contains B
+        let Inside: XMVECTOR = XMVectorAndInt(XMVectorLessOrEqual(MinA, MinB), XMVectorLessOrEqual(MaxB, MaxA));
+
+        return if internal::XMVector3AllTrue(Inside) { CONTAINS } else { INTERSECTS };
     }
 }
 
@@ -966,8 +1596,33 @@ impl Contains<&BoundingOrientedBox> for BoundingBox {
     /// Tests whether the BoundingBox contains the specified BoundingOrientedBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-contains(constboundingorientedbox_)>
-    fn Contains(&self, _box: &BoundingOrientedBox) -> ContainmentType {
-        todo!()
+    fn Contains(&self, box_: &BoundingOrientedBox) -> ContainmentType {
+        if (!box_.Intersects(self)) {
+            return DISJOINT;
+        }
+
+        let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+
+        // Subtract off the AABB center to remove a subtract below
+        let oCenter: XMVECTOR = XMVectorSubtract(XMLoadFloat3(&box_.Center), vCenter);
+
+        let oExtents: XMVECTOR = XMLoadFloat3(&box_.Extents);
+        let oOrientation: XMVECTOR = XMLoadFloat4(&box_.Orientation);
+
+        debug_assert!(internal::XMQuaternionIsUnit(oOrientation));
+
+        let mut Inside: XMVECTOR = XMVectorTrueInt();
+
+        //for (size_t i = 0; i < BoundingOrientedBox::CORNER_COUNT; ++i)
+        for i in 0 .. BoundingOrientedBox::CORNER_COUNT
+        {
+            let C: XMVECTOR = XMVectorAdd(XMVector3Rotate(XMVectorMultiply(oExtents, g_BoxOffset[i].v()), oOrientation), oCenter);
+            let d: XMVECTOR = XMVectorAbs(C);
+            Inside = XMVectorAndInt(Inside, XMVectorLessOrEqual(d, vExtents));
+        }
+
+        return if (XMVector3EqualInt(Inside, XMVectorTrueInt())) { CONTAINS } else { INTERSECTS };
     }
 }
 
@@ -975,8 +1630,27 @@ impl Contains<&BoundingFrustum> for BoundingBox {
     /// Tests whether the BoundingBox contains the specified BoundingFrustum.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-contains(constboundingfrustum_)>
-    fn Contains(&self, _fr: &BoundingFrustum) -> ContainmentType {
-        todo!()
+    fn Contains(&self, fr: &BoundingFrustum) -> ContainmentType {
+        if (!fr.Intersects(self)) {
+            return DISJOINT;
+        }
+
+        let mut Corners: [XMFLOAT3; BoundingFrustum::CORNER_COUNT] = unsafe { uninitialized() };
+        fr.GetCorners(&mut Corners);
+
+        let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+
+        let mut Inside: XMVECTOR = XMVectorTrueInt();
+
+        for i in 0 ..BoundingFrustum::CORNER_COUNT
+        {
+            let Point: XMVECTOR = XMLoadFloat3(&Corners[i]);
+            let d: XMVECTOR = XMVectorAbs(XMVectorSubtract(Point, vCenter));
+            Inside = XMVectorAndInt(Inside, XMVectorLessOrEqual(d, vExtents));
+        }
+
+        return if (XMVector3EqualInt(Inside, XMVectorTrueInt())) { CONTAINS } else { INTERSECTS };
     }
 }
 
@@ -984,49 +1658,348 @@ impl Intersects<&BoundingSphere> for BoundingBox {
     /// Tests the BoundingBox for intersection with a BoundingSphere.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-intersects>
-    fn Intersects(&self, _sh: &BoundingSphere) -> bool { todo!() }
+    fn Intersects(&self, sh: &BoundingSphere) -> bool {
+        let SphereCenter: XMVECTOR = XMLoadFloat3(&sh.Center);
+        let SphereRadius: XMVECTOR = XMVectorReplicatePtr(&sh.Radius);
+    
+        let BoxCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let BoxExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+    
+        let BoxMin: XMVECTOR = XMVectorSubtract(BoxCenter, BoxExtents);
+        let BoxMax: XMVECTOR = XMVectorAdd(BoxCenter, BoxExtents);
+    
+        // Find the distance to the nearest point on the box.
+        // for each i in (x, y, z)
+        // if (SphereCenter(i) < BoxMin(i)) d2 += (SphereCenter(i) - BoxMin(i)) ^ 2
+        // else if (SphereCenter(i) > BoxMax(i)) d2 += (SphereCenter(i) - BoxMax(i)) ^ 2
+    
+        let mut d: XMVECTOR = XMVectorZero();
+    
+        // Compute d for each dimension.
+        let LessThanMin: XMVECTOR = XMVectorLess(SphereCenter, BoxMin);
+        let GreaterThanMax: XMVECTOR = XMVectorGreater(SphereCenter, BoxMax);
+    
+        let MinDelta: XMVECTOR = XMVectorSubtract(SphereCenter, BoxMin);
+        let MaxDelta: XMVECTOR = XMVectorSubtract(SphereCenter, BoxMax);
+    
+        // Choose value for each dimension based on the comparison.
+        d = XMVectorSelect(d, MinDelta, LessThanMin);
+        d = XMVectorSelect(d, MaxDelta, GreaterThanMax);
+    
+        // Use a dot-product to square them and sum them together.
+        let d2: XMVECTOR = XMVector3Dot(d, d);
+    
+        return XMVector3LessOrEqual(d2, XMVectorMultiply(SphereRadius, SphereRadius));
+    }
 }
 
 impl Intersects<&BoundingBox> for BoundingBox {
     /// Tests the BoundingBox for intersection with a BoundingBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-intersects(constboundingbox_)>
-    fn Intersects(&self, _box: &BoundingBox) -> bool { todo!() }
+    fn Intersects(&self, box_: &BoundingBox) -> bool {
+        let CenterA: XMVECTOR = XMLoadFloat3(&self.Center);
+        let ExtentsA: XMVECTOR = XMLoadFloat3(&self.Extents);
+
+        let CenterB: XMVECTOR = XMLoadFloat3(&box_.Center);
+        let ExtentsB: XMVECTOR = XMLoadFloat3(&box_.Extents);
+
+        let MinA: XMVECTOR = XMVectorSubtract(CenterA, ExtentsA);
+        let MaxA: XMVECTOR = XMVectorAdd(CenterA, ExtentsA);
+
+        let MinB: XMVECTOR = XMVectorSubtract(CenterB, ExtentsB);
+        let MaxB: XMVECTOR = XMVectorAdd(CenterB, ExtentsB);
+
+        // for each i in (x, y, z) if a_min(i) > b_max(i) or b_min(i) > a_max(i) then return false
+        let Disjoint: XMVECTOR = XMVectorOrInt(XMVectorGreater(MinA, MaxB), XMVectorGreater(MinB, MaxA));
+
+        return !internal::XMVector3AnyTrue(Disjoint);
+    }
 }
 
 impl Intersects<&BoundingOrientedBox> for BoundingBox {
     /// Test the BoundingBox for intersection with a BoundingOrientedBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-intersects(constboundingorientedbox_)>
-    fn Intersects(&self, _box: &BoundingOrientedBox) -> bool { todo!() }
+    fn Intersects(&self, box_: &BoundingOrientedBox) -> bool {
+        return box_.Intersects(self);
+    }
 }
 
 impl Intersects<&BoundingFrustum> for BoundingBox {
     /// Test the BoundingBox for intersection with a BoundingFrustum.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-intersects(constboundingfrustum_)>
-    fn Intersects(&self, _box: &BoundingFrustum) -> bool { todo!() }
+    fn Intersects(&self, fr: &BoundingFrustum) -> bool {
+        return fr.Intersects(self);
+    }
 }
 
 impl Intersects<Triangle> for BoundingBox {
     /// Tests the BoundingSphere for intersection with a triangle.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-intersects(fxmvector_fxmvector_fxmvector)>
-    fn Intersects(&self, (_V0, _V1, _V2): Triangle) -> bool { todo!() }
+    fn Intersects(&self, (V0, V1, V2): Triangle) -> bool {
+        let Zero: XMVECTOR = XMVectorZero();
+
+        // Load the box.
+        let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+
+        let BoxMin: XMVECTOR = XMVectorSubtract(vCenter, vExtents);
+        let BoxMax: XMVECTOR = XMVectorAdd(vCenter, vExtents);
+
+        // Test the axes of the box (in effect test the AAB against the minimal AAB
+        // around the triangle).
+        let TriMin: XMVECTOR = XMVectorMin(XMVectorMin(V0, V1), V2);
+        let TriMax: XMVECTOR = XMVectorMax(XMVectorMax(V0, V1), V2);
+
+        // for each i in (x, y, z) if a_min(i) > b_max(i) or b_min(i) > a_max(i) then disjoint
+        let Disjoint: XMVECTOR = XMVectorOrInt(XMVectorGreater(TriMin, BoxMax), XMVectorGreater(BoxMin, TriMax));
+        if (internal::XMVector3AnyTrue(Disjoint)) {
+            return false;
+        }
+
+        // Test the plane of the triangle.
+        let Normal: XMVECTOR = XMVector3Cross(XMVectorSubtract(V1, V0), XMVectorSubtract(V2, V0));
+        let Dist: XMVECTOR = XMVector3Dot(Normal, V0);
+
+        // Assert that the triangle is not degenerate.
+        debug_assert!(!XMVector3Equal(Normal, Zero));
+
+        // for each i in (x, y, z) if n(i) >= 0 then v_min(i)=b_min(i), v_max(i)=b_max(i)
+        // else v_min(i)=b_max(i), v_max(i)=b_min(i)
+        let NormalSelect: XMVECTOR = XMVectorGreater(Normal, Zero);
+        let V_Min: XMVECTOR = XMVectorSelect(BoxMax, BoxMin, NormalSelect);
+        let V_Max: XMVECTOR = XMVectorSelect(BoxMin, BoxMax, NormalSelect);
+
+        // if n dot v_min + d > 0 || n dot v_max + d < 0 then disjoint
+        let MinDist: XMVECTOR = XMVector3Dot(V_Min, Normal);
+        let MaxDist: XMVECTOR = XMVector3Dot(V_Max, Normal);
+
+        let mut NoIntersection: XMVECTOR = XMVectorGreater(MinDist, Dist);
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorLess(MaxDist, Dist));
+
+        // Move the box center to zero to simplify the following tests.
+        let TV0: XMVECTOR = XMVectorSubtract(V0, vCenter);
+        let TV1: XMVECTOR = XMVectorSubtract(V1, vCenter);
+        let TV2: XMVECTOR = XMVectorSubtract(V2, vCenter);
+
+        // Test the edge/edge axes (3*3).
+        let mut e0: XMVECTOR = XMVectorSubtract(TV1, TV0);
+        let mut e1: XMVECTOR = XMVectorSubtract(TV2, TV1);
+        let mut e2: XMVECTOR = XMVectorSubtract(TV0, TV2);
+
+        // Make w zero.
+        // TODO: template
+        e0 = XMVectorInsert(e0, Zero, 0, 0, 0, 0, 1);
+        e1 = XMVectorInsert(e1, Zero, 0, 0, 0, 0, 1);
+        e2 = XMVectorInsert(e2, Zero, 0, 0, 0, 0, 1);
+
+        let mut Axis: XMVECTOR;
+        let mut p0: XMVECTOR;
+        let mut p1: XMVECTOR;
+        let mut p2: XMVECTOR;
+        let mut Min: XMVECTOR;
+        let mut Max: XMVECTOR;
+        let mut Radius: XMVECTOR;
+
+        // Axis == (1,0,0) let e0: x = (0, -e0.z, e0.y)
+        Axis = <(XM_PERMUTE_0W, XM_PERMUTE_1Z, XM_PERMUTE_0Y, XM_PERMUTE_0X)>::XMVectorPermute(e0, XMVectorNegate(e0));
+        p0 = XMVector3Dot(TV0, Axis);
+        // p1 = XMVector3Dot( V1, Axis ); // p1 = p0;
+        p2 = XMVector3Dot(TV2, Axis);
+        Min = XMVectorMin(p0, p2);
+        Max = XMVectorMax(p0, p2);
+        Radius = XMVector3Dot(vExtents, XMVectorAbs(Axis));
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorGreater(Min, Radius));
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorLess(Max, XMVectorNegate(Radius)));
+
+        // Axis == (1,0,0) let e1: x = (0, -e1.z, e1.y)
+        Axis = <(XM_PERMUTE_0W, XM_PERMUTE_1Z, XM_PERMUTE_0Y, XM_PERMUTE_0X)>::XMVectorPermute(e1, XMVectorNegate(e1));
+        p0 = XMVector3Dot(TV0, Axis);
+        p1 = XMVector3Dot(TV1, Axis);
+        // p2 = XMVector3Dot( V2, Axis ); // p2 = p1;
+        Min = XMVectorMin(p0, p1);
+        Max = XMVectorMax(p0, p1);
+        Radius = XMVector3Dot(vExtents, XMVectorAbs(Axis));
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorGreater(Min, Radius));
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorLess(Max, XMVectorNegate(Radius)));
+
+        // Axis == (1,0,0) let e2: x = (0, -e2.z, e2.y)
+        Axis = <(XM_PERMUTE_0W, XM_PERMUTE_1Z, XM_PERMUTE_0Y, XM_PERMUTE_0X)>::XMVectorPermute(e2, XMVectorNegate(e2));
+        p0 = XMVector3Dot(TV0, Axis);
+        p1 = XMVector3Dot(TV1, Axis);
+        // p2 = XMVector3Dot( V2, Axis ); // p2 = p0;
+        Min = XMVectorMin(p0, p1);
+        Max = XMVectorMax(p0, p1);
+        Radius = XMVector3Dot(vExtents, XMVectorAbs(Axis));
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorGreater(Min, Radius));
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorLess(Max, XMVectorNegate(Radius)));
+
+        // Axis == (0,1,0) let e0: x = (e0.z, 0, -e0.x)
+        Axis = <(XM_PERMUTE_0Z, XM_PERMUTE_0W, XM_PERMUTE_1X, XM_PERMUTE_0Y)>::XMVectorPermute(e0, XMVectorNegate(e0));
+        p0 = XMVector3Dot(TV0, Axis);
+        // p1 = XMVector3Dot( V1, Axis ); // p1 = p0;
+        p2 = XMVector3Dot(TV2, Axis);
+        Min = XMVectorMin(p0, p2);
+        Max = XMVectorMax(p0, p2);
+        Radius = XMVector3Dot(vExtents, XMVectorAbs(Axis));
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorGreater(Min, Radius));
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorLess(Max, XMVectorNegate(Radius)));
+
+        // Axis == (0,1,0) let e1: x = (e1.z, 0, -e1.x)
+        Axis = <(XM_PERMUTE_0Z, XM_PERMUTE_0W, XM_PERMUTE_1X, XM_PERMUTE_0Y)>::XMVectorPermute(e1, XMVectorNegate(e1));
+        p0 = XMVector3Dot(TV0, Axis);
+        p1 = XMVector3Dot(TV1, Axis);
+        // p2 = XMVector3Dot( V2, Axis ); // p2 = p1;
+        Min = XMVectorMin(p0, p1);
+        Max = XMVectorMax(p0, p1);
+        Radius = XMVector3Dot(vExtents, XMVectorAbs(Axis));
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorGreater(Min, Radius));
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorLess(Max, XMVectorNegate(Radius)));
+
+        // Axis == (0,0,1) let e2: x = (e2.z, 0, -e2.x)
+        Axis = <(XM_PERMUTE_0Z, XM_PERMUTE_0W, XM_PERMUTE_1X, XM_PERMUTE_0Y)>::XMVectorPermute(e2, XMVectorNegate(e2));
+        p0 = XMVector3Dot(TV0, Axis);
+        p1 = XMVector3Dot(TV1, Axis);
+        // p2 = XMVector3Dot( V2, Axis ); // p2 = p0;
+        Min = XMVectorMin(p0, p1);
+        Max = XMVectorMax(p0, p1);
+        Radius = XMVector3Dot(vExtents, XMVectorAbs(Axis));
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorGreater(Min, Radius));
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorLess(Max, XMVectorNegate(Radius)));
+
+        // Axis == (0,0,1) let e0: x = (-e0.y, e0.x, 0)
+        Axis = <(XM_PERMUTE_1Y, XM_PERMUTE_0X, XM_PERMUTE_0W, XM_PERMUTE_0Z)>::XMVectorPermute(e0, XMVectorNegate(e0));
+        p0 = XMVector3Dot(TV0, Axis);
+        // p1 = XMVector3Dot( V1, Axis ); // p1 = p0;
+        p2 = XMVector3Dot(TV2, Axis);
+        Min = XMVectorMin(p0, p2);
+        Max = XMVectorMax(p0, p2);
+        Radius = XMVector3Dot(vExtents, XMVectorAbs(Axis));
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorGreater(Min, Radius));
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorLess(Max, XMVectorNegate(Radius)));
+
+        // Axis == (0,0,1) let e1: x = (-e1.y, e1.x, 0)
+        Axis = <(XM_PERMUTE_1Y, XM_PERMUTE_0X, XM_PERMUTE_0W, XM_PERMUTE_0Z)>::XMVectorPermute(e1, XMVectorNegate(e1));
+        p0 = XMVector3Dot(TV0, Axis);
+        p1 = XMVector3Dot(TV1, Axis);
+        // p2 = XMVector3Dot( V2, Axis ); // p2 = p1;
+        Min = XMVectorMin(p0, p1);
+        Max = XMVectorMax(p0, p1);
+        Radius = XMVector3Dot(vExtents, XMVectorAbs(Axis));
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorGreater(Min, Radius));
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorLess(Max, XMVectorNegate(Radius)));
+
+        // Axis == (0,0,1) let e2: x = (-e2.y, e2.x, 0)
+        Axis = <(XM_PERMUTE_1Y, XM_PERMUTE_0X, XM_PERMUTE_0W, XM_PERMUTE_0Z)>::XMVectorPermute(e2, XMVectorNegate(e2));
+        p0 = XMVector3Dot(TV0, Axis);
+        p1 = XMVector3Dot(TV1, Axis);
+        // p2 = XMVector3Dot( V2, Axis ); // p2 = p0;
+        Min = XMVectorMin(p0, p1);
+        Max = XMVectorMax(p0, p1);
+        Radius = XMVector3Dot(vExtents, XMVectorAbs(Axis));
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorGreater(Min, Radius));
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorLess(Max, XMVectorNegate(Radius)));
+
+        return XMVector4NotEqualInt(NoIntersection, XMVectorTrueInt());
+    }
 }
 
-impl Intersects<Plane> for BoundingBox {
+impl Intersects<Plane, PlaneIntersectionType> for BoundingBox {
     /// Tests the BoundingBox for intersection with a Plane.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-intersects(fxmvector)>
-    fn Intersects(&self, _Plane: Plane) -> bool { todo!() }
+    fn Intersects(&self, Plane: Plane) -> PlaneIntersectionType {
+        debug_assert!(internal::XMPlaneIsUnit(Plane));
+
+        // Load the box.
+        let mut vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+
+        // Set w of the center to one so we can dot4 with a plane.
+        // TODO: template
+        vCenter = XMVectorInsert(vCenter, XMVectorSplatOne(), 0, 0, 0, 0, 1);
+
+        let mut Outside: XMVECTOR = unsafe { uninitialized() };
+        let mut Inside: XMVECTOR = unsafe { uninitialized() };
+        internal::FastIntersectAxisAlignedBoxPlane(vCenter, vExtents, Plane, &mut Outside, &mut Inside);
+
+        // If the box is outside any plane it is outside.
+        if (XMVector4EqualInt(Outside, XMVectorTrueInt())) {
+            return FRONT;
+        }
+
+        // If the box is inside all planes it is inside.
+        if (XMVector4EqualInt(Inside, XMVectorTrueInt())) {
+            return BACK;
+        }
+
+        // The box is not inside all planes or outside a plane it intersects.
+        return INTERSECTING;
+    }
 }
 
-impl Intersects<Ray> for BoundingBox {
+impl Intersects<RayMut<'_>> for BoundingBox {
     /// Tests the BoundingBox for intersection with a ray.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-intersects(fxmvector_fxmvector_float_)>
-    fn Intersects(&self, (_Origin, _Direction, _Dist): Ray) -> bool { todo!() }
+    fn Intersects(&self, (Origin, Direction, Dist): RayMut<'_>) -> bool {
+        debug_assert!(internal::XMVector3IsUnit(Direction));
+
+        // Load the box.
+        let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+
+        // Adjust ray origin to be relative to center of the box.
+        let TOrigin: XMVECTOR = XMVectorSubtract(vCenter, Origin);
+
+        // Compute the dot product againt each axis of the box.
+        // Since the axii are (1,0,0), (0,1,0), (0,0,1) no computation is necessary.
+        let AxisDotOrigin: XMVECTOR = TOrigin;
+        let AxisDotDirection: XMVECTOR = Direction;
+
+        // if (fabs(AxisDotDirection) <= Epsilon) the ray is nearly parallel to the slab.
+        let IsParallel: XMVECTOR = XMVectorLessOrEqual(XMVectorAbs(AxisDotDirection), g_RayEpsilon.v());
+
+        // Test against all three axii simultaneously.
+        let InverseAxisDotDirection: XMVECTOR = XMVectorReciprocal(AxisDotDirection);
+        let t1: XMVECTOR = XMVectorMultiply(XMVectorSubtract(AxisDotOrigin, vExtents), InverseAxisDotDirection);
+        let t2: XMVECTOR = XMVectorMultiply(XMVectorAdd(AxisDotOrigin, vExtents), InverseAxisDotDirection);
+
+        // Compute the max of min(t1,t2) and the min of max(t1,t2) ensuring we don't
+        // use the results from any directions parallel to the slab.
+        let mut t_min: XMVECTOR = XMVectorSelect(XMVectorMin(t1, t2), g_FltMin.v(), IsParallel);
+        let mut t_max: XMVECTOR = XMVectorSelect(XMVectorMax(t1, t2), g_FltMax.v(), IsParallel);
+
+        // t_min.x = maximum( t_min.x, t_min.y, t_min.z );
+        // t_max.x = minimum( t_max.x, t_max.y, t_max.z );
+        t_min = XMVectorMax(t_min, XMVectorSplatY(t_min));  // x = max(x,y)
+        t_min = XMVectorMax(t_min, XMVectorSplatZ(t_min));  // x = max(max(x,y),z)
+        t_max = XMVectorMin(t_max, XMVectorSplatY(t_max));  // x = min(x,y)
+        t_max = XMVectorMin(t_max, XMVectorSplatZ(t_max));  // x = min(min(x,y),z)
+
+        // if ( t_min > t_max ) return false;
+        let mut NoIntersection: XMVECTOR = XMVectorGreater(XMVectorSplatX(t_min), XMVectorSplatX(t_max));
+
+        // if ( t_max < 0.0f ) return false;
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorLess(XMVectorSplatX(t_max), XMVectorZero()));
+
+        // if (IsParallel && (-Extents > AxisDotOrigin || Extents < AxisDotOrigin)) return false;
+        let ParallelOverlap: XMVECTOR = XMVectorInBounds(AxisDotOrigin, vExtents);
+        NoIntersection = XMVectorOrInt(NoIntersection, XMVectorAndCInt(IsParallel, ParallelOverlap));
+
+        if (!internal::XMVector3AnyTrue(NoIntersection))
+        {
+            // Store the x-component to *pDist
+            XMStoreFloat(Dist, t_min);
+            return true;
+        }
+
+        *Dist = 0.0;
+        return false;
+    }
 }
 
 impl ContainedBy for BoundingBox {
@@ -1035,14 +2008,63 @@ impl ContainedBy for BoundingBox {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-containedby>
     fn ContainedBy(
         &self,
-        _Plane0: FXMVECTOR,
-        _Plane1: FXMVECTOR,
-        _Plane2: GXMVECTOR,
-        _Plane3: HXMVECTOR,
-        _Plane4: HXMVECTOR
+        Plane0: FXMVECTOR,
+        Plane1: FXMVECTOR,
+        Plane2: GXMVECTOR,
+        Plane3: HXMVECTOR,
+        Plane4: HXMVECTOR,
+        Plane5: HXMVECTOR,
     ) -> ContainmentType
     {
-        todo!()
+        // Load the box.
+        let mut vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+
+        // Set w of the center to one so we can dot4 with a plane.
+        // TODO: template
+        vCenter = XMVectorInsert(vCenter, XMVectorSplatOne(), 0, 0, 0, 0, 1);
+
+        let mut Outside: XMVECTOR = unsafe { uninitialized() };
+        let mut Inside: XMVECTOR = unsafe { uninitialized() };
+
+        // Test against each plane.
+        internal::FastIntersectAxisAlignedBoxPlane(vCenter, vExtents, Plane0, &mut Outside, &mut Inside);
+
+        let mut AnyOutside: XMVECTOR = Outside;
+        let mut AllInside: XMVECTOR = Inside;
+
+        internal::FastIntersectAxisAlignedBoxPlane(vCenter, vExtents, Plane1, &mut Outside, &mut Inside);
+        AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+        AllInside = XMVectorAndInt(AllInside, Inside);
+
+        internal::FastIntersectAxisAlignedBoxPlane(vCenter, vExtents, Plane2, &mut Outside, &mut Inside);
+        AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+        AllInside = XMVectorAndInt(AllInside, Inside);
+
+        internal::FastIntersectAxisAlignedBoxPlane(vCenter, vExtents, Plane3, &mut Outside, &mut Inside);
+        AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+        AllInside = XMVectorAndInt(AllInside, Inside);
+
+        internal::FastIntersectAxisAlignedBoxPlane(vCenter, vExtents, Plane4, &mut Outside, &mut Inside);
+        AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+        AllInside = XMVectorAndInt(AllInside, Inside);
+
+        internal::FastIntersectAxisAlignedBoxPlane(vCenter, vExtents, Plane5, &mut Outside, &mut Inside);
+        AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+        AllInside = XMVectorAndInt(AllInside, Inside);
+
+        // If the box is outside any plane it is outside.
+        if (XMVector4EqualInt(AnyOutside, XMVectorTrueInt())) {
+            return DISJOINT;
+        }
+
+        // If the box is inside all planes it is inside.
+        if (XMVector4EqualInt(AllInside, XMVectorTrueInt())) {
+            return CONTAINS;
+        }
+
+        // The box is not inside all planes or outside a plane, it may intersect.
+        return INTERSECTS;
     }
 }
 
@@ -1050,8 +2072,23 @@ impl CreateMerged for BoundingBox {
     /// Creates a BoundingBox that contains the two specified BoundingBox objects.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-createmerged>
-    fn CreateMerged(_Out: &mut Self, _B1: &Self, _B2: &Self) {
-        todo!()
+    fn CreateMerged(Out: &mut Self, b1: &Self, b2: &Self) {
+        let b1Center: XMVECTOR = XMLoadFloat3(&b1.Center);
+        let b1Extents: XMVECTOR = XMLoadFloat3(&b1.Extents);
+
+        let b2Center: XMVECTOR = XMLoadFloat3(&b2.Center);
+        let b2Extents: XMVECTOR = XMLoadFloat3(&b2.Extents);
+
+        let mut Min: XMVECTOR = XMVectorSubtract(b1Center, b1Extents);
+        Min = XMVectorMin(Min, XMVectorSubtract(b2Center, b2Extents));
+
+        let mut Max: XMVECTOR = XMVectorAdd(b1Center, b1Extents);
+        Max = XMVectorMax(Max, XMVectorAdd(b2Center, b2Extents));
+
+        debug_assert!(XMVector3LessOrEqual(Min, Max));
+
+        XMStoreFloat3(&mut Out.Center, XMVectorScale(XMVectorAdd(Min, Max), 0.5));
+        XMStoreFloat3(&mut Out.Extents, XMVectorScale(XMVectorSubtract(Max, Min), 0.5));
     }
 }
 
@@ -1059,43 +2096,154 @@ impl CreateFromSphere for BoundingBox {
     /// Creates a BoundingBox large enough to contain the a specified BoundingSphere.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingbox-createfromsphere>
-    fn CreateFromSphere(_Out: &mut Self, _box: &BoundingSphere) { todo!() }
+    fn CreateFromSphere(Out: &mut Self, sh: &BoundingSphere) {
+        let spCenter: XMVECTOR = XMLoadFloat3(&sh.Center);
+        let shRadius: XMVECTOR = XMVectorReplicatePtr(&sh.Radius);
+
+        let Min: XMVECTOR = XMVectorSubtract(spCenter, shRadius);
+        let Max: XMVECTOR = XMVectorAdd(spCenter, shRadius);
+
+        debug_assert!(XMVector3LessOrEqual(Min, Max));
+
+        XMStoreFloat3(&mut Out.Center, XMVectorScale(XMVectorAdd(Min, Max), 0.5));
+        XMStoreFloat3(&mut Out.Extents, XMVectorScale(XMVectorSubtract(Max, Min), 0.5));
+    }
 }
 
 impl CreateFromPoints for BoundingBox {
     /// Creates a new BoundingBox from a list of points.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-createfrompoints>
-    fn CreateFromPoints<'a>(_Out: &mut Self, _pPoints: impl Iterator<Item=&'a XMFLOAT3>) { todo!() }
+    fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl Iterator<Item=&'a XMFLOAT3>) {
+        // assert(Count > 0);
+        // assert(pPoints);
+
+        // Find the minimum and maximum x, y, and z
+        // NOTE: We default to Zero since we don't have the Count > 0 assertion
+        let mut vMin: XMVECTOR = g_XMZero.v();
+        let mut vMax: XMVECTOR = g_XMZero.v();
+
+        for (i, pPoint) in pPoints.enumerate()
+        {
+            let Point: XMVECTOR = XMLoadFloat3(pPoint);
+            if i == 0 {
+                vMin = Point;
+                vMax = Point;
+            } else {
+                vMin = XMVectorMin(vMin, Point);
+                vMax = XMVectorMax(vMax, Point);
+            }
+        }
+
+        // Store center and extents.
+        XMStoreFloat3(&mut Out.Center, XMVectorScale(XMVectorAdd(vMin, vMax), 0.5));
+        XMStoreFloat3(&mut Out.Extents, XMVectorScale(XMVectorSubtract(vMax, vMin), 0.5));
+    }
 }
 
 // BoundingOrientedBox --------------------------------------------------------
 
 impl MatrixTransform for BoundingOrientedBox {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-transform>
-    fn Transform(&self, _Out: &mut Self, _M: FXMMATRIX) {
-        todo!()
+    fn Transform(&self, Out: &mut Self, M: FXMMATRIX) {
+        // Load the box.
+        let mut vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let mut vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+        let mut vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        debug_assert!(internal::XMQuaternionIsUnit(vOrientation));
+
+        unsafe {
+            // Composite the box rotation and the transform rotation.
+            let mut nM: XMMATRIX = uninitialized();
+            nM.r[0] = XMVector3Normalize(M.r[0]);
+            nM.r[1] = XMVector3Normalize(M.r[1]);
+            nM.r[2] = XMVector3Normalize(M.r[2]);
+            nM.r[3] = g_XMIdentityR3.v;
+            let Rotation: XMVECTOR = XMQuaternionRotationMatrix(nM);
+            vOrientation = XMQuaternionMultiply(vOrientation, Rotation);
+
+            // Transform the center.
+            vCenter = XMVector3Transform(vCenter, M);
+
+            // Scale the box extents.
+            let dX: XMVECTOR = XMVector3Length(M.r[0]);
+            let dY: XMVECTOR = XMVector3Length(M.r[1]);
+            let dZ: XMVECTOR = XMVector3Length(M.r[2]);
+
+            let mut VectorScale: XMVECTOR = XMVectorSelect(dY, dX, g_XMSelect1000.v);
+            VectorScale = XMVectorSelect(dZ, VectorScale, g_XMSelect1100.v);
+            vExtents = XMVectorMultiply(vExtents, VectorScale);
+        }
+
+        // Store the box.
+        XMStoreFloat3(&mut Out.Center, vCenter);
+        XMStoreFloat3(&mut Out.Extents, vExtents);
+        XMStoreFloat4(&mut Out.Orientation, vOrientation);
     }
 }
 
 impl DecomposedTransform for BoundingOrientedBox {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-transform(BoundingOrientedBox__float_fxmvector_fxmvector)>
-    fn Transform(&self, _Out: &mut Self, _Scale: f32, _Rotation: FXMVECTOR, _Translation: FXMVECTOR) {
-        todo!()
+    fn Transform(&self, Out: &mut Self, Scale: f32, Rotation: FXMVECTOR, Translation: FXMVECTOR) {
+        debug_assert!(internal::XMQuaternionIsUnit(Rotation));
+
+        // Load the box.
+        let mut vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let mut vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+        let mut vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        debug_assert!(internal::XMQuaternionIsUnit(vOrientation));
+
+        // Composite the box rotation and the transform rotation.
+        vOrientation = XMQuaternionMultiply(vOrientation, Rotation);
+
+        // Transform the center.
+        let VectorScale: XMVECTOR = XMVectorReplicate(Scale);
+        vCenter = XMVectorAdd(XMVector3Rotate(XMVectorMultiply(vCenter, VectorScale), Rotation), Translation);
+
+        // Scale the box extents.
+        vExtents = XMVectorMultiply(vExtents, VectorScale);
+
+        // Store the box.
+        XMStoreFloat3(&mut Out.Center, vCenter);
+        XMStoreFloat3(&mut Out.Extents, vExtents);
+        XMStoreFloat4(&mut Out.Orientation, vOrientation);
     }
 }
 
 impl Contains<Point> for BoundingOrientedBox {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-contains>
-    fn Contains(&self, _Point: Point) -> ContainmentType {
-        todo!()
+    fn Contains(&self, Point: Point) -> ContainmentType {
+        let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+        let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        // Transform the point to be local to the box.
+        let TPoint: XMVECTOR = XMVector3InverseRotate(XMVectorSubtract(Point, vCenter), vOrientation);
+
+        return if XMVector3InBounds(TPoint, vExtents) { CONTAINS } else { DISJOINT };
     }
 }
 
 impl Contains<Triangle> for BoundingOrientedBox {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-contains(fxmvector_fxmvector_fxmvector)>
-    fn Contains(&self, (_V0, _V1, _V2): Triangle) -> ContainmentType {
-        todo!()
+    fn Contains(&self, (V0, V1, V2): Triangle) -> ContainmentType {
+        // Load the box center & orientation.
+        let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        // Transform the triangle vertices into the space of the box.
+        let TV0: XMVECTOR = XMVector3InverseRotate(XMVectorSubtract(V0, vCenter), vOrientation);
+        let TV1: XMVECTOR = XMVector3InverseRotate(XMVectorSubtract(V1, vCenter), vOrientation);
+        let TV2: XMVECTOR = XMVector3InverseRotate(XMVectorSubtract(V2, vCenter), vOrientation);
+
+        let mut box_: BoundingBox = unsafe { uninitialized() };
+        box_.Center = XMFLOAT3::set(0.0, 0.0, 0.0);
+        box_.Extents = self.Extents;
+
+        // Use the triangle vs axis aligned box intersection routine.
+        return box_.Contains((TV0, TV1, TV2));
     }
 }
 
@@ -1103,8 +2251,52 @@ impl Contains<&BoundingSphere> for BoundingOrientedBox {
     /// Tests whether the BoundingOrientedBox contains a specified BoundingSphere.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-contains(constboundingsphere_)>
-    fn Contains(&self, _sh: &BoundingSphere) -> ContainmentType {
-        todo!()
+    fn Contains(&self, sh: &BoundingSphere) -> ContainmentType {
+        let mut SphereCenter: XMVECTOR = XMLoadFloat3(&sh.Center);
+        let SphereRadius: XMVECTOR = XMVectorReplicatePtr(&sh.Radius);
+
+        let BoxCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let BoxExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+        let BoxOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        debug_assert!(internal::XMQuaternionIsUnit(BoxOrientation));
+
+        // Transform the center of the sphere to be local to the box.
+        // BoxMin = -BoxExtents
+        // BoxMax = +BoxExtents
+        SphereCenter = XMVector3InverseRotate(XMVectorSubtract(SphereCenter, BoxCenter), BoxOrientation);
+
+        // Find the distance to the nearest point on the box.
+        // for each i in (x, y, z)
+        // if (SphereCenter(i) < BoxMin(i)) d2 += (SphereCenter(i) - BoxMin(i)) ^ 2
+        // else if (SphereCenter(i) > BoxMax(i)) d2 += (SphereCenter(i) - BoxMax(i)) ^ 2
+
+        let mut d: XMVECTOR = XMVectorZero();
+
+        // Compute d for each dimension.
+        let LessThanMin: XMVECTOR = XMVectorLess(SphereCenter, XMVectorNegate(BoxExtents));
+        let GreaterThanMax: XMVECTOR = XMVectorGreater(SphereCenter, BoxExtents);
+
+        let MinDelta: XMVECTOR = XMVectorAdd(SphereCenter, BoxExtents);
+        let MaxDelta: XMVECTOR = XMVectorSubtract(SphereCenter, BoxExtents);
+
+        // Choose value for each dimension based on the comparison.
+        d = XMVectorSelect(d, MinDelta, LessThanMin);
+        d = XMVectorSelect(d, MaxDelta, GreaterThanMax);
+
+        // Use a dot-product to square them and sum them together.
+        let d2: XMVECTOR = XMVector3Dot(d, d);
+        let SphereRadiusSq: XMVECTOR = XMVectorMultiply(SphereRadius, SphereRadius);
+
+        if (XMVector4Greater(d2, SphereRadiusSq)) {
+            return DISJOINT;
+        }
+
+        // See if we are completely inside the box
+        let SMin: XMVECTOR = XMVectorSubtract(SphereCenter, SphereRadius);
+        let SMax: XMVECTOR = XMVectorAdd(SphereCenter, SphereRadius);
+
+        return if (XMVector3InBounds(SMin, BoxExtents) && XMVector3InBounds(SMax, BoxExtents)) { CONTAINS } else { INTERSECTS };
     }
 }
 
@@ -1112,8 +2304,14 @@ impl Contains<&BoundingBox> for BoundingOrientedBox {
     /// Tests whether the BoundingOrientedBox contains a specified BoundingBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-contains(constboundingbox_)>
-    fn Contains(&self, _box: &BoundingBox) -> ContainmentType {
-        todo!()
+    fn Contains(&self, box_: &BoundingBox) -> ContainmentType {
+        // Make the axis aligned box oriented and do an OBB vs OBB test.
+        let obox = BoundingOrientedBox {
+            Center: box_.Center,
+            Extents: box_.Extents,
+            Orientation: XMFLOAT4::set(0.0, 0.0, 0.0, 1.0),
+        };
+        return self.Contains(&obox);
     }
 }
 
@@ -1121,8 +2319,40 @@ impl Contains<&BoundingOrientedBox> for BoundingOrientedBox {
     /// Tests whether the BoundingOrientedBox contains the specified BoundingOrientedBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-contains(constboundingorientedbox_)>
-    fn Contains(&self, _box: &BoundingOrientedBox) -> ContainmentType {
-        todo!()
+    fn Contains(&self, box_: &BoundingOrientedBox) -> ContainmentType {
+        if (!self.Intersects(box_)) {
+            return DISJOINT;
+        }
+
+        // Load the boxes
+        let aCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let aExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+        let aOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        debug_assert!(internal::XMQuaternionIsUnit(aOrientation));
+
+        let bCenter: XMVECTOR = XMLoadFloat3(&box_.Center);
+        let bExtents: XMVECTOR = XMLoadFloat3(&box_.Extents);
+        let bOrientation: XMVECTOR = XMLoadFloat4(&box_.Orientation);
+
+        debug_assert!(internal::XMQuaternionIsUnit(bOrientation));
+
+        let offset: XMVECTOR = XMVectorSubtract(bCenter, aCenter);
+
+        for i in 0..BoundingOrientedBox::CORNER_COUNT
+        {
+            // Cb = rotate( bExtents * corneroffset[i], bOrientation ) + bcenter
+            // Ca = invrotate( Cb - aCenter, aOrientation )
+
+            let mut C: XMVECTOR = XMVectorAdd(XMVector3Rotate(XMVectorMultiply(bExtents, g_BoxOffset[i].v()), bOrientation), offset);
+            C = XMVector3InverseRotate(C, aOrientation);
+
+            if (!XMVector3InBounds(C, aExtents)) {
+                return INTERSECTS;
+            }
+        }
+
+        return CONTAINS;
     }
 }
 
@@ -1130,8 +2360,31 @@ impl Contains<&BoundingFrustum> for BoundingOrientedBox {
     /// Tests whether the BoundingOrientedBox contains the specified BoundingFrustum.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-contains(constboundingfrustum_)>
-    fn Contains(&self, _fr: &BoundingFrustum) -> ContainmentType {
-        todo!()
+    fn Contains(&self, fr: &BoundingFrustum) -> ContainmentType {
+        if (!fr.Intersects(self)) {
+            return DISJOINT;
+        }
+
+        let mut Corners: [XMFLOAT3; BoundingFrustum::CORNER_COUNT] = unsafe { uninitialized() };
+        fr.GetCorners(&mut Corners);
+
+        // Load the box
+        let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+        let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        debug_assert!(internal::XMQuaternionIsUnit(vOrientation));
+
+        for i in 0 .. BoundingFrustum::CORNER_COUNT
+        {
+            let C: XMVECTOR = XMVector3InverseRotate(XMVectorSubtract(XMLoadFloat3(&Corners[i]), vCenter), vOrientation);
+
+            if (!XMVector3InBounds(C, vExtents)) {
+                return INTERSECTS;
+            }
+        }
+
+        return CONTAINS;
     }
 }
 
@@ -1139,49 +2392,416 @@ impl Intersects<&BoundingSphere> for BoundingOrientedBox {
     /// Tests the BoundingOrientedBox for intersection with a BoundingSphere.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-intersects>
-    fn Intersects(&self, _sh: &BoundingSphere) -> bool { todo!() }
+    fn Intersects(&self, sh: &BoundingSphere) -> bool {
+        let mut SphereCenter: XMVECTOR = XMLoadFloat3(&sh.Center);
+        let SphereRadius: XMVECTOR = XMVectorReplicatePtr(&sh.Radius);
+
+        let BoxCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let BoxExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+        let BoxOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        debug_assert!(internal::XMQuaternionIsUnit(BoxOrientation));
+
+        // Transform the center of the sphere to be local to the box.
+        // BoxMin = -BoxExtents
+        // BoxMax = +BoxExtents
+        SphereCenter = XMVector3InverseRotate(XMVectorSubtract(SphereCenter, BoxCenter), BoxOrientation);
+
+        // Find the distance to the nearest point on the box.
+        // for each i in (x, y, z)
+        // if (SphereCenter(i) < BoxMin(i)) d2 += (SphereCenter(i) - BoxMin(i)) ^ 2
+        // else if (SphereCenter(i) > BoxMax(i)) d2 += (SphereCenter(i) - BoxMax(i)) ^ 2
+
+        let mut d: XMVECTOR = XMVectorZero();
+
+        // Compute d for each dimension.
+        let LessThanMin: XMVECTOR = XMVectorLess(SphereCenter, XMVectorNegate(BoxExtents));
+        let GreaterThanMax: XMVECTOR = XMVectorGreater(SphereCenter, BoxExtents);
+
+        let MinDelta: XMVECTOR = XMVectorAdd(SphereCenter, BoxExtents);
+        let MaxDelta: XMVECTOR = XMVectorSubtract(SphereCenter, BoxExtents);
+
+        // Choose value for each dimension based on the comparison.
+        d = XMVectorSelect(d, MinDelta, LessThanMin);
+        d = XMVectorSelect(d, MaxDelta, GreaterThanMax);
+
+        // Use a dot-product to square them and sum them together.
+        let d2: XMVECTOR = XMVector3Dot(d, d);
+
+        return if XMVector4LessOrEqual(d2, XMVectorMultiply(SphereRadius, SphereRadius)) { true } else { false };
+    }
 }
 
 impl Intersects<&BoundingBox> for BoundingOrientedBox {
     /// Tests the BoundingOrientedBox for intersection with a BoundingBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-intersects(constboundingbox_)>
-    fn Intersects(&self, _box: &BoundingBox) -> bool { todo!() }
+    fn Intersects(&self, box_: &BoundingBox) -> bool {
+        // Make the axis aligned box oriented and do an OBB vs OBB test.
+        let obox = BoundingOrientedBox {
+            Center: box_.Center,
+            Extents: box_.Extents,
+            Orientation: XMFLOAT4::set(0.0, 0.0, 0.0, 1.0),
+        };
+        return self.Intersects(&obox);
+    }
 }
 
 impl Intersects<&BoundingOrientedBox> for BoundingOrientedBox {
     /// Test the BoundingOrientedBox for intersection with a BoundingOrientedBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-intersects(constboundingorientedbox_)>
-    fn Intersects(&self, _box: &BoundingOrientedBox) -> bool { todo!() }
+    fn Intersects(&self, box_: &BoundingOrientedBox) -> bool {
+        // Build the 3x3 rotation matrix that defines the orientation of B relative to A.
+        let A_quat: XMVECTOR = XMLoadFloat4(&self.Orientation);
+        let B_quat: XMVECTOR = XMLoadFloat4(&box_.Orientation);
+
+        debug_assert!(internal::XMQuaternionIsUnit(A_quat));
+        debug_assert!(internal::XMQuaternionIsUnit(B_quat));
+
+        let Q: XMVECTOR = XMQuaternionMultiply(A_quat, XMQuaternionConjugate(B_quat));
+        let R: XMMATRIX = XMMatrixRotationQuaternion(Q);
+
+        // Compute the translation of B relative to A.
+        let A_cent: XMVECTOR = XMLoadFloat3(&self.Center);
+        let B_cent: XMVECTOR = XMLoadFloat3(&box_.Center);
+        let t: XMVECTOR = XMVector3InverseRotate(XMVectorSubtract(B_cent, A_cent), A_quat);
+
+        //
+        // h(A) = extents of A.
+        // h(B) = extents of B.
+        //
+        // a(u) = axes let A: of = (1,0,0), (0,1,0), (0,0,1)
+        // b(u) = axes of B relative let A: to = (r00,r10,r20), (r01,r11,r21), (r02,r12,r22)
+        //
+        // For each possible separating axis l:
+        //   d(A) = sum (let i: for = u,v,w) h(A)(i) * abs( a(i) dot l )
+        //   d(B) = sum (let i: for = u,v,w) h(B)(i) * abs( b(i) dot l )
+        //   if abs( t dot l ) > d(A) + d(B) then disjoint
+        //
+
+        // Load extents of A and B.
+        let h_A: XMVECTOR = XMLoadFloat3(&self.Extents);
+        let h_B: XMVECTOR = XMLoadFloat3(&box_.Extents);
+
+        // Rows. Note R[0,1,2]X.w = 0.
+        let R0X: XMVECTOR = unsafe { R.r[0] };
+        let R1X: XMVECTOR = unsafe { R.r[1] };
+        let R2X: XMVECTOR = unsafe { R.r[2] };
+
+        let R = XMMatrixTranspose(R);
+
+        // Columns. Note RX[0,1,2].w = 0.
+        let RX0: XMVECTOR = unsafe { R.r[0] };
+        let RX1: XMVECTOR = unsafe { R.r[1] };
+        let RX2: XMVECTOR = unsafe { R.r[2] };
+
+        // Absolute value of rows.
+        let AR0X: XMVECTOR = XMVectorAbs(R0X);
+        let AR1X: XMVECTOR = XMVectorAbs(R1X);
+        let AR2X: XMVECTOR = XMVectorAbs(R2X);
+
+        // Absolute value of columns.
+        let ARX0: XMVECTOR = XMVectorAbs(RX0);
+        let ARX1: XMVECTOR = XMVectorAbs(RX1);
+        let ARX2: XMVECTOR = XMVectorAbs(RX2);
+
+        // Test each of the 15 possible seperating axii.
+        //XMVECTOR d, d_A, d_B;
+        let mut d: XMVECTOR;
+        let mut d_A: XMVECTOR;
+        let mut d_B: XMVECTOR;
+
+        // l = a(u) = (1, 0, 0)
+        // t let l: dot = t.x
+        // d(A) = h(A).x
+        // d(B) = h(B) dot abs(r00, r01, r02)
+        d = XMVectorSplatX(t);
+        d_A = XMVectorSplatX(h_A);
+        d_B = XMVector3Dot(h_B, AR0X);
+        let mut NoIntersection: XMVECTOR = XMVectorGreater(XMVectorAbs(d), XMVectorAdd(d_A, d_B));
+
+        // l = a(v) = (0, 1, 0)
+        // t let l: dot = t.y
+        // d(A) = h(A).y
+        // d(B) = h(B) dot abs(r10, r11, r12)
+        d = XMVectorSplatY(t);
+        d_A = XMVectorSplatY(h_A);
+        d_B = XMVector3Dot(h_B, AR1X);
+        NoIntersection = XMVectorOrInt(NoIntersection,
+            XMVectorGreater(XMVectorAbs(d), XMVectorAdd(d_A, d_B)));
+
+        // l = a(w) = (0, 0, 1)
+        // t let l: dot = t.z
+        // d(A) = h(A).z
+        // d(B) = h(B) dot abs(r20, r21, r22)
+        d = XMVectorSplatZ(t);
+        d_A = XMVectorSplatZ(h_A);
+        d_B = XMVector3Dot(h_B, AR2X);
+        NoIntersection = XMVectorOrInt(NoIntersection,
+            XMVectorGreater(XMVectorAbs(d), XMVectorAdd(d_A, d_B)));
+
+        // l = b(u) = (r00, r10, r20)
+        // d(A) = h(A) dot abs(r00, r10, r20)
+        // d(B) = h(B).x
+        d = XMVector3Dot(t, RX0);
+        d_A = XMVector3Dot(h_A, ARX0);
+        d_B = XMVectorSplatX(h_B);
+        NoIntersection = XMVectorOrInt(NoIntersection,
+            XMVectorGreater(XMVectorAbs(d), XMVectorAdd(d_A, d_B)));
+
+        // l = b(v) = (r01, r11, r21)
+        // d(A) = h(A) dot abs(r01, r11, r21)
+        // d(B) = h(B).y
+        d = XMVector3Dot(t, RX1);
+        d_A = XMVector3Dot(h_A, ARX1);
+        d_B = XMVectorSplatY(h_B);
+        NoIntersection = XMVectorOrInt(NoIntersection,
+            XMVectorGreater(XMVectorAbs(d), XMVectorAdd(d_A, d_B)));
+
+        // l = b(w) = (r02, r12, r22)
+        // d(A) = h(A) dot abs(r02, r12, r22)
+        // d(B) = h(B).z
+        d = XMVector3Dot(t, RX2);
+        d_A = XMVector3Dot(h_A, ARX2);
+        d_B = XMVectorSplatZ(h_B);
+        NoIntersection = XMVectorOrInt(NoIntersection,
+            XMVectorGreater(XMVectorAbs(d), XMVectorAdd(d_A, d_B)));
+
+        // l = a(u) x b(u) = (0, -r20, r10)
+        // d(A) = h(A) dot abs(0, r20, r10)
+        // d(B) = h(B) dot abs(0, r02, r01)
+        d = XMVector3Dot(t, <(XM_PERMUTE_0W, XM_PERMUTE_1Z, XM_PERMUTE_0Y, XM_PERMUTE_0X)>::XMVectorPermute(RX0, XMVectorNegate(RX0)));
+        d_A = XMVector3Dot(h_A, <(XM_SWIZZLE_W, XM_SWIZZLE_Z, XM_SWIZZLE_Y, XM_SWIZZLE_X)>::XMVectorSwizzle(ARX0));
+        d_B = XMVector3Dot(h_B, <(XM_SWIZZLE_W, XM_SWIZZLE_Z, XM_SWIZZLE_Y, XM_SWIZZLE_X)>::XMVectorSwizzle(AR0X));
+        NoIntersection = XMVectorOrInt(NoIntersection,
+            XMVectorGreater(XMVectorAbs(d), XMVectorAdd(d_A, d_B)));
+
+        // l = a(u) x b(v) = (0, -r21, r11)
+        // d(A) = h(A) dot abs(0, r21, r11)
+        // d(B) = h(B) dot abs(r02, 0, r00)
+        d = XMVector3Dot(t, <(XM_PERMUTE_0W, XM_PERMUTE_1Z, XM_PERMUTE_0Y, XM_PERMUTE_0X)>::XMVectorPermute(RX1, XMVectorNegate(RX1)));
+        d_A = XMVector3Dot(h_A, <(XM_SWIZZLE_W, XM_SWIZZLE_Z, XM_SWIZZLE_Y, XM_SWIZZLE_X)>::XMVectorSwizzle(ARX1));
+        d_B = XMVector3Dot(h_B, <(XM_SWIZZLE_Z, XM_SWIZZLE_W, XM_SWIZZLE_X, XM_SWIZZLE_Y)>::XMVectorSwizzle(AR0X));
+        NoIntersection = XMVectorOrInt(NoIntersection,
+            XMVectorGreater(XMVectorAbs(d), XMVectorAdd(d_A, d_B)));
+
+        // l = a(u) x b(w) = (0, -r22, r12)
+        // d(A) = h(A) dot abs(0, r22, r12)
+        // d(B) = h(B) dot abs(r01, r00, 0)
+        d = XMVector3Dot(t, <(XM_PERMUTE_0W, XM_PERMUTE_1Z, XM_PERMUTE_0Y, XM_PERMUTE_0X)>::XMVectorPermute(RX2, XMVectorNegate(RX2)));
+        d_A = XMVector3Dot(h_A, <(XM_SWIZZLE_W, XM_SWIZZLE_Z, XM_SWIZZLE_Y, XM_SWIZZLE_X)>::XMVectorSwizzle(ARX2));
+        d_B = XMVector3Dot(h_B, <(XM_SWIZZLE_Y, XM_SWIZZLE_X, XM_SWIZZLE_W, XM_SWIZZLE_Z)>::XMVectorSwizzle(AR0X));
+        NoIntersection = XMVectorOrInt(NoIntersection,
+            XMVectorGreater(XMVectorAbs(d), XMVectorAdd(d_A, d_B)));
+
+        // l = a(v) x b(u) = (r20, 0, -r00)
+        // d(A) = h(A) dot abs(r20, 0, r00)
+        // d(B) = h(B) dot abs(0, r12, r11)
+        d = XMVector3Dot(t, <(XM_PERMUTE_0Z, XM_PERMUTE_0W, XM_PERMUTE_1X, XM_PERMUTE_0Y)>::XMVectorPermute(RX0, XMVectorNegate(RX0)));
+        d_A = XMVector3Dot(h_A, <(XM_SWIZZLE_Z, XM_SWIZZLE_W, XM_SWIZZLE_X, XM_SWIZZLE_Y)>::XMVectorSwizzle(ARX0));
+        d_B = XMVector3Dot(h_B, <(XM_SWIZZLE_W, XM_SWIZZLE_Z, XM_SWIZZLE_Y, XM_SWIZZLE_X)>::XMVectorSwizzle(AR1X));
+        NoIntersection = XMVectorOrInt(NoIntersection,
+            XMVectorGreater(XMVectorAbs(d), XMVectorAdd(d_A, d_B)));
+
+        // l = a(v) x b(v) = (r21, 0, -r01)
+        // d(A) = h(A) dot abs(r21, 0, r01)
+        // d(B) = h(B) dot abs(r12, 0, r10)
+        d = XMVector3Dot(t, <(XM_PERMUTE_0Z, XM_PERMUTE_0W, XM_PERMUTE_1X, XM_PERMUTE_0Y)>::XMVectorPermute(RX1, XMVectorNegate(RX1)));
+        d_A = XMVector3Dot(h_A, <(XM_SWIZZLE_Z, XM_SWIZZLE_W, XM_SWIZZLE_X, XM_SWIZZLE_Y)>::XMVectorSwizzle(ARX1));
+        d_B = XMVector3Dot(h_B, <(XM_SWIZZLE_Z, XM_SWIZZLE_W, XM_SWIZZLE_X, XM_SWIZZLE_Y)>::XMVectorSwizzle(AR1X));
+        NoIntersection = XMVectorOrInt(NoIntersection,
+            XMVectorGreater(XMVectorAbs(d), XMVectorAdd(d_A, d_B)));
+
+        // l = a(v) x b(w) = (r22, 0, -r02)
+        // d(A) = h(A) dot abs(r22, 0, r02)
+        // d(B) = h(B) dot abs(r11, r10, 0)
+        d = XMVector3Dot(t, <(XM_PERMUTE_0Z, XM_PERMUTE_0W, XM_PERMUTE_1X, XM_PERMUTE_0Y)>::XMVectorPermute(RX2, XMVectorNegate(RX2)));
+        d_A = XMVector3Dot(h_A, <(XM_SWIZZLE_Z, XM_SWIZZLE_W, XM_SWIZZLE_X, XM_SWIZZLE_Y)>::XMVectorSwizzle(ARX2));
+        d_B = XMVector3Dot(h_B, <(XM_SWIZZLE_Y, XM_SWIZZLE_X, XM_SWIZZLE_W, XM_SWIZZLE_Z)>::XMVectorSwizzle(AR1X));
+        NoIntersection = XMVectorOrInt(NoIntersection,
+            XMVectorGreater(XMVectorAbs(d), XMVectorAdd(d_A, d_B)));
+
+        // l = a(w) x b(u) = (-r10, r00, 0)
+        // d(A) = h(A) dot abs(r10, r00, 0)
+        // d(B) = h(B) dot abs(0, r22, r21)
+        d = XMVector3Dot(t, <(XM_PERMUTE_1Y, XM_PERMUTE_0X, XM_PERMUTE_0W, XM_PERMUTE_0Z)>::XMVectorPermute(RX0, XMVectorNegate(RX0)));
+        d_A = XMVector3Dot(h_A, <(XM_SWIZZLE_Y, XM_SWIZZLE_X, XM_SWIZZLE_W, XM_SWIZZLE_Z)>::XMVectorSwizzle(ARX0));
+        d_B = XMVector3Dot(h_B, <(XM_SWIZZLE_W, XM_SWIZZLE_Z, XM_SWIZZLE_Y, XM_SWIZZLE_X)>::XMVectorSwizzle(AR2X));
+        NoIntersection = XMVectorOrInt(NoIntersection,
+            XMVectorGreater(XMVectorAbs(d), XMVectorAdd(d_A, d_B)));
+
+        // l = a(w) x b(v) = (-r11, r01, 0)
+        // d(A) = h(A) dot abs(r11, r01, 0)
+        // d(B) = h(B) dot abs(r22, 0, r20)
+        d = XMVector3Dot(t, <(XM_PERMUTE_1Y, XM_PERMUTE_0X, XM_PERMUTE_0W, XM_PERMUTE_0Z)>::XMVectorPermute(RX1, XMVectorNegate(RX1)));
+        d_A = XMVector3Dot(h_A, <(XM_SWIZZLE_Y, XM_SWIZZLE_X, XM_SWIZZLE_W, XM_SWIZZLE_Z)>::XMVectorSwizzle(ARX1));
+        d_B = XMVector3Dot(h_B, <(XM_SWIZZLE_Z, XM_SWIZZLE_W, XM_SWIZZLE_X, XM_SWIZZLE_Y)>::XMVectorSwizzle(AR2X));
+        NoIntersection = XMVectorOrInt(NoIntersection,
+            XMVectorGreater(XMVectorAbs(d), XMVectorAdd(d_A, d_B)));
+
+        // l = a(w) x b(w) = (-r12, r02, 0)
+        // d(A) = h(A) dot abs(r12, r02, 0)
+        // d(B) = h(B) dot abs(r21, r20, 0)
+        d = XMVector3Dot(t, <(XM_PERMUTE_1Y, XM_PERMUTE_0X, XM_PERMUTE_0W, XM_PERMUTE_0Z)>::XMVectorPermute(RX2, XMVectorNegate(RX2)));
+        d_A = XMVector3Dot(h_A, <(XM_SWIZZLE_Y, XM_SWIZZLE_X, XM_SWIZZLE_W, XM_SWIZZLE_Z)>::XMVectorSwizzle(ARX2));
+        d_B = XMVector3Dot(h_B, <(XM_SWIZZLE_Y, XM_SWIZZLE_X, XM_SWIZZLE_W, XM_SWIZZLE_Z)>::XMVectorSwizzle(AR2X));
+        NoIntersection = XMVectorOrInt(NoIntersection,
+            XMVectorGreater(XMVectorAbs(d), XMVectorAdd(d_A, d_B)));
+
+        // No seperating axis found, boxes must intersect.
+        return if XMVector4NotEqualInt(NoIntersection, XMVectorTrueInt()) { true } else { false };
+    }
 }
 
 impl Intersects<&BoundingFrustum> for BoundingOrientedBox {
     /// Test the BoundingOrientedBox for intersection with a BoundingFrustum.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-intersects(constboundingfrustum_)>
-    fn Intersects(&self, _box: &BoundingFrustum) -> bool { todo!() }
+    fn Intersects(&self, fr: &BoundingFrustum) -> bool {
+        return fr.Intersects(self);
+    }
 }
 
 impl Intersects<Triangle> for BoundingOrientedBox {
     /// Tests the BoundingOrientedBox for intersection with a triangle.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-intersects(fxmvector_fxmvector_fxmvector)>
-    fn Intersects(&self, (_V0, _V1, _V2): Triangle) -> bool { todo!() }
+    fn Intersects(&self, (V0, V1, V2): Triangle) -> bool {
+        // Load the box center & orientation.
+        let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        // Transform the triangle vertices into the space of the box.
+        let TV0: XMVECTOR = XMVector3InverseRotate(XMVectorSubtract(V0, vCenter), vOrientation);
+        let TV1: XMVECTOR = XMVector3InverseRotate(XMVectorSubtract(V1, vCenter), vOrientation);
+        let TV2: XMVECTOR = XMVector3InverseRotate(XMVectorSubtract(V2, vCenter), vOrientation);
+
+        let mut box_: BoundingBox = unsafe { uninitialized() };
+        box_.Center = XMFLOAT3::set(0.0, 0.0, 0.0);
+        box_.Extents = self.Extents;
+
+        // Use the triangle vs axis aligned box intersection routine.
+        return box_.Intersects((TV0, TV1, TV2));
+    }
 }
 
-impl Intersects<Plane> for BoundingOrientedBox {
+impl Intersects<Plane, PlaneIntersectionType> for BoundingOrientedBox {
     /// Tests the BoundingOrientedBox for intersection with a Plane.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-intersects(fxmvector)>
-    fn Intersects(&self, _Plane: Plane) -> bool { todo!() }
+    fn Intersects(&self, Plane: Plane) -> PlaneIntersectionType {
+        debug_assert!(internal::XMPlaneIsUnit(Plane));
+
+        // Load the box.
+        let mut vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+        let BoxOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+    
+        debug_assert!(internal::XMQuaternionIsUnit(BoxOrientation));
+    
+        // Set w of the center to one so we can dot4 with a plane.
+        // TODO: template
+        vCenter = XMVectorInsert(vCenter, XMVectorSplatOne(), 0, 0, 0, 0, 1);
+    
+        // Build the 3x3 rotation matrix that defines the box axes.
+        let R: XMMATRIX = XMMatrixRotationQuaternion(BoxOrientation);
+    
+        unsafe {
+            let mut Outside: XMVECTOR = uninitialized();
+            let mut Inside: XMVECTOR = uninitialized();
+            internal::FastIntersectOrientedBoxPlane(vCenter, vExtents, R.r[0], R.r[1], R.r[2], Plane, &mut Outside, &mut Inside);
+        
+            // If the box is outside any plane it is outside.
+            if (XMVector4EqualInt(Outside, XMVectorTrueInt())) {
+                return FRONT;
+            }
+        
+            // If the box is inside all planes it is inside.
+            if (XMVector4EqualInt(Inside, XMVectorTrueInt())) {
+                return BACK;
+            }
+        }
+    
+        // The box is not inside all planes or outside a plane it intersects.
+        return INTERSECTING;        
+    }
 }
 
-impl Intersects<Ray> for BoundingOrientedBox {
+impl Intersects<RayMut<'_>> for BoundingOrientedBox {
     /// Tests the BoundingOrientedBox for intersection with a ray.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-intersects(fxmvector_fxmvector_float_)>
-    fn Intersects(&self, (_Origin, _Direction, _Dist): Ray) -> bool { todo!() }
+    fn Intersects(&self, (Origin, Direction, Dist): RayMut<'_>) -> bool {
+        unsafe {
+            debug_assert!(internal::XMVector3IsUnit(Direction));
+
+            const SelectY: XMVECTORU32 = XMVECTORU32 { u: [ XM_SELECT_0, XM_SELECT_1, XM_SELECT_0, XM_SELECT_0 ] };
+            const SelectZ: XMVECTORU32 = XMVECTORU32 { u: [ XM_SELECT_0, XM_SELECT_0, XM_SELECT_1, XM_SELECT_0 ] };
+
+            // Load the box.
+            let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+            let vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+            let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+            debug_assert!(internal::XMQuaternionIsUnit(vOrientation));
+
+            // Get the boxes normalized side directions.
+            let R: XMMATRIX = XMMatrixRotationQuaternion(vOrientation);
+
+            // Adjust ray origin to be relative to center of the box.
+            let TOrigin: XMVECTOR = XMVectorSubtract(vCenter, Origin);
+
+            // Compute the dot product againt each axis of the box.
+            let mut AxisDotOrigin: XMVECTOR = XMVector3Dot(R.r[0], TOrigin);
+            AxisDotOrigin = XMVectorSelect(AxisDotOrigin, XMVector3Dot(R.r[1], TOrigin), SelectY.v);
+            AxisDotOrigin = XMVectorSelect(AxisDotOrigin, XMVector3Dot(R.r[2], TOrigin), SelectZ.v);
+
+            let mut AxisDotDirection: XMVECTOR = XMVector3Dot(R.r[0], Direction);
+            AxisDotDirection = XMVectorSelect(AxisDotDirection, XMVector3Dot(R.r[1], Direction), SelectY.v);
+            AxisDotDirection = XMVectorSelect(AxisDotDirection, XMVector3Dot(R.r[2], Direction), SelectZ.v);
+
+            // if (fabs(AxisDotDirection) <= Epsilon) the ray is nearly parallel to the slab.
+            let IsParallel: XMVECTOR = XMVectorLessOrEqual(XMVectorAbs(AxisDotDirection), g_RayEpsilon.v);
+
+            // Test against all three axes simultaneously.
+            let InverseAxisDotDirection: XMVECTOR = XMVectorReciprocal(AxisDotDirection);
+            let t1: XMVECTOR = XMVectorMultiply(XMVectorSubtract(AxisDotOrigin, vExtents), InverseAxisDotDirection);
+            let t2: XMVECTOR = XMVectorMultiply(XMVectorAdd(AxisDotOrigin, vExtents), InverseAxisDotDirection);
+
+            // Compute the max of min(t1,t2) and the min of max(t1,t2) ensuring we don't
+            // use the results from any directions parallel to the slab.
+            let mut t_min: XMVECTOR = XMVectorSelect(XMVectorMin(t1, t2), g_FltMin.v, IsParallel);
+            let mut t_max: XMVECTOR = XMVectorSelect(XMVectorMax(t1, t2), g_FltMax.v, IsParallel);
+
+            // t_min.x = maximum( t_min.x, t_min.y, t_min.z );
+            // t_max.x = minimum( t_max.x, t_max.y, t_max.z );
+            t_min = XMVectorMax(t_min, XMVectorSplatY(t_min));  // x = max(x,y)
+            t_min = XMVectorMax(t_min, XMVectorSplatZ(t_min));  // x = max(max(x,y),z)
+            t_max = XMVectorMin(t_max, XMVectorSplatY(t_max));  // x = min(x,y)
+            t_max = XMVectorMin(t_max, XMVectorSplatZ(t_max));  // x = min(min(x,y),z)
+
+            // if ( t_min > t_max ) return false;
+            let mut NoIntersection: XMVECTOR = XMVectorGreater(XMVectorSplatX(t_min), XMVectorSplatX(t_max));
+
+            // if ( t_max < 0.0f ) return false;
+            NoIntersection = XMVectorOrInt(NoIntersection, XMVectorLess(XMVectorSplatX(t_max), XMVectorZero()));
+
+            // if (IsParallel && (-Extents > AxisDotOrigin || Extents < AxisDotOrigin)) return false;
+            let ParallelOverlap: XMVECTOR = XMVectorInBounds(AxisDotOrigin, vExtents);
+            NoIntersection = XMVectorOrInt(NoIntersection, XMVectorAndCInt(IsParallel, ParallelOverlap));
+
+            if (!internal::XMVector3AnyTrue(NoIntersection))
+            {
+                // Store the x-component to *pDist
+                XMStoreFloat(Dist, t_min);
+                return true;
+            }
+
+            *Dist = 0.0;
+            return false;
+        }
+    }
 }
 
 impl ContainedBy for BoundingOrientedBox {
@@ -1190,29 +2810,218 @@ impl ContainedBy for BoundingOrientedBox {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-containedby>
     fn ContainedBy(
         &self,
-        _Plane0: FXMVECTOR,
-        _Plane1: FXMVECTOR,
-        _Plane2: GXMVECTOR,
-        _Plane3: HXMVECTOR,
-        _Plane4: HXMVECTOR
+        Plane0: FXMVECTOR,
+        Plane1: FXMVECTOR,
+        Plane2: GXMVECTOR,
+        Plane3: HXMVECTOR,
+        Plane4: HXMVECTOR,
+        Plane5: HXMVECTOR,
     ) -> ContainmentType
     {
-        todo!()
+        // Load the box.
+        let mut vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+        let BoxOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        debug_assert!(internal::XMQuaternionIsUnit(BoxOrientation));
+
+        // Set w of the center to one so we can dot4 with a plane.
+        // TODO: template
+        vCenter = XMVectorInsert(vCenter, XMVectorSplatOne(), 0, 0, 0, 0, 1);
+
+        // Build the 3x3 rotation matrix that defines the box axes.
+        let R: XMMATRIX = XMMatrixRotationQuaternion(BoxOrientation);
+
+        unsafe { 
+            let mut Outside: XMVECTOR = uninitialized();
+            let mut Inside: XMVECTOR = uninitialized();
+
+            // Test against each plane.
+            internal::FastIntersectOrientedBoxPlane(vCenter, vExtents, R.r[0], R.r[1], R.r[2], Plane0, &mut Outside, &mut Inside);
+
+            let mut AnyOutside: XMVECTOR = Outside;
+            let mut AllInside: XMVECTOR = Inside;
+
+            internal::FastIntersectOrientedBoxPlane(vCenter, vExtents, R.r[0], R.r[1], R.r[2], Plane1, &mut Outside, &mut Inside);
+            AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+            AllInside = XMVectorAndInt(AllInside, Inside);
+
+            internal::FastIntersectOrientedBoxPlane(vCenter, vExtents, R.r[0], R.r[1], R.r[2], Plane2, &mut Outside, &mut Inside);
+            AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+            AllInside = XMVectorAndInt(AllInside, Inside);
+
+            internal::FastIntersectOrientedBoxPlane(vCenter, vExtents, R.r[0], R.r[1], R.r[2], Plane3, &mut Outside, &mut Inside);
+            AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+            AllInside = XMVectorAndInt(AllInside, Inside);
+
+            internal::FastIntersectOrientedBoxPlane(vCenter, vExtents, R.r[0], R.r[1], R.r[2], Plane4, &mut Outside, &mut Inside);
+            AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+            AllInside = XMVectorAndInt(AllInside, Inside);
+
+            internal::FastIntersectOrientedBoxPlane(vCenter, vExtents, R.r[0], R.r[1], R.r[2], Plane5, &mut Outside, &mut Inside);
+            AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+            AllInside = XMVectorAndInt(AllInside, Inside);
+
+            // If the box is outside any plane it is outside.
+            if (XMVector4EqualInt(AnyOutside, XMVectorTrueInt())) {
+                return DISJOINT;
+            }
+
+            // If the box is inside all planes it is inside.
+            if (XMVector4EqualInt(AllInside, XMVectorTrueInt())) {
+                return CONTAINS;
+            }
+        }
+
+        // The box is not inside all planes or outside a plane, it may intersect.
+        return INTERSECTS;
     }
 }
 
+// Create oriented bounding box from axis-aligned bounding box
 impl CreateFromBoundingBox for BoundingOrientedBox {
     /// Creates a BoundingBox large enough to contain the a specified BoundingSphere.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-CreateFromBoundingBox>
-    fn CreateFromBoundingBox(_Out: &mut Self, _box: &BoundingBox) { todo!() }
+    fn CreateFromBoundingBox(Out: &mut Self, box_: &BoundingBox) {
+        Out.Center = box_.Center;
+        Out.Extents = box_.Extents;
+        Out.Orientation = XMFLOAT4::set(0.0, 0.0, 0.0, 1.0);
+    }
 }
 
+//-----------------------------------------------------------------------------
+// Find the approximate minimum oriented bounding box containing a set of
+// points.  Exact computation of minimum oriented bounding box is possible but
+// is slower and requires a more complex algorithm.
+// The algorithm works by computing the inertia tensor of the points and then
+// using the eigenvectors of the intertia tensor as the axes of the box.
+// Computing the intertia tensor of the convex hull of the points will usually
+// result in better bounding box but the computation is more complex.
+// Exact computation of the minimum oriented bounding box is possible but the
+// best know algorithm is O(N^3) and is significanly more complex to implement.
+//-----------------------------------------------------------------------------
 impl CreateFromPoints for BoundingOrientedBox {
     /// Creates a new BoundingOrientedBox from a list of points.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-createfrompoints>
-    fn CreateFromPoints<'a>(_Out: &mut Self, _pPoints: impl Iterator<Item=&'a XMFLOAT3>) { todo!() }
+    fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl Iterator<Item=&'a XMFLOAT3> + Clone) {
+        // TODO: Determine the best way to handle an empty set of points
+        
+        // assert(Count > 0);
+        // assert(pPoints != nullptr);
+
+        let mut CenterOfMass: XMVECTOR = XMVectorZero();
+
+        // Compute the center of mass and inertia tensor of the points.
+        //for (let i: size_t = 0; i < Count; ++i)
+        for point in pPoints.clone()
+        {
+            //let Point: XMVECTOR = XMLoadFloat3(reinterpret_cast<const XMFLOAT3*>(reinterpret_cast<const uint8_t*>(pPoints) + i * Stride));
+            let Point: XMVECTOR = XMLoadFloat3(point);
+
+            CenterOfMass = XMVectorAdd(CenterOfMass, Point);
+        }
+
+        // TODO: ExactSizeIterator
+        let Count = pPoints.clone().count();
+
+        CenterOfMass = XMVectorMultiply(CenterOfMass, XMVectorReciprocal(XMVectorReplicate(Count as f32)));
+
+        // Compute the inertia tensor of the points around the center of mass.
+        // Using the center of mass is not strictly necessary, but will hopefully
+        // improve the stability of finding the eigenvectors.
+        let mut XX_YY_ZZ: XMVECTOR = XMVectorZero();
+        let mut XY_XZ_YZ: XMVECTOR = XMVectorZero();
+
+        //for (let i: size_t = 0; i < Count; ++i)
+        for point in pPoints.clone()
+        {
+            let Point: XMVECTOR = XMVectorSubtract(XMLoadFloat3(point), CenterOfMass);
+
+            XX_YY_ZZ = XMVectorAdd(XX_YY_ZZ, XMVectorMultiply(Point, Point));
+
+            let XXY: XMVECTOR = <(XM_SWIZZLE_X, XM_SWIZZLE_X, XM_SWIZZLE_Y, XM_SWIZZLE_W)>::XMVectorSwizzle(Point);
+            let YZZ: XMVECTOR = <(XM_SWIZZLE_Y, XM_SWIZZLE_Z, XM_SWIZZLE_Z, XM_SWIZZLE_W)>::XMVectorSwizzle(Point);
+
+            XY_XZ_YZ = XMVectorAdd(XY_XZ_YZ, XMVectorMultiply(XXY, YZZ));
+        }
+
+        let mut v1: XMVECTOR = unsafe { uninitialized() };
+        let mut v2: XMVECTOR = unsafe { uninitialized() };
+        let mut v3: XMVECTOR = unsafe { uninitialized() };
+
+        // Compute the eigenvectors of the inertia tensor.
+        internal::CalculateEigenVectorsFromCovarianceMatrix(XMVectorGetX(XX_YY_ZZ), XMVectorGetY(XX_YY_ZZ),
+            XMVectorGetZ(XX_YY_ZZ),
+            XMVectorGetX(XY_XZ_YZ), XMVectorGetY(XY_XZ_YZ),
+            XMVectorGetZ(XY_XZ_YZ),
+            &mut v1, &mut v2, &mut v3);
+
+        // Put them in a matrix.
+        let mut R: XMMATRIX = unsafe { uninitialized() };
+
+        unsafe {
+            R.r[0] = XMVectorSetW(v1, 0.0);
+            R.r[1] = XMVectorSetW(v2, 0.0);
+            R.r[2] = XMVectorSetW(v3, 0.0);
+            R.r[3] = g_XMIdentityR3.v;
+        }
+
+        // Multiply by -1 to convert the matrix into a right handed coordinate
+        // system (Det ~= 1) in case the eigenvectors form a left handed
+        // coordinate system (Det ~= -1) because XMQuaternionRotationMatrix only
+        // works on right handed matrices.
+        let Det: XMVECTOR = XMMatrixDeterminant(R);
+
+        if (XMVector4Less(Det, XMVectorZero()))
+        {
+            unsafe {
+                R.r[0] = XMVectorMultiply(R.r[0], g_XMNegativeOne.v);
+                R.r[1] = XMVectorMultiply(R.r[1], g_XMNegativeOne.v);
+                R.r[2] = XMVectorMultiply(R.r[2], g_XMNegativeOne.v);
+            }
+        }
+
+        // Get the rotation quaternion from the matrix.
+        let mut vOrientation: XMVECTOR = XMQuaternionRotationMatrix(R);
+
+        // Make sure it is normal (in case the vectors are slightly non-orthogonal).
+        vOrientation = XMQuaternionNormalize(vOrientation);
+
+        // Rebuild the rotation matrix from the quaternion.
+        R = XMMatrixRotationQuaternion(vOrientation);
+
+        // Build the rotation into the rotated space.
+        let InverseR: XMMATRIX = XMMatrixTranspose(R);
+
+        // Find the minimum OBB using the eigenvectors as the axes.
+        let mut vMin: XMVECTOR = XMVectorZero();
+        let mut vMax: XMVECTOR = XMVectorZero();
+
+        //for (let i: size_t = 1; i < Count; ++i)
+        for (i, point) in pPoints.clone().enumerate()
+        {
+            let Point: XMVECTOR = XMLoadFloat3(point);
+
+            if i == 0 {
+                vMin = XMVector3TransformNormal(Point, InverseR);
+                vMax = vMin;
+            } else {
+                vMin = XMVectorMin(vMin, Point);
+                vMax = XMVectorMax(vMax, Point);
+            }
+        }
+
+        // Rotate the center into world space.
+        let mut vCenter: XMVECTOR = XMVectorScale(XMVectorAdd(vMin, vMax), 0.5);
+        vCenter = XMVector3TransformNormal(vCenter, R);
+
+        // Store center, extents, and orientation.
+        XMStoreFloat3(&mut Out.Center, vCenter);
+        XMStoreFloat3(&mut Out.Extents, XMVectorScale(XMVectorSubtract(vMax, vMin), 0.5));
+        XMStoreFloat4(&mut Out.Orientation, vOrientation);
+    }
 }
 
 // BoundingFrustum ----------------------------------------------------------------
@@ -1340,18 +3149,23 @@ impl ContainedBy for BoundingFrustum {
         _Plane1: FXMVECTOR,
         _Plane2: GXMVECTOR,
         _Plane3: HXMVECTOR,
-        _Plane4: HXMVECTOR
+        _Plane4: HXMVECTOR,
+        _Plane5: HXMVECTOR,
     ) -> ContainmentType
     {
         todo!()
     }
 }
 
-impl BoundingFrustum {
-    pub fn CreateFromMatrix(_Out: &mut Self, _Projection: FXMMATRIX) {
+impl CreateFromMatrix for BoundingFrustum {
+    fn CreateFromMatrix(_Out: &mut Self, _Projection: FXMMATRIX) {
         todo!()
     }
+}
+
+impl BoundingFrustum {
     pub fn GetPlanes(
+        &self,
         _NearPlane: Option<&mut XMVECTOR>,
         _FarPlane: Option<&mut XMVECTOR>,
         _RightPlane: Option<&mut XMVECTOR>,
@@ -1360,6 +3174,47 @@ impl BoundingFrustum {
         _BottomPlane: Option<&mut XMVECTOR>,
     ) {
         todo!()
+    }
+
+    pub fn GetCorners(&self, Corners: &mut [XMFLOAT3; BoundingFrustum::CORNER_COUNT]) {
+        // assert(Corners != nullptr);
+
+        // Load origin and orientation of the frustum.
+        let vOrigin: XMVECTOR = XMLoadFloat3(&self.Origin);
+        let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        debug_assert!(internal::XMQuaternionIsUnit(vOrientation));
+
+        // Build the corners of the frustum.
+        let vRightTop: XMVECTOR = XMVectorSet(self.RightSlope, self.TopSlope, 1.0, 0.0);
+        let vRightBottom: XMVECTOR = XMVectorSet(self.RightSlope, self.BottomSlope, 1.0, 0.0);
+        let vLeftTop: XMVECTOR = XMVectorSet(self.LeftSlope, self.TopSlope, 1.0, 0.0);
+        let vLeftBottom: XMVECTOR = XMVectorSet(self.LeftSlope, self.BottomSlope, 1.0, 0.0);
+        let vNear: XMVECTOR = XMVectorReplicatePtr(&self.Near);
+        let vFar: XMVECTOR = XMVectorReplicatePtr(&self.Far);
+
+        // Returns 8 corners position of bounding frustum.
+        //     Near    Far
+        //    0----1  4----5
+        //    |    |  |    |
+        //    |    |  |    |
+        //    3----2  7----6
+
+        let mut vCorners: [XMVECTOR; BoundingFrustum::CORNER_COUNT] = unsafe { uninitialized() };
+        vCorners[0] = XMVectorMultiply(vLeftTop, vNear);
+        vCorners[1] = XMVectorMultiply(vRightTop, vNear);
+        vCorners[2] = XMVectorMultiply(vRightBottom, vNear);
+        vCorners[3] = XMVectorMultiply(vLeftBottom, vNear);
+        vCorners[4] = XMVectorMultiply(vLeftTop, vFar);
+        vCorners[5] = XMVectorMultiply(vRightTop, vFar);
+        vCorners[6] = XMVectorMultiply(vRightBottom, vFar);
+        vCorners[7] = XMVectorMultiply(vLeftBottom, vFar);
+
+        for i in 0.. BoundingFrustum::CORNER_COUNT
+        {
+            let C: XMVECTOR = XMVectorAdd(XMVector3Rotate(vCorners[i], vOrientation), vOrigin);
+            XMStoreFloat3(&mut Corners[i], C);
+        }
     }
 }
 

@@ -659,6 +659,31 @@ pub fn XMLoadFloat4x4(
 // TODO: XMStoreInt
 // TODO: XMStoreFloat
 
+/// Stores an XMVECTOR in a float.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMStoreFloat>
+#[inline]
+pub fn XMStoreFloat(
+    pDestination: &mut f32,
+    V: FXMVECTOR,
+)
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    {
+        *pDestination = XMVectorGetX(V);
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(all(_XM_SSE_INTRINSICS_))]
+    unsafe {
+        _mm_store_ss(pDestination, V);
+    }
+}
+
 /// Stores an XMVECTOR in a 2-element uint32_t array.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMStoreInt2>
