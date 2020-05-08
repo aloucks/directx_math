@@ -129,46 +129,6 @@ pub trait Intersects<T, U = bool> {
     fn Intersects(&self, other: T) -> U;
 }
 
-pub trait ContainedBy {
-    fn ContainedBy(
-        &self,
-        Plane0: FXMVECTOR,
-        Plane1: FXMVECTOR,
-        Plane2: GXMVECTOR,
-        Plane3: HXMVECTOR,
-        Plane4: HXMVECTOR,
-        Plane5: HXMVECTOR,
-    ) -> ContainmentType;
-}
-
-pub trait CreateMerged: Sized {
-    fn CreateMerged(Out: &mut Self, B1: &Self, B2: &Self);
-}
-
-pub trait CreateFromBoundingBox: Sized {
-    fn CreateFromBoundingBox(Out: &mut Self, box_: &BoundingBox);
-}
-
-pub trait CreateFromBoundingOrientedBox: Sized {
-    fn CreateFromBoundingBox(Out: &mut Self, box_: &BoundingOrientedBox);
-}
-
-pub trait CreateFromPoints: Sized {
-    fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl Iterator<Item=&'a XMFLOAT3> + Clone);
-}
-
-pub trait CreateFromFrustum: Sized {
-    fn CreateFromFrustum(Out: &mut Self, fr: &BoundingFrustum);
-}
-
-pub trait CreateFromSphere: Sized {
-    fn CreateFromSphere(Out: &mut Self, fr: &BoundingSphere);
-}
-
-pub trait CreateFromMatrix: Sized {
-    fn CreateFromMatrix(Out: &mut Self, Projection: FXMMATRIX);
-}
-
 const g_BoxOffset: [XMVECTORF32; BoundingBox::CORNER_COUNT] = [
     XMVECTORF32 { f: [ -1.0, -1.0,  1.0, 0.0 ] },
     XMVECTORF32 { f: [  1.0, -1.0,  1.0, 0.0 ] },
@@ -1107,11 +1067,11 @@ impl Intersects<RayMut<'_>> for BoundingSphere {
     }
 }
 
-impl ContainedBy for BoundingSphere {
+impl BoundingSphere {
     /// Tests whether the BoundingSphere is contained by the specified frustum.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-containedby>
-    fn ContainedBy(
+    pub fn ContainedBy(
         &self,
         Plane0: FXMVECTOR,
         Plane1: FXMVECTOR,
@@ -1173,11 +1133,11 @@ impl ContainedBy for BoundingSphere {
     }
 }
 
-impl CreateMerged for BoundingSphere {
+impl BoundingSphere {
     /// Creates a BoundingSphere that contains the two specified BoundingSphere objects.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-createmerged>
-    fn CreateMerged(Out: &mut Self, S1: &Self, S2: &Self) {
+    pub fn CreateMerged(Out: &mut Self, S1: &Self, S2: &Self) {
         let Center1: XMVECTOR = XMLoadFloat3(&S1.Center);
         let r1: f32 = S1.Radius;
 
@@ -1218,22 +1178,20 @@ impl CreateMerged for BoundingSphere {
 }
 
 
-impl CreateFromBoundingBox for BoundingSphere {
+impl BoundingSphere {
     /// Creates a BoundingSphere containing the specified BoundingBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-createfromboundingbox>
-    fn CreateFromBoundingBox(Out: &mut Self, box_: &BoundingBox) {
+    pub fn CreateFromBoundingBox(Out: &mut Self, box_: &BoundingBox) {
         Out.Center = box_.Center;
         let vExtents: XMVECTOR = XMLoadFloat3(&box_.Extents);
         Out.Radius = XMVectorGetX(XMVector3Length(vExtents));
     }
-}
 
-impl CreateFromBoundingOrientedBox for BoundingSphere {
     /// Creates a BoundingSphere containing the specified BoundingOrientedBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-createfromboundingbox(boundingsphere__constboundingorientedbox_)>
-    fn CreateFromBoundingBox(Out: &mut Self, box_: &BoundingOrientedBox) {
+    pub fn CreateFromBoundingOrientedBox(Out: &mut Self, box_: &BoundingOrientedBox) {
         // Bounding box orientation is irrelevant because a sphere is rotationally invariant
         Out.Center = box_.Center;
         let vExtents: XMVECTOR = XMLoadFloat3(&box_.Extents);
@@ -1241,11 +1199,11 @@ impl CreateFromBoundingOrientedBox for BoundingSphere {
     }
 }
 
-impl CreateFromPoints for BoundingSphere {
+impl BoundingSphere {
     /// Creates a new BoundingSphere from a list of points.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-createfrompoints>
-    fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl Iterator<Item=&'a XMFLOAT3> + Clone) {
+    pub fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl IntoIterator<Item=&'a XMFLOAT3> + Clone) {
         // assert(Count > 0);
         // assert(pPoints);
 
@@ -1254,15 +1212,15 @@ impl CreateFromPoints for BoundingSphere {
 
         // MinX = MaxX = MinY = MaxY = MinZ = MaxZ = XMLoadFloat3(pPoints);
 
-        let mut MinX = g_XMZero.v();
-        let mut MaxX = g_XMZero.v();
-        let mut MinY = g_XMZero.v();
-        let mut MaxY = g_XMZero.v();
-        let mut MinZ = g_XMZero.v();
-        let mut MaxZ = g_XMZero.v();
+        let mut MinX = g_XMInfinity.v();
+        let mut MaxX = g_XMNegInfinity.v();
+        let mut MinY = g_XMInfinity.v();
+        let mut MaxY = g_XMNegInfinity.v();
+        let mut MinZ = g_XMInfinity.v();
+        let mut MaxZ = g_XMNegInfinity.v();
 
         // NOTE: We clone the iterator because it's reused down below.
-        for (i, pPoint) in pPoints.clone().enumerate()
+        for (i, pPoint) in pPoints.clone().into_iter().enumerate()
         {
             // XMVECTOR Point = XMLoadFloat3(reinterpret_cast<const XMFLOAT3*>(reinterpret_cast<const uint8_t*>(pPoints) + i * Stride));
             let Point = XMLoadFloat3(pPoint);
@@ -1350,7 +1308,7 @@ impl CreateFromPoints for BoundingSphere {
         }
 
         // Add any points not inside the sphere.
-        for pPoint in pPoints
+        for pPoint in pPoints.into_iter()
         {
             let Point: XMVECTOR = XMLoadFloat3(pPoint);
 
@@ -1373,36 +1331,38 @@ impl CreateFromPoints for BoundingSphere {
 
 #[test]
 fn test_BoundingSphere_CreateFromPoints() {
-    let points = [
+    let mut bounds: BoundingSphere = unsafe { uninitialized() };
+    BoundingSphere::CreateFromPoints(&mut bounds, &[
         XMFLOAT3 { x:  1.0, y: 0.0, z:  1.0 },
         XMFLOAT3 { x: -1.0, y: 0.0, z: -1.0 },
-    ];
+    ]);
 
-    let mut out: BoundingSphere = unsafe { uninitialized() };
-    BoundingSphere::CreateFromPoints(&mut out, points.iter());
+    assert_eq!(0.0, bounds.Center.x);
+    assert_eq!(0.0, bounds.Center.y);
+    assert_eq!(0.0, bounds.Center.z);
+    assert_eq!(2.0f32.sqrt(), bounds.Radius);
 
-    assert_eq!(0.0, out.Center.x);
-    assert_eq!(0.0, out.Center.y);
-    assert_eq!(0.0, out.Center.z);
-    assert_eq!(2.0f32.sqrt(), out.Radius);
+    assert_eq!(ContainmentType::CONTAINS, bounds.Contains(XMVectorSet(0.5, 0.5, 0.5, 0.0)));
+    assert_eq!(ContainmentType::DISJOINT, bounds.Contains(XMVectorSet(3.0, 3.0, 3.0, 0.0)));
 
-    let points = [];
+    let mut bounds: BoundingSphere = unsafe { uninitialized() };
+    BoundingSphere::CreateFromPoints(&mut bounds, &[]);
 
-    let mut out: BoundingSphere = unsafe { uninitialized() };
-    BoundingSphere::CreateFromPoints(&mut out, points.iter());
+    // NOTE: The DirectXMath source asserts points.len > 0
+    assert!(bounds.Center.x.is_nan());
+    assert!(bounds.Center.y.is_nan());
+    assert!(bounds.Center.z.is_nan());
+    assert!(bounds.Radius.is_infinite());
 
-    assert_eq!(0.0, out.Center.x);
-    assert_eq!(0.0, out.Center.y);
-    assert_eq!(0.0, out.Center.z);
-    assert_eq!(0.0, out.Radius); // NOTE: The DirectXMath source asserts points.len > 0
+    assert_eq!(ContainmentType::DISJOINT, bounds.Contains(XMVectorSet(0.0, 0.0, 0.0, 0.0)));
 }
 
-impl CreateFromFrustum for BoundingSphere {
+impl BoundingSphere {
     /// Creates a BoundingSphere containing the specified BoundingFrustum.
-    fn CreateFromFrustum(Out: &mut Self, fr: &BoundingFrustum) {
+    pub fn CreateFromFrustum(Out: &mut Self, fr: &BoundingFrustum) {
         let mut Corners: [XMFLOAT3; BoundingFrustum::CORNER_COUNT] = unsafe { uninitialized() };
         fr.GetCorners(&mut Corners);
-        BoundingSphere::CreateFromPoints(Out, Corners.iter())
+        BoundingSphere::CreateFromPoints(Out, &Corners)
     }
 }
 
@@ -2006,11 +1966,11 @@ impl Intersects<RayMut<'_>> for BoundingBox {
     }
 }
 
-impl ContainedBy for BoundingBox {
+impl BoundingBox {
     /// Tests whether the BoundingBox is contained by the specified frustum.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-containedby>
-    fn ContainedBy(
+    pub fn ContainedBy(
         &self,
         Plane0: FXMVECTOR,
         Plane1: FXMVECTOR,
@@ -2072,11 +2032,11 @@ impl ContainedBy for BoundingBox {
     }
 }
 
-impl CreateMerged for BoundingBox {
+impl BoundingBox {
     /// Creates a BoundingBox that contains the two specified BoundingBox objects.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-createmerged>
-    fn CreateMerged(Out: &mut Self, b1: &Self, b2: &Self) {
+    pub fn CreateMerged(Out: &mut Self, b1: &Self, b2: &Self) {
         let b1Center: XMVECTOR = XMLoadFloat3(&b1.Center);
         let b1Extents: XMVECTOR = XMLoadFloat3(&b1.Extents);
 
@@ -2096,7 +2056,7 @@ impl CreateMerged for BoundingBox {
     }
 }
 
-impl CreateFromSphere for BoundingBox {
+impl BoundingBox {
     /// Creates a BoundingBox large enough to contain the a specified BoundingSphere.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingbox-createfromsphere>
@@ -2114,18 +2074,18 @@ impl CreateFromSphere for BoundingBox {
     }
 }
 
-impl CreateFromPoints for BoundingBox {
+impl BoundingBox {
     /// Creates a new BoundingBox from a list of points.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-createfrompoints>
-    fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl Iterator<Item=&'a XMFLOAT3>) {
+    pub fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl Iterator<Item=&'a XMFLOAT3>) {
         // assert(Count > 0);
         // assert(pPoints);
 
         // Find the minimum and maximum x, y, and z
         // NOTE: We default to Zero since we don't have the Count > 0 assertion
-        let mut vMin: XMVECTOR = g_XMZero.v();
-        let mut vMax: XMVECTOR = g_XMZero.v();
+        let mut vMin: XMVECTOR = g_XMInfinity.v();
+        let mut vMax: XMVECTOR = g_XMNegInfinity.v();
 
         for (i, pPoint) in pPoints.enumerate()
         {
@@ -2808,11 +2768,11 @@ impl Intersects<RayMut<'_>> for BoundingOrientedBox {
     }
 }
 
-impl ContainedBy for BoundingOrientedBox {
+impl BoundingOrientedBox {
     /// Tests whether the BoundingOrientedBox is contained by the specified frustum.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-containedby>
-    fn ContainedBy(
+    pub fn ContainedBy(
         &self,
         Plane0: FXMVECTOR,
         Plane1: FXMVECTOR,
@@ -2883,11 +2843,11 @@ impl ContainedBy for BoundingOrientedBox {
 }
 
 // Create oriented bounding box from axis-aligned bounding box
-impl CreateFromBoundingBox for BoundingOrientedBox {
+impl BoundingOrientedBox {
     /// Creates a BoundingBox large enough to contain the a specified BoundingSphere.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-CreateFromBoundingBox>
-    fn CreateFromBoundingBox(Out: &mut Self, box_: &BoundingBox) {
+    pub fn CreateFromBoundingBox(Out: &mut Self, box_: &BoundingBox) {
         Out.Center = box_.Center;
         Out.Extents = box_.Extents;
         Out.Orientation = XMFLOAT4::set(0.0, 0.0, 0.0, 1.0);
@@ -2905,12 +2865,18 @@ impl CreateFromBoundingBox for BoundingOrientedBox {
 // Exact computation of the minimum oriented bounding box is possible but the
 // best know algorithm is O(N^3) and is significanly more complex to implement.
 //-----------------------------------------------------------------------------
-impl CreateFromPoints for BoundingOrientedBox {
+impl BoundingOrientedBox {
     /// Creates a new BoundingOrientedBox from a list of points.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-createfrompoints>
-    fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl Iterator<Item=&'a XMFLOAT3> + Clone) {
-        // TODO: Determine the best way to handle an empty set of points
+    pub fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl IntoIterator<Item=&'a XMFLOAT3> + Clone) {
+        let Count = pPoints.clone().into_iter().count();
+
+        if Count == 0 {
+            Out.Extents = XMFLOAT3::set(std::f32::NAN, std::f32::NAN, std::f32::NAN);
+            Out.Orientation = XMFLOAT4::set(0.0, 0.0, 0.0, 1.0);
+            return;
+        }
 
         // assert(Count > 0);
         // assert(pPoints != nullptr);
@@ -2919,16 +2885,13 @@ impl CreateFromPoints for BoundingOrientedBox {
 
         // Compute the center of mass and inertia tensor of the points.
         //for (let i: size_t = 0; i < Count; ++i)
-        for point in pPoints.clone()
+        for point in pPoints.clone().into_iter()
         {
             //let Point: XMVECTOR = XMLoadFloat3(reinterpret_cast<const XMFLOAT3*>(reinterpret_cast<const uint8_t*>(pPoints) + i * Stride));
             let Point: XMVECTOR = XMLoadFloat3(point);
 
             CenterOfMass = XMVectorAdd(CenterOfMass, Point);
         }
-
-        // TODO: ExactSizeIterator
-        let Count = pPoints.clone().count();
 
         CenterOfMass = XMVectorMultiply(CenterOfMass, XMVectorReciprocal(XMVectorReplicate(Count as f32)));
 
@@ -2939,7 +2902,7 @@ impl CreateFromPoints for BoundingOrientedBox {
         let mut XY_XZ_YZ: XMVECTOR = XMVectorZero();
 
         //for (let i: size_t = 0; i < Count; ++i)
-        for point in pPoints.clone()
+        for point in pPoints.clone().into_iter()
         {
             let Point: XMVECTOR = XMVectorSubtract(XMLoadFloat3(point), CenterOfMass);
 
@@ -3004,7 +2967,7 @@ impl CreateFromPoints for BoundingOrientedBox {
         let mut vMax: XMVECTOR = XMVectorZero();
 
         //for (let i: size_t = 1; i < Count; ++i)
-        for (i, point) in pPoints.clone().enumerate()
+        for (i, point) in pPoints.into_iter().enumerate()
         {
             let Point: XMVECTOR = XMLoadFloat3(point);
 
@@ -3026,6 +2989,22 @@ impl CreateFromPoints for BoundingOrientedBox {
         XMStoreFloat3(&mut Out.Extents, XMVectorScale(XMVectorSubtract(vMax, vMin), 0.5));
         XMStoreFloat4(&mut Out.Orientation, vOrientation);
     }
+}
+
+#[test]
+fn test_BoundingOrientedBox_CreateFromPoints() {
+    let mut bounds: BoundingOrientedBox = unsafe { uninitialized() };
+    BoundingOrientedBox::CreateFromPoints(&mut bounds, &[
+        XMFLOAT3::set(-1.0, -1.0, -1.0),
+        XMFLOAT3::set( 1.0,  1.0,  1.0),
+    ]);
+    assert_eq!(ContainmentType::CONTAINS, bounds.Contains(XMVectorSet(0.0, 0.0, 0.0, 0.0)));
+    assert_eq!(ContainmentType::CONTAINS, bounds.Contains(XMVectorSet(1.0, 1.0, 1.0, 0.0)));
+    assert_eq!(ContainmentType::DISJOINT, bounds.Contains(XMVectorSet(2.0, 2.0, 2.0, 0.0)));
+
+    let mut bounds: BoundingOrientedBox = unsafe { uninitialized() };
+    BoundingOrientedBox::CreateFromPoints(&mut bounds, &[]);
+    assert_eq!(ContainmentType::DISJOINT, bounds.Contains(XMVectorSet(0.0, 0.0, 0.0, 0.0)));
 }
 
 // BoundingFrustum ----------------------------------------------------------------
@@ -4306,11 +4285,11 @@ impl Intersects<RayMut<'_>> for BoundingFrustum {
     }
 }
 
-impl ContainedBy for BoundingFrustum {
+impl BoundingFrustum {
     /// Tests whether the BoundingFrustum is contained by the specified frustum.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-containedby>
-    fn ContainedBy(
+    pub fn ContainedBy(
         &self,
         Plane0: FXMVECTOR,
         Plane1: FXMVECTOR,
@@ -4413,8 +4392,8 @@ impl ContainedBy for BoundingFrustum {
     }
 }
 
-impl CreateFromMatrix for BoundingFrustum {
-    fn CreateFromMatrix(Out: &mut Self, Projection: FXMMATRIX) {
+impl BoundingFrustum {
+    pub fn CreateFromMatrix(Out: &mut Self, Projection: FXMMATRIX) {
         // Corners of the projection frustum in homogenous space.
         const HomogenousPoints: [XMVECTORF32; 6] =
         [
