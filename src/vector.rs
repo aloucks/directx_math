@@ -7836,6 +7836,18 @@ pub fn XMVector3Dot(
         return _mm_dp_ps(V1, V2, 0x7f);
     }
 
+    // Using `bench_BoundingOrientedBox_Intersects_BoundingOrientedBox` as a measure, the SSE3
+    // intrinsics actually perform worse. We'll add it for completeness, but disabled for now.
+    // #[cfg(all(_XM_SSE3_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
+    // unsafe {
+    //     let mut vTemp: XMVECTOR = _mm_mul_ps(V1, V2);
+    //     vTemp = _mm_and_ps(vTemp, g_XMMask3.v);
+    //     vTemp = _mm_hadd_ps(vTemp, vTemp);
+    //     return _mm_hadd_ps(vTemp, vTemp);
+    // }
+    //
+    // #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE3_INTRINSICS_), not(_XM_SSE4_INTRINSICS_)))]
+    
     #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
     unsafe {
         // Perform the dot product
