@@ -3,7 +3,7 @@
 use crate::*;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum ContainmentType {
     DISJOINT = 0,
     INTERSECTS = 1,
@@ -11,7 +11,7 @@ pub enum ContainmentType {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum PlaneIntersectionType {
     FRONT = 0,
     INTERSECTING = 1,
@@ -1399,7 +1399,11 @@ fn test_BoundingSphere_CreateFromPoints() {
 
 impl CreateFromFrustum for BoundingSphere {
     /// Creates a BoundingSphere containing the specified BoundingFrustum.
-    fn CreateFromFrustum(_Out: &mut Self, _fr: &BoundingFrustum) { todo!() }
+    fn CreateFromFrustum(Out: &mut Self, fr: &BoundingFrustum) {
+        let mut Corners: [XMFLOAT3; BoundingFrustum::CORNER_COUNT] = unsafe { uninitialized() };
+        fr.GetCorners(&mut Corners);
+        BoundingSphere::CreateFromPoints(Out, Corners.iter())
+    }
 }
 
 
@@ -3028,29 +3032,156 @@ impl CreateFromPoints for BoundingOrientedBox {
 
 impl MatrixTransform for BoundingFrustum {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-transform>
-    fn Transform(&self, _Out: &mut Self, _M: FXMMATRIX) {
-        todo!()
+    fn Transform(&self, Out: &mut Self, M: FXMMATRIX) {
+        // Load the frustum.
+        let mut vOrigin: XMVECTOR = XMLoadFloat3(&self.Origin);
+        let mut vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        debug_assert!(internal::XMQuaternionIsUnit(vOrientation));
+
+        unsafe {
+            // Composite the frustum rotation and the transform rotation
+            let mut nM: XMMATRIX = uninitialized();
+            nM.r[0] = XMVector3Normalize(M.r[0]);
+            nM.r[1] = XMVector3Normalize(M.r[1]);
+            nM.r[2] = XMVector3Normalize(M.r[2]);
+            nM.r[3] = g_XMIdentityR3.v;
+            let Rotation: XMVECTOR = XMQuaternionRotationMatrix(nM);
+            vOrientation = XMQuaternionMultiply(vOrientation, Rotation);
+
+            // Transform the center.
+            vOrigin = XMVector3Transform(vOrigin, M);
+
+            // Store the frustum.
+            XMStoreFloat3(&mut Out.Origin, vOrigin);
+            XMStoreFloat4(&mut Out.Orientation, vOrientation);
+
+            // Scale the near and far distances (the slopes remain the same).
+            let dX: XMVECTOR = XMVector3Dot(M.r[0], M.r[0]);
+            let dY: XMVECTOR = XMVector3Dot(M.r[1], M.r[1]);
+            let dZ: XMVECTOR = XMVector3Dot(M.r[2], M.r[2]);
+
+            let d: XMVECTOR = XMVectorMax(dX, XMVectorMax(dY, dZ));
+            let Scale: f32 = sqrtf(XMVectorGetX(d));
+
+            Out.Near = self.Near * Scale;
+            Out.Far = self.Far * Scale;
+        }
+
+        // Copy the slopes.
+        Out.RightSlope = self.RightSlope;
+        Out.LeftSlope = self.LeftSlope;
+        Out.TopSlope = self.TopSlope;
+        Out.BottomSlope = self.BottomSlope;
     }
 }
 
 impl DecomposedTransform for BoundingFrustum {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-transform(BoundingFrustum__float_fxmvector_fxmvector)>
-    fn Transform(&self, _Out: &mut Self, _Scale: f32, _Rotation: FXMVECTOR, _Translation: FXMVECTOR) {
-        todo!()
+    fn Transform(&self, Out: &mut Self, Scale: f32, Rotation: FXMVECTOR, Translation: FXMVECTOR) {
+        debug_assert!(internal::XMQuaternionIsUnit(Rotation));
+
+        // Load the frustum.
+        let mut vOrigin: XMVECTOR = XMLoadFloat3(&self.Origin);
+        let mut vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        debug_assert!(internal::XMQuaternionIsUnit(vOrientation));
+
+        // Composite the frustum rotation and the transform rotation.
+        vOrientation = XMQuaternionMultiply(vOrientation, Rotation);
+
+        // Transform the origin.
+        vOrigin = XMVectorAdd(XMVector3Rotate(XMVectorScale(vOrigin, Scale), Rotation), Translation);
+
+        // Store the frustum.
+        XMStoreFloat3(&mut Out.Origin, vOrigin);
+        XMStoreFloat4(&mut Out.Orientation, vOrientation);
+
+        // Scale the near and far distances (the slopes remain the same).
+        Out.Near = self.Near * Scale;
+        Out.Far = self.Far * Scale;
+
+        // Copy the slopes.
+        Out.RightSlope = self.RightSlope;
+        Out.LeftSlope = self.LeftSlope;
+        Out.TopSlope = self.TopSlope;
+        Out.BottomSlope = self.BottomSlope;
     }
 }
 
 impl Contains<Point> for BoundingFrustum {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-contains>
-    fn Contains(&self, _Point: Point) -> ContainmentType {
-        todo!()
+    fn Contains(&self, Point: Point) -> ContainmentType {
+        // Build frustum planes.
+        let mut Planes: [XMVECTOR; 6] = unsafe { uninitialized() };
+        Planes[0] = XMVectorSet(0.0, 0.0, -1.0, self.Near);
+        Planes[1] = XMVectorSet(0.0, 0.0, 1.0, -self.Far);
+        Planes[2] = XMVectorSet(1.0, 0.0, -self.RightSlope, 0.0);
+        Planes[3] = XMVectorSet(-1.0, 0.0, self.LeftSlope, 0.0);
+        Planes[4] = XMVectorSet(0.0, 1.0, -self.TopSlope, 0.0);
+        Planes[5] = XMVectorSet(0.0, -1.0, self.BottomSlope, 0.0);
+
+        // Load origin and orientation.
+        let vOrigin: XMVECTOR = XMLoadFloat3(&self.Origin);
+        let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        debug_assert!(internal::XMQuaternionIsUnit(vOrientation));
+
+        // Transform point into local space of frustum.
+        let mut TPoint: XMVECTOR = XMVector3InverseRotate(XMVectorSubtract(Point, vOrigin), vOrientation);
+
+        // Set w to one.
+        // TODO: template
+        TPoint = XMVectorInsert(TPoint, XMVectorSplatOne(), 0, 0, 0, 0, 1);
+
+        let Zero: XMVECTOR = XMVectorZero();
+        let mut Outside: XMVECTOR = Zero;
+
+        // Test point against each plane of the frustum.
+        //for (let i: size_t = 0; i < 6; ++i)
+        for i in 0 .. 6
+        {
+            let Dot: XMVECTOR = XMVector4Dot(TPoint, Planes[i]);
+            Outside = XMVectorOrInt(Outside, XMVectorGreater(Dot, Zero));
+        }
+
+        return if XMVector4NotEqualInt(Outside, XMVectorTrueInt()) { CONTAINS } else { DISJOINT };
     }
 }
 
 impl Contains<Triangle> for BoundingFrustum {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-contains(fxmvector_fxmvector_fxmvector)>
-    fn Contains(&self, (_V0, _V1, _V2): Triangle) -> ContainmentType {
-        todo!()
+    fn Contains(&self, (V0, V1, V2): Triangle) -> ContainmentType {
+        // Load origin and orientation of the frustum.
+        let vOrigin: XMVECTOR = XMLoadFloat3(&self.Origin);
+        let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        // Create 6 planes (do it inline to encourage use of registers)
+        let mut NearPlane: XMVECTOR = XMVectorSet(0.0, 0.0, -1.0, self.Near);
+        NearPlane = internal::XMPlaneTransform(NearPlane, vOrientation, vOrigin);
+        NearPlane = XMPlaneNormalize(NearPlane);
+
+        let mut FarPlane: XMVECTOR = XMVectorSet(0.0, 0.0, 1.0, -self.Far);
+        FarPlane = internal::XMPlaneTransform(FarPlane, vOrientation, vOrigin);
+        FarPlane = XMPlaneNormalize(FarPlane);
+
+        let mut RightPlane: XMVECTOR = XMVectorSet(1.0, 0.0, -self.RightSlope, 0.0);
+        RightPlane = internal::XMPlaneTransform(RightPlane, vOrientation, vOrigin);
+        RightPlane = XMPlaneNormalize(RightPlane);
+
+        let mut LeftPlane: XMVECTOR = XMVectorSet(-1.0, 0.0, self.LeftSlope, 0.0);
+        LeftPlane = internal::XMPlaneTransform(LeftPlane, vOrientation, vOrigin);
+        LeftPlane = XMPlaneNormalize(LeftPlane);
+
+        let mut TopPlane: XMVECTOR = XMVectorSet(0.0, 1.0, -self.TopSlope, 0.0);
+        TopPlane = internal::XMPlaneTransform(TopPlane, vOrientation, vOrigin);
+        TopPlane = XMPlaneNormalize(TopPlane);
+
+        let mut BottomPlane: XMVECTOR = XMVectorSet(0.0, -1.0, self.BottomSlope, 0.0);
+        BottomPlane = internal::XMPlaneTransform(BottomPlane, vOrientation, vOrigin);
+        BottomPlane = XMPlaneNormalize(BottomPlane);
+
+        return triangle_tests::ContainedBy(V0, V1, V2, NearPlane, FarPlane, RightPlane, &LeftPlane, &TopPlane, &BottomPlane);
     }
 }
 
@@ -3058,8 +3189,37 @@ impl Contains<&BoundingSphere> for BoundingFrustum {
     /// Tests whether the BoundingFrustum contains a specified BoundingSphere.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-contains(constboundingsphere_)>
-    fn Contains(&self, _sh: &BoundingSphere) -> ContainmentType {
-        todo!()
+    fn Contains(&self, sh: &BoundingSphere) -> ContainmentType {
+        // Load origin and orientation of the frustum.
+        let vOrigin: XMVECTOR = XMLoadFloat3(&self.Origin);
+        let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        // Create 6 planes (do it inline to encourage use of registers)
+        let mut NearPlane: XMVECTOR = XMVectorSet(0.0, 0.0, -1.0, self.Near);
+        NearPlane = internal::XMPlaneTransform(NearPlane, vOrientation, vOrigin);
+        NearPlane = XMPlaneNormalize(NearPlane);
+
+        let mut FarPlane: XMVECTOR = XMVectorSet(0.0, 0.0, 1.0, -self.Far);
+        FarPlane = internal::XMPlaneTransform(FarPlane, vOrientation, vOrigin);
+        FarPlane = XMPlaneNormalize(FarPlane);
+
+        let mut RightPlane: XMVECTOR = XMVectorSet(1.0, 0.0, -self.RightSlope, 0.0);
+        RightPlane = internal::XMPlaneTransform(RightPlane, vOrientation, vOrigin);
+        RightPlane = XMPlaneNormalize(RightPlane);
+
+        let mut LeftPlane: XMVECTOR = XMVectorSet(-1.0, 0.0, self.LeftSlope, 0.0);
+        LeftPlane = internal::XMPlaneTransform(LeftPlane, vOrientation, vOrigin);
+        LeftPlane = XMPlaneNormalize(LeftPlane);
+
+        let mut TopPlane: XMVECTOR = XMVectorSet(0.0, 1.0, -self.TopSlope, 0.0);
+        TopPlane = internal::XMPlaneTransform(TopPlane, vOrientation, vOrigin);
+        TopPlane = XMPlaneNormalize(TopPlane);
+
+        let mut BottomPlane: XMVECTOR = XMVectorSet(0.0, -1.0, self.BottomSlope, 0.0);
+        BottomPlane = internal::XMPlaneTransform(BottomPlane, vOrientation, vOrigin);
+        BottomPlane = XMPlaneNormalize(BottomPlane);
+
+        return sh.ContainedBy(NearPlane, FarPlane, RightPlane, LeftPlane, TopPlane, BottomPlane);
     }
 }
 
@@ -3067,8 +3227,37 @@ impl Contains<&BoundingBox> for BoundingFrustum {
     /// Tests whether the BoundingFrustum contains a specified BoundingBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-contains(constboundingbox_)>
-    fn Contains(&self, _box: &BoundingBox) -> ContainmentType {
-        todo!()
+    fn Contains(&self, box_: &BoundingBox) -> ContainmentType {
+        // Load origin and orientation of the frustum.
+        let vOrigin: XMVECTOR = XMLoadFloat3(&self.Origin);
+        let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        // Create 6 planes (do it inline to encourage use of registers)
+        let mut NearPlane: XMVECTOR = XMVectorSet(0.0, 0.0, -1.0, self.Near);
+        NearPlane = internal::XMPlaneTransform(NearPlane, vOrientation, vOrigin);
+        NearPlane = XMPlaneNormalize(NearPlane);
+
+        let mut FarPlane: XMVECTOR = XMVectorSet(0.0, 0.0, 1.0, -self.Far);
+        FarPlane = internal::XMPlaneTransform(FarPlane, vOrientation, vOrigin);
+        FarPlane = XMPlaneNormalize(FarPlane);
+
+        let mut RightPlane: XMVECTOR = XMVectorSet(1.0, 0.0, -self.RightSlope, 0.0);
+        RightPlane = internal::XMPlaneTransform(RightPlane, vOrientation, vOrigin);
+        RightPlane = XMPlaneNormalize(RightPlane);
+
+        let mut LeftPlane: XMVECTOR = XMVectorSet(-1.0, 0.0, self.LeftSlope, 0.0);
+        LeftPlane = internal::XMPlaneTransform(LeftPlane, vOrientation, vOrigin);
+        LeftPlane = XMPlaneNormalize(LeftPlane);
+
+        let mut TopPlane: XMVECTOR = XMVectorSet(0.0, 1.0, -self.TopSlope, 0.0);
+        TopPlane = internal::XMPlaneTransform(TopPlane, vOrientation, vOrigin);
+        TopPlane = XMPlaneNormalize(TopPlane);
+
+        let mut BottomPlane: XMVECTOR = XMVectorSet(0.0, -1.0, self.BottomSlope, 0.0);
+        BottomPlane = internal::XMPlaneTransform(BottomPlane, vOrientation, vOrigin);
+        BottomPlane = XMPlaneNormalize(BottomPlane);
+
+        return box_.ContainedBy(NearPlane, FarPlane, RightPlane, LeftPlane, TopPlane, BottomPlane);
     }
 }
 
@@ -3076,8 +3265,37 @@ impl Contains<&BoundingOrientedBox> for BoundingFrustum {
     /// Tests whether the BoundingFrustum contains the specified BoundingOrientedBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-contains(constboundingorientedbox_)>
-    fn Contains(&self, _box: &BoundingOrientedBox) -> ContainmentType {
-        todo!()
+    fn Contains(&self, box_: &BoundingOrientedBox) -> ContainmentType {
+        // Load origin and orientation of the frustum.
+        let vOrigin: XMVECTOR = XMLoadFloat3(&self.Origin);
+        let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        // Create 6 planes (do it inline to encourage use of registers)
+        let mut NearPlane: XMVECTOR = XMVectorSet(0.0, 0.0, -1.0, self.Near);
+        NearPlane = internal::XMPlaneTransform(NearPlane, vOrientation, vOrigin);
+        NearPlane = XMPlaneNormalize(NearPlane);
+
+        let mut FarPlane: XMVECTOR = XMVectorSet(0.0, 0.0, 1.0, -self.Far);
+        FarPlane = internal::XMPlaneTransform(FarPlane, vOrientation, vOrigin);
+        FarPlane = XMPlaneNormalize(FarPlane);
+
+        let mut RightPlane: XMVECTOR = XMVectorSet(1.0, 0.0, -self.RightSlope, 0.0);
+        RightPlane = internal::XMPlaneTransform(RightPlane, vOrientation, vOrigin);
+        RightPlane = XMPlaneNormalize(RightPlane);
+
+        let mut LeftPlane: XMVECTOR = XMVectorSet(-1.0, 0.0, self.LeftSlope, 0.0);
+        LeftPlane = internal::XMPlaneTransform(LeftPlane, vOrientation, vOrigin);
+        LeftPlane = XMPlaneNormalize(LeftPlane);
+
+        let mut TopPlane: XMVECTOR = XMVectorSet(0.0, 1.0, -self.TopSlope, 0.0);
+        TopPlane = internal::XMPlaneTransform(TopPlane, vOrientation, vOrigin);
+        TopPlane = XMPlaneNormalize(TopPlane);
+
+        let mut BottomPlane: XMVECTOR = XMVectorSet(0.0, -1.0, self.BottomSlope, 0.0);
+        BottomPlane = internal::XMPlaneTransform(BottomPlane, vOrientation, vOrigin);
+        BottomPlane = XMPlaneNormalize(BottomPlane);
+
+        return box_.ContainedBy(NearPlane, FarPlane, RightPlane, LeftPlane, TopPlane, BottomPlane);
     }
 }
 
@@ -3085,58 +3303,1007 @@ impl Contains<&BoundingFrustum> for BoundingFrustum {
     /// Tests whether the BoundingFrustum contains the specified BoundingFrustum.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-contains(constboundingfrustum_)>
-    fn Contains(&self, _fr: &BoundingFrustum) -> ContainmentType {
-        todo!()
+    fn Contains(&self, fr: &BoundingFrustum) -> ContainmentType {
+        // Load origin and orientation of the frustum.
+        let vOrigin: XMVECTOR = XMLoadFloat3(&self.Origin);
+        let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        // Create 6 planes (do it inline to encourage use of registers)
+        let mut NearPlane: XMVECTOR = XMVectorSet(0.0, 0.0, -1.0, self.Near);
+        NearPlane = internal::XMPlaneTransform(NearPlane, vOrientation, vOrigin);
+        NearPlane = XMPlaneNormalize(NearPlane);
+
+        let mut FarPlane: XMVECTOR = XMVectorSet(0.0, 0.0, 1.0, -self.Far);
+        FarPlane = internal::XMPlaneTransform(FarPlane, vOrientation, vOrigin);
+        FarPlane = XMPlaneNormalize(FarPlane);
+
+        let mut RightPlane: XMVECTOR = XMVectorSet(1.0, 0.0, -self.RightSlope, 0.0);
+        RightPlane = internal::XMPlaneTransform(RightPlane, vOrientation, vOrigin);
+        RightPlane = XMPlaneNormalize(RightPlane);
+
+        let mut LeftPlane: XMVECTOR = XMVectorSet(-1.0, 0.0, self.LeftSlope, 0.0);
+        LeftPlane = internal::XMPlaneTransform(LeftPlane, vOrientation, vOrigin);
+        LeftPlane = XMPlaneNormalize(LeftPlane);
+
+        let mut TopPlane: XMVECTOR = XMVectorSet(0.0, 1.0, -self.TopSlope, 0.0);
+        TopPlane = internal::XMPlaneTransform(TopPlane, vOrientation, vOrigin);
+        TopPlane = XMPlaneNormalize(TopPlane);
+
+        let mut BottomPlane: XMVECTOR = XMVectorSet(0.0, -1.0, self.BottomSlope, 0.0);
+        BottomPlane = internal::XMPlaneTransform(BottomPlane, vOrientation, vOrigin);
+        BottomPlane = XMPlaneNormalize(BottomPlane);
+
+        return fr.ContainedBy(NearPlane, FarPlane, RightPlane, LeftPlane, TopPlane, BottomPlane);
     }
 }
 
+//-----------------------------------------------------------------------------
+// Exact sphere vs frustum test.  The algorithm first checks the sphere against
+// the planes of the frustum, then if the plane checks were indeterminate finds
+// the nearest feature (plane, line, point) on the frustum to the center of the
+// sphere and compares the distance to the nearest feature to the radius of the
+// sphere
+//-----------------------------------------------------------------------------
 impl Intersects<&BoundingSphere> for BoundingFrustum {
     /// Tests the BoundingFrustum for intersection with a BoundingSphere.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-intersects>
-    fn Intersects(&self, _sh: &BoundingSphere) -> bool { todo!() }
+    fn Intersects(&self, sh: &BoundingSphere) -> bool {
+        let Zero: XMVECTOR = XMVectorZero();
+
+        // Build the frustum planes.
+        let mut Planes: [XMVECTOR; 6] = unsafe { uninitialized() };
+        Planes[0] = XMVectorSet(0.0, 0.0, -1.0, self.Near);
+        Planes[1] = XMVectorSet(0.0, 0.0, 1.0, -self.Far);
+        Planes[2] = XMVectorSet(1.0, 0.0, -self.RightSlope, 0.0);
+        Planes[3] = XMVectorSet(-1.0, 0.0, self.LeftSlope, 0.0);
+        Planes[4] = XMVectorSet(0.0, 1.0, -self.TopSlope, 0.0);
+        Planes[5] = XMVectorSet(0.0, -1.0, self.BottomSlope, 0.0);
+    
+        // Normalize the planes so we can compare to the sphere radius.
+        Planes[2] = XMVector3Normalize(Planes[2]);
+        Planes[3] = XMVector3Normalize(Planes[3]);
+        Planes[4] = XMVector3Normalize(Planes[4]);
+        Planes[5] = XMVector3Normalize(Planes[5]);
+    
+        // Load origin and orientation of the frustum.
+        let vOrigin: XMVECTOR = XMLoadFloat3(&self.Origin);
+        let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+    
+        debug_assert!(internal::XMQuaternionIsUnit(vOrientation));
+    
+        // Load the sphere.
+        let mut vCenter: XMVECTOR = XMLoadFloat3(&sh.Center);
+        let vRadius: XMVECTOR = XMVectorReplicatePtr(&sh.Radius);
+    
+        // Transform the center of the sphere into the local space of frustum.
+        vCenter = XMVector3InverseRotate(XMVectorSubtract(vCenter, vOrigin), vOrientation);
+    
+        // Set w of the center to one so we can dot4 with the plane.
+        vCenter = XMVectorInsert(vCenter, XMVectorSplatOne(), 0, 0, 0, 0, 1);
+    
+        // Check against each plane of the frustum.
+        let mut Outside: XMVECTOR = XMVectorFalseInt();
+        let mut InsideAll: XMVECTOR = XMVectorTrueInt();
+        let mut CenterInsideAll: XMVECTOR = XMVectorTrueInt();
+    
+        let mut Dist: [XMVECTOR; 6] = unsafe { uninitialized() };
+    
+        //for (let i: size_t = 0; i < 6; ++i)
+        for i in 0 .. 6
+        {
+            Dist[i] = XMVector4Dot(vCenter, Planes[i]);
+    
+            // Outside the plane?
+            Outside = XMVectorOrInt(Outside, XMVectorGreater(Dist[i], vRadius));
+    
+            // Fully inside the plane?
+            InsideAll = XMVectorAndInt(InsideAll, XMVectorLessOrEqual(Dist[i], XMVectorNegate(vRadius)));
+    
+            // Check if the center is inside the plane.
+            CenterInsideAll = XMVectorAndInt(CenterInsideAll, XMVectorLessOrEqual(Dist[i], Zero));
+        }
+    
+        // If the sphere is outside any of the planes it is outside.
+        if (XMVector4EqualInt(Outside, XMVectorTrueInt())) {
+            return false;
+        }
+    
+        // If the sphere is inside all planes it is fully inside.
+        if (XMVector4EqualInt(InsideAll, XMVectorTrueInt())) {
+            return true;
+        }
+    
+        // If the center of the sphere is inside all planes and the sphere intersects
+        // one or more planes then it must intersect.
+        if (XMVector4EqualInt(CenterInsideAll, XMVectorTrueInt())) {
+            return true;
+        }
+    
+        // The sphere may be outside the frustum or intersecting the frustum.
+        // Find the nearest feature (face, edge, or corner) on the frustum
+        // to the sphere.
+    
+        // The faces adjacent to each face are:
+        //static const size_t adjacent_faces[6][4] =
+        const adjacent_faces: [[usize; 4]; 6] = [
+            [ 2, 3, 4, 5 ],    // 0
+            [ 2, 3, 4, 5 ],    // 1
+            [ 0, 1, 4, 5 ],    // 2
+            [ 0, 1, 4, 5 ],    // 3
+            [ 0, 1, 2, 3 ],    // 4
+            [ 0, 1, 2, 3 ]
+        ];  // 5
+    
+        let mut Intersects: XMVECTOR = XMVectorFalseInt();
+    
+        // Check to see if the nearest feature is one of the planes.
+        //for (let i: size_t = 0; i < 6; ++i)
+        for i in 0 .. 6
+        {
+            // Find the nearest point on the plane to the center of the sphere.
+            let mut Point: XMVECTOR = XMVectorNegativeMultiplySubtract(Planes[i], Dist[i], vCenter);
+    
+            // Set w of the point to one.
+            Point = XMVectorInsert(Point, XMVectorSplatOne(), 0, 0, 0, 0, 1);
+    
+            // If the point is inside the face (inside the adjacent planes) then
+            // this plane is the nearest feature.
+            let mut InsideFace: XMVECTOR = XMVectorTrueInt();
+    
+            //for (let j: size_t = 0; j < 4; j++)
+            for j in 0 .. 4
+            {
+                let plane_index: usize = adjacent_faces[i][j];
+    
+                InsideFace = XMVectorAndInt(InsideFace,
+                    XMVectorLessOrEqual(XMVector4Dot(Point, Planes[plane_index]), Zero));
+            }
+    
+            // Since we have already checked distance from the plane we know that the
+            // sphere must intersect if this plane is the nearest feature.
+            Intersects = XMVectorOrInt(Intersects,
+                XMVectorAndInt(XMVectorGreater(Dist[i], Zero), InsideFace));
+        }
+    
+        if (XMVector4EqualInt(Intersects, XMVectorTrueInt())) {
+            return true;
+        }
+    
+        // Build the corners of the frustum.
+        let vRightTop: XMVECTOR = XMVectorSet(self.RightSlope, self.TopSlope, 1.0, 0.0);
+        let vRightBottom: XMVECTOR = XMVectorSet(self.RightSlope, self.BottomSlope, 1.0, 0.0);
+        let vLeftTop: XMVECTOR = XMVectorSet(self.LeftSlope, self.TopSlope, 1.0, 0.0);
+        let vLeftBottom: XMVECTOR = XMVectorSet(self.LeftSlope, self.BottomSlope, 1.0, 0.0);
+        let vNear: XMVECTOR = XMVectorReplicatePtr(&self.Near);
+        let vFar: XMVECTOR = XMVectorReplicatePtr(&self.Far);
+    
+        let mut Corners: [XMVECTOR; BoundingFrustum::CORNER_COUNT] = unsafe { uninitialized() };
+        Corners[0] = XMVectorMultiply(vRightTop, vNear);
+        Corners[1] = XMVectorMultiply(vRightBottom, vNear);
+        Corners[2] = XMVectorMultiply(vLeftTop, vNear);
+        Corners[3] = XMVectorMultiply(vLeftBottom, vNear);
+        Corners[4] = XMVectorMultiply(vRightTop, vFar);
+        Corners[5] = XMVectorMultiply(vRightBottom, vFar);
+        Corners[6] = XMVectorMultiply(vLeftTop, vFar);
+        Corners[7] = XMVectorMultiply(vLeftBottom, vFar);
+    
+        // The Edges are:
+        //static const size_t edges[12][2] =
+        const edges: [[usize; 2]; 12] =
+        [
+            [ 0, 1 ], [ 2, 3 ], [ 0, 2 ], [ 1, 3 ],    // Near plane
+            [ 4, 5 ], [ 6, 7 ], [ 4, 6 ], [ 5, 7 ],    // Far plane
+            [ 0, 4 ], [ 1, 5 ], [ 2, 6 ], [ 3, 7 ],
+        ]; // Near to far
+    
+        let RadiusSq: XMVECTOR = XMVectorMultiply(vRadius, vRadius);
+    
+        // Check to see if the nearest feature is one of the edges (or corners).
+        //for (let i: size_t = 0; i < 12; ++i)
+        for i in 0 .. 12
+        {
+            let ei0: usize = edges[i][0];
+            let ei1: usize = edges[i][1];
+    
+            // Find the nearest point on the edge to the center of the sphere.
+            // The corners of the frustum are included as the endpoints of the edges.
+            let Point: XMVECTOR = internal::PointOnLineSegmentNearestPoint(Corners[ei0], Corners[ei1], vCenter);
+    
+            let Delta: XMVECTOR = XMVectorSubtract(vCenter, Point);
+    
+            let DistSq: XMVECTOR = XMVector3Dot(Delta, Delta);
+    
+            // If the distance to the center of the sphere to the point is less than
+            // the radius of the sphere then it must intersect.
+            Intersects = XMVectorOrInt(Intersects, XMVectorLessOrEqual(DistSq, RadiusSq));
+        }
+    
+        if (XMVector4EqualInt(Intersects, XMVectorTrueInt())) {
+            return true;
+        }
+    
+        // The sphere must be outside the frustum.
+        return false;        
+    }
 }
 
 impl Intersects<&BoundingBox> for BoundingFrustum {
     /// Tests the BoundingFrustum for intersection with a BoundingBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-intersects(constboundingbox_)>
-    fn Intersects(&self, _box: &BoundingBox) -> bool { todo!() }
+    fn Intersects(&self, box_: &BoundingBox) -> bool {
+        // Make the axis aligned box oriented and do an OBB vs frustum test.
+        let obox = BoundingOrientedBox {
+            Center: box_.Center,
+            Extents: box_.Extents,
+            Orientation: XMFLOAT4::set(0.0, 0.0, 0.0, 1.0)
+        };
+        return self.Intersects(&obox);
+    }
 }
 
 impl Intersects<&BoundingOrientedBox> for BoundingFrustum {
     /// Test the BoundingFrustum for intersection with a BoundingOrientedBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-intersects(constboundingorientedbox_)>
-    fn Intersects(&self, _box: &BoundingOrientedBox) -> bool { todo!() }
+    fn Intersects(&self, box_: &BoundingOrientedBox) -> bool {
+        const SelectY: XMVECTOR = unsafe { XMVECTORU32 { u: [ XM_SELECT_0, XM_SELECT_1, XM_SELECT_0, XM_SELECT_0 ] }.v };
+        const SelectZ: XMVECTOR = unsafe { XMVECTORU32 { u: [ XM_SELECT_0, XM_SELECT_0, XM_SELECT_1, XM_SELECT_0 ] }.v };
+    
+        let Zero: XMVECTOR = XMVectorZero();
+    
+        // Build the frustum planes.
+        let mut Planes: [XMVECTOR; 6] = unsafe { uninitialized() };
+        Planes[0] = XMVectorSet(0.0, 0.0, -1.0, self.Near);
+        Planes[1] = XMVectorSet(0.0, 0.0, 1.0, -self.Far);
+        Planes[2] = XMVectorSet(1.0, 0.0, -self.RightSlope, 0.0);
+        Planes[3] = XMVectorSet(-1.0, 0.0, self.LeftSlope, 0.0);
+        Planes[4] = XMVectorSet(0.0, 1.0, -self.TopSlope, 0.0);
+        Planes[5] = XMVectorSet(0.0, -1.0, self.BottomSlope, 0.0);
+    
+        // Load origin and orientation of the frustum.
+        let vOrigin: XMVECTOR = XMLoadFloat3(&self.Origin);
+        let FrustumOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+    
+        debug_assert!(internal::XMQuaternionIsUnit(FrustumOrientation));
+    
+        // Load the box.
+        let mut Center: XMVECTOR = XMLoadFloat3(&box_.Center);
+        let Extents: XMVECTOR = XMLoadFloat3(&box_.Extents);
+        let mut BoxOrientation: XMVECTOR = XMLoadFloat4(&box_.Orientation);
+    
+        debug_assert!(internal::XMQuaternionIsUnit(BoxOrientation));
+    
+        // Transform the oriented box into the space of the frustum in order to
+        // minimize the number of transforms we have to do.
+        Center = XMVector3InverseRotate(XMVectorSubtract(Center, vOrigin), FrustumOrientation);
+        BoxOrientation = XMQuaternionMultiply(BoxOrientation, XMQuaternionConjugate(FrustumOrientation));
+    
+        // Set w of the center to one so we can dot4 with the plane.
+        Center = XMVectorInsert(Center, XMVectorSplatOne(), 0, 0, 0, 0, 1);
+    
+        // Build the 3x3 rotation matrix that defines the box axes.
+        let R: XMMATRIX = XMMatrixRotationQuaternion(BoxOrientation);
+    
+        // Check against each plane of the frustum.
+        let mut Outside: XMVECTOR = XMVectorFalseInt();
+        let mut InsideAll: XMVECTOR = XMVectorTrueInt();
+        let mut CenterInsideAll: XMVECTOR = XMVectorTrueInt();
+    
+        //for (let i: size_t = 0; i < 6; ++i)
+        for i in 0 .. 6
+        {
+            // Compute the distance to the center of the box.
+            let Dist: XMVECTOR = XMVector4Dot(Center, Planes[i]);
+    
+            // Project the axes of the box onto the normal of the plane.  Half the
+            // length of the projection (sometime called the "radius") is equal to
+            // h(u) * abs(n dot b(u))) + h(v) * abs(n dot b(v)) + h(w) * abs(n dot b(w))
+            // where h(i) are extents of the box, n is the plane normal, and b(i) are the
+            // axes of the box.
+            unsafe {
+                let mut Radius: XMVECTOR = XMVector3Dot(Planes[i], R.r[0]);
+                Radius = XMVectorSelect(Radius, XMVector3Dot(Planes[i], R.r[1]), SelectY);
+                Radius = XMVectorSelect(Radius, XMVector3Dot(Planes[i], R.r[2]), SelectZ);
+                Radius = XMVector3Dot(Extents, XMVectorAbs(Radius));
+        
+                // Outside the plane?
+                Outside = XMVectorOrInt(Outside, XMVectorGreater(Dist, Radius));
+        
+                // Fully inside the plane?
+                InsideAll = XMVectorAndInt(InsideAll, XMVectorLessOrEqual(Dist, XMVectorNegate(Radius)));
+        
+                // Check if the center is inside the plane.
+                CenterInsideAll = XMVectorAndInt(CenterInsideAll, XMVectorLessOrEqual(Dist, Zero));
+            }
+        }
+    
+        // If the box is outside any of the planes it is outside.
+        if (XMVector4EqualInt(Outside, XMVectorTrueInt())) {
+            return false;
+        }
+    
+        // If the box is inside all planes it is fully inside.
+        if (XMVector4EqualInt(InsideAll, XMVectorTrueInt())) {
+            return true;
+        }
+    
+        // If the center of the box is inside all planes and the box intersects
+        // one or more planes then it must intersect.
+        if (XMVector4EqualInt(CenterInsideAll, XMVectorTrueInt())) {
+            return true;
+        }
+    
+        // Build the corners of the frustum.
+        let vRightTop: XMVECTOR = XMVectorSet(self.RightSlope, self.TopSlope, 1.0, 0.0);
+        let vRightBottom: XMVECTOR = XMVectorSet(self.RightSlope, self.BottomSlope, 1.0, 0.0);
+        let vLeftTop: XMVECTOR = XMVectorSet(self.LeftSlope, self.TopSlope, 1.0, 0.0);
+        let vLeftBottom: XMVECTOR = XMVectorSet(self.LeftSlope, self.BottomSlope, 1.0, 0.0);
+        let vNear: XMVECTOR = XMVectorReplicatePtr(&self.Near);
+        let vFar: XMVECTOR = XMVectorReplicatePtr(&self.Far);
+    
+        let mut Corners: [XMVECTOR; Self::CORNER_COUNT] = unsafe { uninitialized() };
+        Corners[0] = XMVectorMultiply(vRightTop, vNear);
+        Corners[1] = XMVectorMultiply(vRightBottom, vNear);
+        Corners[2] = XMVectorMultiply(vLeftTop, vNear);
+        Corners[3] = XMVectorMultiply(vLeftBottom, vNear);
+        Corners[4] = XMVectorMultiply(vRightTop, vFar);
+        Corners[5] = XMVectorMultiply(vRightBottom, vFar);
+        Corners[6] = XMVectorMultiply(vLeftTop, vFar);
+        Corners[7] = XMVectorMultiply(vLeftBottom, vFar);
+    
+        unsafe {
+            // Test against box axes (3)
+            {
+                // Find the min/max values of the projection of the frustum onto each axis.
+                let mut FrustumMin: XMVECTOR;
+                let mut FrustumMax: XMVECTOR;
+        
+                FrustumMin = XMVector3Dot(Corners[0], R.r[0]);
+                FrustumMin = XMVectorSelect(FrustumMin, XMVector3Dot(Corners[0], R.r[1]), SelectY);
+                FrustumMin = XMVectorSelect(FrustumMin, XMVector3Dot(Corners[0], R.r[2]), SelectZ);
+                FrustumMax = FrustumMin;
+        
+                //for (let i: size_t = 1; i < BoundingOrientedBox::CORNER_COUNT; ++i)
+                for i in 1 .. BoundingOrientedBox::CORNER_COUNT
+                {
+                    let mut Temp: XMVECTOR = XMVector3Dot(Corners[i], R.r[0]);
+                    Temp = XMVectorSelect(Temp, XMVector3Dot(Corners[i], R.r[1]), SelectY);
+                    Temp = XMVectorSelect(Temp, XMVector3Dot(Corners[i], R.r[2]), SelectZ);
+        
+                    FrustumMin = XMVectorMin(FrustumMin, Temp);
+                    FrustumMax = XMVectorMax(FrustumMax, Temp);
+                }
+        
+                // Project the center of the box onto the axes.
+                let mut BoxDist: XMVECTOR = XMVector3Dot(Center, R.r[0]);
+                BoxDist = XMVectorSelect(BoxDist, XMVector3Dot(Center, R.r[1]), SelectY);
+                BoxDist = XMVectorSelect(BoxDist, XMVector3Dot(Center, R.r[2]), SelectZ);
+        
+                // The projection of the box onto the axis is just its Center and Extents.
+                // if (min > box_max || max < box_min) reject;
+                let Result: XMVECTOR = XMVectorOrInt(XMVectorGreater(FrustumMin, XMVectorAdd(BoxDist, Extents)),
+                    XMVectorLess(FrustumMax, XMVectorSubtract(BoxDist, Extents)));
+        
+                if (internal::XMVector3AnyTrue(Result)) {
+                    return false;
+                }
+            }
+        
+            // Test against edge/edge axes (3*6).
+            let mut FrustumEdgeAxis: [XMVECTOR; 6] = uninitialized();
+        
+            FrustumEdgeAxis[0] = vRightTop;
+            FrustumEdgeAxis[1] = vRightBottom;
+            FrustumEdgeAxis[2] = vLeftTop;
+            FrustumEdgeAxis[3] = vLeftBottom;
+            FrustumEdgeAxis[4] = XMVectorSubtract(vRightTop, vLeftTop);
+            FrustumEdgeAxis[5] = XMVectorSubtract(vLeftBottom, vLeftTop);
+        
+            //for (let i: size_t = 0; i < 3; ++i)
+            for i in 0 .. 3
+            {
+                //for (let j: size_t = 0; j < 6; j++)
+                for j in 0 .. 6
+                {
+                    // Compute the axis we are going to test.
+                    let Axis: XMVECTOR = XMVector3Cross(R.r[i], FrustumEdgeAxis[j]);
+        
+                    // Find the min/max values of the projection of the frustum onto the axis.
+                    let mut FrustumMin: XMVECTOR;
+                    let mut FrustumMax: XMVECTOR;
+        
+                    FrustumMin = XMVector3Dot(Axis, Corners[0]);
+                    FrustumMax = FrustumMin;
+        
+                    //for (let k: size_t = 1; k < CORNER_COUNT; k++)
+                    for k in 1 .. Self::CORNER_COUNT
+                    {
+                        let Temp: XMVECTOR = XMVector3Dot(Axis, Corners[k]);
+                        FrustumMin = XMVectorMin(FrustumMin, Temp);
+                        FrustumMax = XMVectorMax(FrustumMax, Temp);
+                    }
+        
+                    // Project the center of the box onto the axis.
+                    let Dist: XMVECTOR = XMVector3Dot(Center, Axis);
+        
+                    // Project the axes of the box onto the axis to find the "radius" of the box.
+                    let mut Radius: XMVECTOR = XMVector3Dot(Axis, R.r[0]);
+                    Radius = XMVectorSelect(Radius, XMVector3Dot(Axis, R.r[1]), SelectY);
+                    Radius = XMVectorSelect(Radius, XMVector3Dot(Axis, R.r[2]), SelectZ);
+                    Radius = XMVector3Dot(Extents, XMVectorAbs(Radius));
+        
+                    // if (center > max + radius || center < min - radius) reject;
+                    Outside = XMVectorOrInt(Outside, XMVectorGreater(Dist, XMVectorAdd(FrustumMax, Radius)));
+                    Outside = XMVectorOrInt(Outside, XMVectorLess(Dist, XMVectorSubtract(FrustumMin, Radius)));
+                }
+            }
+        }
+    
+        if (XMVector4EqualInt(Outside, XMVectorTrueInt())) {
+            return false;
+        }
+    
+        // If we did not find a separating plane then the box must intersect the frustum.
+        return true;
+    }
 }
 
 impl Intersects<&BoundingFrustum> for BoundingFrustum {
     /// Test the BoundingFrustum for intersection with a BoundingFrustum.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-intersects(constboundingfrustum_)>
-    fn Intersects(&self, _box: &BoundingFrustum) -> bool { todo!() }
+    fn Intersects(&self, fr: &BoundingFrustum) -> bool {
+        // Load origin and orientation of frustum B.
+        let OriginB: XMVECTOR = XMLoadFloat3(&self.Origin);
+        let OrientationB: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        debug_assert!(internal::XMQuaternionIsUnit(OrientationB));
+
+        // Build the planes of frustum B.
+        let mut AxisB: [XMVECTOR; 6] = unsafe { uninitialized() };
+        AxisB[0] = XMVectorSet(0.0, 0.0, -1.0, 0.0);
+        AxisB[1] = XMVectorSet(0.0, 0.0, 1.0, 0.0);
+        AxisB[2] = XMVectorSet(1.0, 0.0, -self.RightSlope, 0.0);
+        AxisB[3] = XMVectorSet(-1.0, 0.0, self.LeftSlope, 0.0);
+        AxisB[4] = XMVectorSet(0.0, 1.0, -self.TopSlope, 0.0);
+        AxisB[5] = XMVectorSet(0.0, -1.0, self.BottomSlope, 0.0);
+
+        let mut PlaneDistB: [XMVECTOR; 6] = unsafe { uninitialized() };
+        PlaneDistB[0] = XMVectorNegate(XMVectorReplicatePtr(&self.Near));
+        PlaneDistB[1] = XMVectorReplicatePtr(&self.Far);
+        PlaneDistB[2] = XMVectorZero();
+        PlaneDistB[3] = XMVectorZero();
+        PlaneDistB[4] = XMVectorZero();
+        PlaneDistB[5] = XMVectorZero();
+
+        // Load origin and orientation of frustum A.
+        let mut OriginA: XMVECTOR = XMLoadFloat3(&fr.Origin);
+        let mut OrientationA: XMVECTOR = XMLoadFloat4(&fr.Orientation);
+
+        debug_assert!(internal::XMQuaternionIsUnit(OrientationA));
+
+        // Transform frustum A into the space of the frustum B in order to
+        // minimize the number of transforms we have to do.
+        OriginA = XMVector3InverseRotate(XMVectorSubtract(OriginA, OriginB), OrientationB);
+        OrientationA = XMQuaternionMultiply(OrientationA, XMQuaternionConjugate(OrientationB));
+
+        // Build the corners of frustum A (in the local space of B).
+        let mut RightTopA: XMVECTOR = XMVectorSet(fr.RightSlope, fr.TopSlope, 1.0, 0.0);
+        let mut RightBottomA: XMVECTOR = XMVectorSet(fr.RightSlope, fr.BottomSlope, 1.0, 0.0);
+        let mut LeftTopA: XMVECTOR = XMVectorSet(fr.LeftSlope, fr.TopSlope, 1.0, 0.0);
+        let mut LeftBottomA: XMVECTOR = XMVectorSet(fr.LeftSlope, fr.BottomSlope, 1.0, 0.0);
+        let NearA: XMVECTOR = XMVectorReplicatePtr(&fr.Near);
+        let FarA: XMVECTOR = XMVectorReplicatePtr(&fr.Far);
+
+        RightTopA = XMVector3Rotate(RightTopA, OrientationA);
+        RightBottomA = XMVector3Rotate(RightBottomA, OrientationA);
+        LeftTopA = XMVector3Rotate(LeftTopA, OrientationA);
+        LeftBottomA = XMVector3Rotate(LeftBottomA, OrientationA);
+
+        let mut CornersA: [XMVECTOR; Self::CORNER_COUNT] = unsafe { uninitialized() };
+        CornersA[0] = XMVectorMultiplyAdd(RightTopA, NearA, OriginA);
+        CornersA[1] = XMVectorMultiplyAdd(RightBottomA, NearA, OriginA);
+        CornersA[2] = XMVectorMultiplyAdd(LeftTopA, NearA, OriginA);
+        CornersA[3] = XMVectorMultiplyAdd(LeftBottomA, NearA, OriginA);
+        CornersA[4] = XMVectorMultiplyAdd(RightTopA, FarA, OriginA);
+        CornersA[5] = XMVectorMultiplyAdd(RightBottomA, FarA, OriginA);
+        CornersA[6] = XMVectorMultiplyAdd(LeftTopA, FarA, OriginA);
+        CornersA[7] = XMVectorMultiplyAdd(LeftBottomA, FarA, OriginA);
+
+        // Check frustum A against each plane of frustum B.
+        let mut Outside: XMVECTOR = XMVectorFalseInt();
+        let mut InsideAll: XMVECTOR = XMVectorTrueInt();
+
+        //for (let i: size_t = 0; i < 6; ++i)
+        for i in 0 .. 6
+        {
+            // Find the min/max projection of the frustum onto the plane normal.
+            let mut Min: XMVECTOR;
+            let mut Max: XMVECTOR;
+
+            Min = XMVector3Dot(AxisB[i], CornersA[0]);
+            Max = Min;
+
+            //for (let j: size_t = 1; j < CORNER_COUNT; j++)
+            for j in 1 .. Self::CORNER_COUNT
+            {
+                let Temp: XMVECTOR = XMVector3Dot(AxisB[i], CornersA[j]);
+                Min = XMVectorMin(Min, Temp);
+                Max = XMVectorMax(Max, Temp);
+            }
+
+            // Outside the plane?
+            Outside = XMVectorOrInt(Outside, XMVectorGreater(Min, PlaneDistB[i]));
+
+            // Fully inside the plane?
+            InsideAll = XMVectorAndInt(InsideAll, XMVectorLessOrEqual(Max, PlaneDistB[i]));
+        }
+
+        // If the frustum A is outside any of the planes of frustum B it is outside.
+        if (XMVector4EqualInt(Outside, XMVectorTrueInt())) {
+            return false;
+        }
+
+        // If frustum A is inside all planes of frustum B it is fully inside.
+        if (XMVector4EqualInt(InsideAll, XMVectorTrueInt())) {
+            return true;
+        }
+
+        // Build the corners of frustum B.
+        let RightTopB: XMVECTOR = XMVectorSet(self.RightSlope, self.TopSlope, 1.0, 0.0);
+        let RightBottomB: XMVECTOR = XMVectorSet(self.RightSlope, self.BottomSlope, 1.0, 0.0);
+        let LeftTopB: XMVECTOR = XMVectorSet(self.LeftSlope, self.TopSlope, 1.0, 0.0);
+        let LeftBottomB: XMVECTOR = XMVectorSet(self.LeftSlope, self.BottomSlope, 1.0, 0.0);
+        let NearB: XMVECTOR = XMVectorReplicatePtr(&self.Near);
+        let FarB: XMVECTOR = XMVectorReplicatePtr(&self.Far);
+
+        let mut CornersB: [XMVECTOR; BoundingFrustum::CORNER_COUNT] = unsafe { uninitialized() };
+        CornersB[0] = XMVectorMultiply(RightTopB, NearB);
+        CornersB[1] = XMVectorMultiply(RightBottomB, NearB);
+        CornersB[2] = XMVectorMultiply(LeftTopB, NearB);
+        CornersB[3] = XMVectorMultiply(LeftBottomB, NearB);
+        CornersB[4] = XMVectorMultiply(RightTopB, FarB);
+        CornersB[5] = XMVectorMultiply(RightBottomB, FarB);
+        CornersB[6] = XMVectorMultiply(LeftTopB, FarB);
+        CornersB[7] = XMVectorMultiply(LeftBottomB, FarB);
+
+        // Build the planes of frustum A (in the local space of B).
+        let mut AxisA: [XMVECTOR; 6] = unsafe { uninitialized() };
+        let mut PlaneDistA: [XMVECTOR; 6] = unsafe { uninitialized() };
+
+        AxisA[0] = XMVectorSet(0.0, 0.0, -1.0, 0.0);
+        AxisA[1] = XMVectorSet(0.0, 0.0, 1.0, 0.0);
+        AxisA[2] = XMVectorSet(1.0, 0.0, -fr.RightSlope, 0.0);
+        AxisA[3] = XMVectorSet(-1.0, 0.0, fr.LeftSlope, 0.0);
+        AxisA[4] = XMVectorSet(0.0, 1.0, -fr.TopSlope, 0.0);
+        AxisA[5] = XMVectorSet(0.0, -1.0, fr.BottomSlope, 0.0);
+
+        AxisA[0] = XMVector3Rotate(AxisA[0], OrientationA);
+        AxisA[1] = XMVectorNegate(AxisA[0]);
+        AxisA[2] = XMVector3Rotate(AxisA[2], OrientationA);
+        AxisA[3] = XMVector3Rotate(AxisA[3], OrientationA);
+        AxisA[4] = XMVector3Rotate(AxisA[4], OrientationA);
+        AxisA[5] = XMVector3Rotate(AxisA[5], OrientationA);
+
+        PlaneDistA[0] = XMVector3Dot(AxisA[0], CornersA[0]);  // Re-use corner on near plane.
+        PlaneDistA[1] = XMVector3Dot(AxisA[1], CornersA[4]);  // Re-use corner on far plane.
+        PlaneDistA[2] = XMVector3Dot(AxisA[2], OriginA);
+        PlaneDistA[3] = XMVector3Dot(AxisA[3], OriginA);
+        PlaneDistA[4] = XMVector3Dot(AxisA[4], OriginA);
+        PlaneDistA[5] = XMVector3Dot(AxisA[5], OriginA);
+
+        // Check each axis of frustum A for a seperating plane (5).
+        //for (let i: size_t = 0; i < 6; ++i)
+        for i in 0 .. 6
+        {
+            // Find the minimum projection of the frustum onto the plane normal.
+            let mut Min: XMVECTOR;
+
+            Min = XMVector3Dot(AxisA[i], CornersB[0]);
+
+            //for (let j: size_t = 1; j < CORNER_COUNT; j++)
+            for j in 0 .. Self::CORNER_COUNT
+            {
+                let Temp: XMVECTOR = XMVector3Dot(AxisA[i], CornersB[j]);
+                Min = XMVectorMin(Min, Temp);
+            }
+
+            // Outside the plane?
+            Outside = XMVectorOrInt(Outside, XMVectorGreater(Min, PlaneDistA[i]));
+        }
+
+        // If the frustum B is outside any of the planes of frustum A it is outside.
+        if (XMVector4EqualInt(Outside, XMVectorTrueInt())) {
+            return false;
+        }
+
+        // Check edge/edge axes (6 * 6).
+        let mut FrustumEdgeAxisA: [XMVECTOR; 6] = unsafe { uninitialized() };
+        FrustumEdgeAxisA[0] = RightTopA;
+        FrustumEdgeAxisA[1] = RightBottomA;
+        FrustumEdgeAxisA[2] = LeftTopA;
+        FrustumEdgeAxisA[3] = LeftBottomA;
+        FrustumEdgeAxisA[4] = XMVectorSubtract(RightTopA, LeftTopA);
+        FrustumEdgeAxisA[5] = XMVectorSubtract(LeftBottomA, LeftTopA);
+
+        let mut FrustumEdgeAxisB: [XMVECTOR; 6] = unsafe { uninitialized() };
+        FrustumEdgeAxisB[0] = RightTopB;
+        FrustumEdgeAxisB[1] = RightBottomB;
+        FrustumEdgeAxisB[2] = LeftTopB;
+        FrustumEdgeAxisB[3] = LeftBottomB;
+        FrustumEdgeAxisB[4] = XMVectorSubtract(RightTopB, LeftTopB);
+        FrustumEdgeAxisB[5] = XMVectorSubtract(LeftBottomB, LeftTopB);
+
+        //for (let i: size_t = 0; i < 6; ++i)
+        for i in 0 .. 6
+        {
+            //for (let j: size_t = 0; j < 6; j++)
+            for j in 0 .. 6
+            {
+                // Compute the axis we are going to test.
+                let Axis: XMVECTOR = XMVector3Cross(FrustumEdgeAxisA[i], FrustumEdgeAxisB[j]);
+
+                // Find the min/max values of the projection of both frustums onto the axis.
+                let mut MinA: XMVECTOR; let mut MaxA: XMVECTOR;
+                let mut MinB: XMVECTOR; let mut MaxB: XMVECTOR;
+
+                MinA = XMVector3Dot(Axis, CornersA[0]);
+                MaxA = MinA;
+                MinB = XMVector3Dot(Axis, CornersB[0]);
+                MaxB = MinB;
+
+                //for (let k: size_t = 1; k < CORNER_COUNT; k++)
+                for k in 1 .. Self::CORNER_COUNT
+                {
+                    let TempA: XMVECTOR = XMVector3Dot(Axis, CornersA[k]);
+                    MinA = XMVectorMin(MinA, TempA);
+                    MaxA = XMVectorMax(MaxA, TempA);
+
+                    let TempB: XMVECTOR = XMVector3Dot(Axis, CornersB[k]);
+                    MinB = XMVectorMin(MinB, TempB);
+                    MaxB = XMVectorMax(MaxB, TempB);
+                }
+
+                // if (MinA > MaxB || MinB > MaxA) reject
+                Outside = XMVectorOrInt(Outside, XMVectorGreater(MinA, MaxB));
+                Outside = XMVectorOrInt(Outside, XMVectorGreater(MinB, MaxA));
+            }
+        }
+
+        // If there is a seperating plane, then the frustums do not intersect.
+        if (XMVector4EqualInt(Outside, XMVectorTrueInt())) {
+            return false;
+        }
+
+        // If we did not find a separating plane then the frustums intersect.
+        return true;
+    }
 }
 
 impl Intersects<Triangle> for BoundingFrustum {
     /// Tests the BoundingFrustum for intersection with a triangle.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-intersects(fxmvector_fxmvector_fxmvector)>
-    fn Intersects(&self, (_V0, _V1, _V2): Triangle) -> bool { todo!() }
+    fn Intersects(&self, (V0, V1, V2): Triangle) -> bool {
+       // Build the frustum planes (NOTE: D is negated from the usual).
+       let mut Planes: [XMVECTOR; 6] = unsafe { uninitialized() };
+       Planes[0] = XMVectorSet(0.0, 0.0, -1.0, -self.Near);
+       Planes[1] = XMVectorSet(0.0, 0.0, 1.0, self.Far);
+       Planes[2] = XMVectorSet(1.0, 0.0, -self.RightSlope, 0.0);
+       Planes[3] = XMVectorSet(-1.0, 0.0, self.LeftSlope, 0.0);
+       Planes[4] = XMVectorSet(0.0, 1.0, -self.TopSlope, 0.0);
+       Planes[5] = XMVectorSet(0.0, -1.0, self.BottomSlope, 0.0);
+
+       // Load origin and orientation of the frustum.
+       let vOrigin: XMVECTOR = XMLoadFloat3(&self.Origin);
+       let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+       debug_assert!(internal::XMQuaternionIsUnit(vOrientation));
+
+       // Transform triangle into the local space of frustum.
+       let TV0: XMVECTOR = XMVector3InverseRotate(XMVectorSubtract(V0, vOrigin), vOrientation);
+       let TV1: XMVECTOR = XMVector3InverseRotate(XMVectorSubtract(V1, vOrigin), vOrientation);
+       let TV2: XMVECTOR = XMVector3InverseRotate(XMVectorSubtract(V2, vOrigin), vOrientation);
+
+       // Test each vertex of the triangle against the frustum planes.
+       let mut Outside: XMVECTOR = XMVectorFalseInt();
+       let mut InsideAll: XMVECTOR = XMVectorTrueInt();
+
+       for i in 0 .. 6
+       {
+           let Dist0: XMVECTOR = XMVector3Dot(TV0, Planes[i]);
+           let Dist1: XMVECTOR = XMVector3Dot(TV1, Planes[i]);
+           let Dist2: XMVECTOR = XMVector3Dot(TV2, Planes[i]);
+
+           let mut MinDist: XMVECTOR = XMVectorMin(Dist0, Dist1);
+           MinDist = XMVectorMin(MinDist, Dist2);
+           let mut MaxDist: XMVECTOR = XMVectorMax(Dist0, Dist1);
+           MaxDist = XMVectorMax(MaxDist, Dist2);
+
+           let PlaneDist: XMVECTOR = XMVectorSplatW(Planes[i]);
+
+           // Outside the plane?
+           Outside = XMVectorOrInt(Outside, XMVectorGreater(MinDist, PlaneDist));
+
+           // Fully inside the plane?
+           InsideAll = XMVectorAndInt(InsideAll, XMVectorLessOrEqual(MaxDist, PlaneDist));
+       }
+
+       // If the triangle is outside any of the planes it is outside.
+       if (XMVector4EqualInt(Outside, XMVectorTrueInt())) {
+           return false;
+       }
+
+       // If the triangle is inside all planes it is fully inside.
+       if (XMVector4EqualInt(InsideAll, XMVectorTrueInt())) {
+           return true;
+       }
+
+       // Build the corners of the frustum.
+       let vRightTop: XMVECTOR = XMVectorSet(self.RightSlope, self.TopSlope, 1.0, 0.0);
+       let vRightBottom: XMVECTOR = XMVectorSet(self.RightSlope, self.BottomSlope, 1.0, 0.0);
+       let vLeftTop: XMVECTOR = XMVectorSet(self.LeftSlope, self.TopSlope, 1.0, 0.0);
+       let vLeftBottom: XMVECTOR = XMVectorSet(self.LeftSlope, self.BottomSlope, 1.0, 0.0);
+       let vNear: XMVECTOR = XMVectorReplicatePtr(&self.Near);
+       let vFar: XMVECTOR = XMVectorReplicatePtr(&self.Far);
+
+       let mut Corners: [XMVECTOR; Self::CORNER_COUNT] = unsafe { uninitialized() };
+       Corners[0] = XMVectorMultiply(vRightTop, vNear);
+       Corners[1] = XMVectorMultiply(vRightBottom, vNear);
+       Corners[2] = XMVectorMultiply(vLeftTop, vNear);
+       Corners[3] = XMVectorMultiply(vLeftBottom, vNear);
+       Corners[4] = XMVectorMultiply(vRightTop, vFar);
+       Corners[5] = XMVectorMultiply(vRightBottom, vFar);
+       Corners[6] = XMVectorMultiply(vLeftTop, vFar);
+       Corners[7] = XMVectorMultiply(vLeftBottom, vFar);
+
+       // Test the plane of the triangle.
+       let Normal: XMVECTOR = XMVector3Cross(XMVectorSubtract(V1, V0), XMVectorSubtract(V2, V0));
+       let Dist: XMVECTOR = XMVector3Dot(Normal, V0);
+
+       let mut MinDist: XMVECTOR;
+       let mut MaxDist: XMVECTOR;
+
+       MinDist = XMVector3Dot(Corners[0], Normal);
+       MaxDist = MinDist;
+
+       for i in 1 .. Self::CORNER_COUNT
+       {
+           let Temp: XMVECTOR = XMVector3Dot(Corners[i], Normal);
+           MinDist = XMVectorMin(MinDist, Temp);
+           MaxDist = XMVectorMax(MaxDist, Temp);
+       }
+
+       Outside = XMVectorOrInt(XMVectorGreater(MinDist, Dist), XMVectorLess(MaxDist, Dist));
+       if (XMVector4EqualInt(Outside, XMVectorTrueInt())) {
+           return false;
+       }
+
+       // Check the edge/edge axes (3*6).
+       let mut TriangleEdgeAxis: [XMVECTOR; 3] = unsafe { uninitialized() };
+       TriangleEdgeAxis[0] = XMVectorSubtract(V1, V0);
+       TriangleEdgeAxis[1] = XMVectorSubtract(V2, V1);
+       TriangleEdgeAxis[2] = XMVectorSubtract(V0, V2);
+
+       let mut FrustumEdgeAxis: [XMVECTOR; 6] = unsafe { uninitialized() };
+       FrustumEdgeAxis[0] = vRightTop;
+       FrustumEdgeAxis[1] = vRightBottom;
+       FrustumEdgeAxis[2] = vLeftTop;
+       FrustumEdgeAxis[3] = vLeftBottom;
+       FrustumEdgeAxis[4] = XMVectorSubtract(vRightTop, vLeftTop);
+       FrustumEdgeAxis[5] = XMVectorSubtract(vLeftBottom, vLeftTop);
+
+       for i in 0 .. 3
+       {
+           for j in 0 .. 6
+           {
+               // Compute the axis we are going to test.
+               let Axis: XMVECTOR = XMVector3Cross(TriangleEdgeAxis[i], FrustumEdgeAxis[j]);
+
+               // Find the min/max of the projection of the triangle onto the axis.
+               let mut MinA: XMVECTOR;
+               let mut MaxA: XMVECTOR;
+
+               let Dist0: XMVECTOR = XMVector3Dot(V0, Axis);
+               let Dist1: XMVECTOR = XMVector3Dot(V1, Axis);
+               let Dist2: XMVECTOR = XMVector3Dot(V2, Axis);
+
+               MinA = XMVectorMin(Dist0, Dist1);
+               MinA = XMVectorMin(MinA, Dist2);
+               MaxA = XMVectorMax(Dist0, Dist1);
+               MaxA = XMVectorMax(MaxA, Dist2);
+
+               // Find the min/max of the projection of the frustum onto the axis.
+               let mut MinB: XMVECTOR;
+               let mut MaxB: XMVECTOR;
+
+               MinB = XMVector3Dot(Axis, Corners[0]);
+               MaxB = MinB;
+
+               //for (let k: size_t = 1; k < CORNER_COUNT; k++)
+               for k in 1 .. Self::CORNER_COUNT
+               {
+                   let Temp: XMVECTOR = XMVector3Dot(Axis, Corners[k]);
+                   MinB = XMVectorMin(MinB, Temp);
+                   MaxB = XMVectorMax(MaxB, Temp);
+               }
+
+               // if (MinA > MaxB || MinB > MaxA) reject;
+               Outside = XMVectorOrInt(Outside, XMVectorGreater(MinA, MaxB));
+               Outside = XMVectorOrInt(Outside, XMVectorGreater(MinB, MaxA));
+           }
+       }
+
+       if (XMVector4EqualInt(Outside, XMVectorTrueInt())) {
+           return false;
+       }
+
+       // If we did not find a separating plane then the triangle must intersect the frustum.
+       return true;
+    }
 }
 
-impl Intersects<Plane> for BoundingFrustum {
+impl Intersects<Plane, PlaneIntersectionType> for BoundingFrustum {
     /// Tests the BoundingFrustum for intersection with a Plane.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-intersects(fxmvector)>
-    fn Intersects(&self, _Plane: Plane) -> bool { todo!() }
+    fn Intersects(&self, Plane: Plane) -> PlaneIntersectionType {
+        debug_assert!(internal::XMPlaneIsUnit(Plane));
+
+        // Load origin and orientation of the frustum.
+        let mut vOrigin: XMVECTOR = XMLoadFloat3(&self.Origin);
+        let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+    
+        debug_assert!(internal::XMQuaternionIsUnit(vOrientation));
+    
+        // Set w of the origin to one so we can dot4 with a plane.
+        // TODO: template
+        vOrigin = XMVectorInsert(vOrigin, XMVectorSplatOne(), 0, 0, 0, 0, 1);
+    
+        // Build the corners of the frustum (in world space).
+        let mut RightTop: XMVECTOR = XMVectorSet(self.RightSlope, self.TopSlope, 1.0, 0.0);
+        let mut RightBottom: XMVECTOR = XMVectorSet(self.RightSlope, self.BottomSlope, 1.0, 0.0);
+        let mut LeftTop: XMVECTOR = XMVectorSet(self.LeftSlope, self.TopSlope, 1.0, 0.0);
+        let mut LeftBottom: XMVECTOR = XMVectorSet(self.LeftSlope, self.BottomSlope, 1.0, 0.0);
+        let vNear: XMVECTOR = XMVectorReplicatePtr(&self.Near);
+        let vFar: XMVECTOR = XMVectorReplicatePtr(&self.Far);
+    
+        RightTop = XMVector3Rotate(RightTop, vOrientation);
+        RightBottom = XMVector3Rotate(RightBottom, vOrientation);
+        LeftTop = XMVector3Rotate(LeftTop, vOrientation);
+        LeftBottom = XMVector3Rotate(LeftBottom, vOrientation);
+    
+        let Corners0: XMVECTOR = XMVectorMultiplyAdd(RightTop, vNear, vOrigin);
+        let Corners1: XMVECTOR = XMVectorMultiplyAdd(RightBottom, vNear, vOrigin);
+        let Corners2: XMVECTOR = XMVectorMultiplyAdd(LeftTop, vNear, vOrigin);
+        let Corners3: XMVECTOR = XMVectorMultiplyAdd(LeftBottom, vNear, vOrigin);
+        let Corners4: XMVECTOR = XMVectorMultiplyAdd(RightTop, vFar, vOrigin);
+        let Corners5: XMVECTOR = XMVectorMultiplyAdd(RightBottom, vFar, vOrigin);
+        let Corners6: XMVECTOR = XMVectorMultiplyAdd(LeftTop, vFar, vOrigin);
+        let Corners7: XMVECTOR = XMVectorMultiplyAdd(LeftBottom, vFar, vOrigin);
+    
+        let mut Inside: XMVECTOR = unsafe { uninitialized() };
+        let mut Outside: XMVECTOR = unsafe { uninitialized() };
+
+        internal::FastIntersectFrustumPlane(Corners0, Corners1, Corners2, Corners3,
+            Corners4, Corners5, &Corners6, &Corners7,
+            &Plane, &mut Outside, &mut Inside);
+    
+        // If the frustum is outside any plane it is outside.
+        if (XMVector4EqualInt(Outside, XMVectorTrueInt())) {
+            return FRONT;
+        }
+    
+        // If the frustum is inside all planes it is inside.
+        if (XMVector4EqualInt(Inside, XMVectorTrueInt())) {
+            return BACK;
+        }
+    
+        // The frustum is not inside all planes or outside a plane it intersects.
+        return INTERSECTING;        
+    }
 }
 
-impl Intersects<Ray> for BoundingFrustum {
+impl Intersects<RayMut<'_>> for BoundingFrustum {
     /// Tests the BoundingFrustum for intersection with a ray.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-intersects(fxmvector_fxmvector_float_)>
-    fn Intersects(&self, (_Origin, _Direction, _Dist): Ray) -> bool { todo!() }
+    fn Intersects(&self, (rayOrigin, Direction, Dist): RayMut) -> bool {
+        // If ray starts inside the frustum, return a distance of 0 for the hit
+        if (self.Contains(rayOrigin) == CONTAINS)
+        {
+            *Dist = 0.0;
+            return true;
+        }
+
+        // Build the frustum planes.
+        let mut Planes: [XMVECTOR; 6] = unsafe { uninitialized() };
+        Planes[0] = XMVectorSet(0.0, 0.0, -1.0, self.Near);
+        Planes[1] = XMVectorSet(0.0, 0.0, 1.0, -self.Far);
+        Planes[2] = XMVectorSet(1.0, 0.0, -self.RightSlope, 0.0);
+        Planes[3] = XMVectorSet(-1.0, 0.0, self.LeftSlope, 0.0);
+        Planes[4] = XMVectorSet(0.0, 1.0, -self.TopSlope, 0.0);
+        Planes[5] = XMVectorSet(0.0, -1.0, self.BottomSlope, 0.0);
+
+        // Load origin and orientation of the frustum.
+        let frOrigin: XMVECTOR = XMLoadFloat3(&self.Origin);
+        let frOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        // This algorithm based on "Fast Ray-Convex Polyhedron Intersectin," in James Arvo, ed., Graphics Gems II pp. 247-250
+        let mut tnear: f32 = -FLT_MAX;
+        let mut tfar: f32 = FLT_MAX;
+
+        //for (let i: size_t = 0; i < 6; ++i)
+        for i in 0 .. 6
+        {
+            let mut Plane: XMVECTOR = internal::XMPlaneTransform(Planes[i], frOrientation, frOrigin);
+            Plane = XMPlaneNormalize(Plane);
+
+            let AxisDotOrigin: XMVECTOR = XMPlaneDotCoord(Plane, rayOrigin);
+            let AxisDotDirection: XMVECTOR = XMVector3Dot(Plane, Direction);
+
+            if (XMVector3LessOrEqual(XMVectorAbs(AxisDotDirection), g_RayEpsilon.v()))
+            {
+                // Ray is parallel to plane - check if ray origin is inside plane's
+                if (XMVector3Greater(AxisDotOrigin, g_XMZero.v()))
+                {
+                    // Ray origin is outside half-space.
+                    *Dist = 0.0;
+                    return false;
+                }
+            }
+            else
+            {
+                // Ray not parallel - get distance to plane.
+                let vd: f32 = XMVectorGetX(AxisDotDirection);
+                let vn: f32 = XMVectorGetX(AxisDotOrigin);
+                let t: f32 = -vn / vd;
+                if (vd < 0.0)
+                {
+                    // Front face - T is a near point.
+                    if (t > tfar)
+                    {
+                        *Dist = 0.0;
+                        return false;
+                    }
+                    if (t > tnear)
+                    {
+                        // Hit near face.
+                        tnear = t;
+                    }
+                }
+                else
+                {
+                    // back face - T is far point.
+                    if (t < tnear)
+                    {
+                        *Dist = 0.0;
+                        return false;
+                    }
+                    if (t < tfar)
+                    {
+                        // Hit far face.
+                        tfar = t;
+                    }
+                }
+            }
+        }
+
+        // Survived all tests.
+        // Note: if ray originates on polyhedron, may want to change 0.0f to some
+        // epsilon to avoid intersecting the originating face.
+        let distance: f32 = if (tnear >= 0.00) { tnear } else { tfar };
+        if (distance >= 0.0)
+        {
+            *Dist = distance;
+            return true;
+        }
+
+        *Dist = 0.0;
+        return false;
+    }
 }
 
 impl ContainedBy for BoundingFrustum {
@@ -3145,21 +4312,154 @@ impl ContainedBy for BoundingFrustum {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-containedby>
     fn ContainedBy(
         &self,
-        _Plane0: FXMVECTOR,
-        _Plane1: FXMVECTOR,
-        _Plane2: GXMVECTOR,
-        _Plane3: HXMVECTOR,
-        _Plane4: HXMVECTOR,
-        _Plane5: HXMVECTOR,
+        Plane0: FXMVECTOR,
+        Plane1: FXMVECTOR,
+        Plane2: GXMVECTOR,
+        Plane3: HXMVECTOR,
+        Plane4: HXMVECTOR,
+        Plane5: HXMVECTOR,
     ) -> ContainmentType
     {
-        todo!()
+        // Load origin and orientation of the frustum.
+        let mut vOrigin: XMVECTOR = XMLoadFloat3(&self.Origin);
+        let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        debug_assert!(internal::XMQuaternionIsUnit(vOrientation));
+
+        // Set w of the origin to one so we can dot4 with a plane.
+        // TODO: template
+        vOrigin = XMVectorInsert(vOrigin, XMVectorSplatOne(), 0, 0, 0, 0, 1);
+
+        // Build the corners of the frustum (in world space).
+        let mut RightTop: XMVECTOR = XMVectorSet(self.RightSlope, self.TopSlope, 1.0, 0.0);
+        let mut RightBottom: XMVECTOR = XMVectorSet(self.RightSlope, self.BottomSlope, 1.0, 0.0);
+        let mut LeftTop: XMVECTOR = XMVectorSet(self.LeftSlope, self.TopSlope, 1.0, 0.0);
+        let mut LeftBottom: XMVECTOR = XMVectorSet(self.LeftSlope, self.BottomSlope, 1.0, 0.0);
+        let vNear: XMVECTOR = XMVectorReplicatePtr(&self.Near);
+        let vFar: XMVECTOR = XMVectorReplicatePtr(&self.Far);
+
+        RightTop = XMVector3Rotate(RightTop, vOrientation);
+        RightBottom = XMVector3Rotate(RightBottom, vOrientation);
+        LeftTop = XMVector3Rotate(LeftTop, vOrientation);
+        LeftBottom = XMVector3Rotate(LeftBottom, vOrientation);
+
+        let Corners0: XMVECTOR = XMVectorMultiplyAdd(RightTop, vNear, vOrigin);
+        let Corners1: XMVECTOR = XMVectorMultiplyAdd(RightBottom, vNear, vOrigin);
+        let Corners2: XMVECTOR = XMVectorMultiplyAdd(LeftTop, vNear, vOrigin);
+        let Corners3: XMVECTOR = XMVectorMultiplyAdd(LeftBottom, vNear, vOrigin);
+        let Corners4: XMVECTOR = XMVectorMultiplyAdd(RightTop, vFar, vOrigin);
+        let Corners5: XMVECTOR = XMVectorMultiplyAdd(RightBottom, vFar, vOrigin);
+        let Corners6: XMVECTOR = XMVectorMultiplyAdd(LeftTop, vFar, vOrigin);
+        let Corners7: XMVECTOR = XMVectorMultiplyAdd(LeftBottom, vFar, vOrigin);
+
+        let mut Inside: XMVECTOR = unsafe { uninitialized() };
+        let mut Outside: XMVECTOR = unsafe { uninitialized() };
+
+        // Test against each plane.
+        internal::FastIntersectFrustumPlane(Corners0, Corners1, Corners2, Corners3,
+            Corners4, Corners5, &Corners6, &Corners7,
+            &Plane0, &mut Outside, &mut Inside);
+
+        let mut AnyOutside: XMVECTOR = Outside;
+        let mut AllInside: XMVECTOR = Inside;
+
+        internal::FastIntersectFrustumPlane(Corners0, Corners1, Corners2, Corners3,
+            Corners4, Corners5, &Corners6, &Corners7,
+            &Plane1, &mut Outside, &mut Inside);
+
+        AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+        AllInside = XMVectorAndInt(AllInside, Inside);
+
+        internal::FastIntersectFrustumPlane(Corners0, Corners1, Corners2, Corners3,
+            Corners4, Corners5, &Corners6, &Corners7,
+            &Plane2, &mut Outside, &mut Inside);
+
+        AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+        AllInside = XMVectorAndInt(AllInside, Inside);
+
+        internal::FastIntersectFrustumPlane(Corners0, Corners1, Corners2, Corners3,
+            Corners4, Corners5, &Corners6, &Corners7,
+            &Plane3, &mut Outside, &mut Inside);
+
+        AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+        AllInside = XMVectorAndInt(AllInside, Inside);
+
+        internal::FastIntersectFrustumPlane(Corners0, Corners1, Corners2, Corners3,
+            Corners4, Corners5, &Corners6, &Corners7,
+            &Plane4, &mut Outside, &mut Inside);
+
+        AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+        AllInside = XMVectorAndInt(AllInside, Inside);
+
+        internal::FastIntersectFrustumPlane(Corners0, Corners1, Corners2, Corners3,
+            Corners4, Corners5, &Corners6, &Corners7,
+            &Plane5, &mut Outside, &mut Inside);
+
+        AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+        AllInside = XMVectorAndInt(AllInside, Inside);
+
+        // If the frustum is outside any plane it is outside.
+        if (XMVector4EqualInt(AnyOutside, XMVectorTrueInt())) {
+            return DISJOINT;
+        }
+
+        // If the frustum is inside all planes it is inside.
+        if (XMVector4EqualInt(AllInside, XMVectorTrueInt())) {
+            return CONTAINS;
+        }
+
+        // The frustum is not inside all planes or outside a plane, it may intersect.
+        return INTERSECTS;
     }
 }
 
 impl CreateFromMatrix for BoundingFrustum {
-    fn CreateFromMatrix(_Out: &mut Self, _Projection: FXMMATRIX) {
-        todo!()
+    fn CreateFromMatrix(Out: &mut Self, Projection: FXMMATRIX) {
+        // Corners of the projection frustum in homogenous space.
+        const HomogenousPoints: [XMVECTORF32; 6] =
+        [
+            XMVECTORF32 { f: [  1.0,  0.0, 1.0, 1.0 ] },   // right (at far plane)
+            XMVECTORF32 { f: [ -1.0,  0.0, 1.0, 1.0 ] },   // left
+            XMVECTORF32 { f: [  0.0,  1.0, 1.0, 1.0 ] },   // top
+            XMVECTORF32 { f: [  0.0, -1.0, 1.0, 1.0 ] },   // bottom
+
+            XMVECTORF32 { f: [  0.0,  0.0, 0.0, 1.0 ] },   // near
+            XMVECTORF32 { f: [  0.0,  0.0, 1.0, 1.0 ] }    // far
+        ];
+
+        let mut Determinant: XMVECTOR = unsafe { uninitialized() };
+        let matInverse: XMMATRIX = XMMatrixInverse(Some(&mut Determinant), Projection);
+
+        // Compute the frustum corners in world space.
+        let mut Points: [XMVECTOR; 6] = unsafe { uninitialized() };
+
+        //for (size_t i = 0; i < 6; ++i)
+        for i in 0 .. 6 
+        {
+            // Transform point.
+            Points[i] = XMVector4Transform(HomogenousPoints[i].v(), matInverse);
+        }
+
+        Out.Origin = XMFLOAT3::set(0.0, 0.0, 0.0);
+        Out.Orientation = XMFLOAT4::set(0.0, 0.0, 0.0, 1.0);
+
+        // Compute the slopes.
+        Points[0] = XMVectorMultiply(Points[0], XMVectorReciprocal(XMVectorSplatZ(Points[0])));
+        Points[1] = XMVectorMultiply(Points[1], XMVectorReciprocal(XMVectorSplatZ(Points[1])));
+        Points[2] = XMVectorMultiply(Points[2], XMVectorReciprocal(XMVectorSplatZ(Points[2])));
+        Points[3] = XMVectorMultiply(Points[3], XMVectorReciprocal(XMVectorSplatZ(Points[3])));
+
+        Out.RightSlope = XMVectorGetX(Points[0]);
+        Out.LeftSlope = XMVectorGetX(Points[1]);
+        Out.TopSlope = XMVectorGetY(Points[2]);
+        Out.BottomSlope = XMVectorGetY(Points[3]);
+
+        // Compute near and far.
+        Points[4] = XMVectorMultiply(Points[4], XMVectorReciprocal(XMVectorSplatW(Points[4])));
+        Points[5] = XMVectorMultiply(Points[5], XMVectorReciprocal(XMVectorSplatW(Points[5])));
+
+        Out.Near = XMVectorGetZ(Points[4]);
+        Out.Far = XMVectorGetZ(Points[5]);
     }
 }
 
@@ -3254,7 +4554,7 @@ impl BoundingFrustum {
         //    |    |  |    |
         //    3----2  7----6
 
-        let mut vCorners: [XMVECTOR; BoundingFrustum::CORNER_COUNT] = unsafe { uninitialized() };
+        let mut vCorners: [XMVECTOR; Self::CORNER_COUNT] = unsafe { uninitialized() };
         vCorners[0] = XMVectorMultiply(vLeftTop, vNear);
         vCorners[1] = XMVectorMultiply(vRightTop, vNear);
         vCorners[2] = XMVectorMultiply(vRightBottom, vNear);
@@ -3264,7 +4564,7 @@ impl BoundingFrustum {
         vCorners[6] = XMVectorMultiply(vRightBottom, vFar);
         vCorners[7] = XMVectorMultiply(vLeftBottom, vFar);
 
-        for i in 0.. BoundingFrustum::CORNER_COUNT
+        for i in 0.. Self::CORNER_COUNT
         {
             let C: XMVECTOR = XMVectorAdd(XMVector3Rotate(vCorners[i], vOrientation), vOrigin);
             XMStoreFloat3(&mut Corners[i], C);
@@ -3274,27 +4574,504 @@ impl BoundingFrustum {
 
 pub mod triangle_tests {
     use crate::*;
-    pub fn IntersectsRay(_Origin: FXMVECTOR, _Direction: FXMVECTOR, _V0: FXMVECTOR, _V1: GXMVECTOR, _V2: HXMVECTOR, _Dist: &f32) {
-        todo!()
+    use super::*;
+
+    pub fn IntersectsRay(Origin: FXMVECTOR, Direction: FXMVECTOR, V0: FXMVECTOR, V1: GXMVECTOR, V2: HXMVECTOR, Dist: &mut f32) -> bool {
+        debug_assert!(internal::XMVector3IsUnit(Direction));
+
+        let Zero: XMVECTOR = XMVectorZero();
+
+        let e1: XMVECTOR = XMVectorSubtract(V1, V0);
+        let e2: XMVECTOR = XMVectorSubtract(V2, V0);
+
+        // p = Direction ^ e2;
+        let p: XMVECTOR = XMVector3Cross(Direction, e2);
+
+        // det = e1 * p;
+        let det: XMVECTOR = XMVector3Dot(e1, p);
+
+        let u: XMVECTOR;
+        let v: XMVECTOR;
+        let mut t: XMVECTOR;
+
+        if (XMVector3GreaterOrEqual(det, g_RayEpsilon.v()))
+        {
+            // Determinate is positive (front side of the triangle).
+            let s: XMVECTOR = XMVectorSubtract(Origin, V0);
+
+            // u = s * p;
+            u = XMVector3Dot(s, p);
+
+            let mut NoIntersection: XMVECTOR = XMVectorLess(u, Zero);
+            NoIntersection = XMVectorOrInt(NoIntersection, XMVectorGreater(u, det));
+
+            // q = s ^ e1;
+            let q: XMVECTOR = XMVector3Cross(s, e1);
+
+            // v = Direction * q;
+            v = XMVector3Dot(Direction, q);
+
+            NoIntersection = XMVectorOrInt(NoIntersection, XMVectorLess(v, Zero));
+            NoIntersection = XMVectorOrInt(NoIntersection, XMVectorGreater(XMVectorAdd(u, v), det));
+
+            // t = e2 * q;
+            t = XMVector3Dot(e2, q);
+
+            NoIntersection = XMVectorOrInt(NoIntersection, XMVectorLess(t, Zero));
+
+            if (XMVector4EqualInt(NoIntersection, XMVectorTrueInt()))
+            {
+                *Dist = 0.0;
+                return false;
+            }
+        }
+        else if (XMVector3LessOrEqual(det, g_RayNegEpsilon.v()))
+        {
+            // Determinate is negative (back side of the triangle).
+            let s: XMVECTOR = XMVectorSubtract(Origin, V0);
+
+            // u = s * p;
+            u = XMVector3Dot(s, p);
+
+            let mut NoIntersection: XMVECTOR = XMVectorGreater(u, Zero);
+            NoIntersection = XMVectorOrInt(NoIntersection, XMVectorLess(u, det));
+
+            // q = s ^ e1;
+            let q: XMVECTOR = XMVector3Cross(s, e1);
+
+            // v = Direction * q;
+            v = XMVector3Dot(Direction, q);
+
+            NoIntersection = XMVectorOrInt(NoIntersection, XMVectorGreater(v, Zero));
+            NoIntersection = XMVectorOrInt(NoIntersection, XMVectorLess(XMVectorAdd(u, v), det));
+
+            // t = e2 * q;
+            t = XMVector3Dot(e2, q);
+
+            NoIntersection = XMVectorOrInt(NoIntersection, XMVectorGreater(t, Zero));
+
+            if (XMVector4EqualInt(NoIntersection, XMVectorTrueInt()))
+            {
+                *Dist = 0.0;
+                return false;
+            }
+        }
+        else
+        {
+            // Parallel ray.
+            *Dist = 0.0;
+            return false;
+        }
+
+        t = XMVectorDivide(t, det);
+
+        // (u / det) and (v / dev) are the barycentric cooridinates of the intersection.
+
+        // Store the x-component to *pDist
+        XMStoreFloat(Dist, t);
+
+        return true;
     }
 
     pub fn IntersectsTriangle(
-        _A0: FXMVECTOR,
-        _A1: FXMVECTOR,
-        _A2: FXMVECTOR,
-        _B0: GXMVECTOR,
-        _B1: HXMVECTOR,
-        _B2: HXMVECTOR,
+        A0: FXMVECTOR,
+        A1: FXMVECTOR,
+        A2: FXMVECTOR,
+        B0: GXMVECTOR,
+        B1: HXMVECTOR,
+        B2: HXMVECTOR,
       ) -> bool {
-          todo!()
-      }
+        const SelectY: XMVECTORU32 = XMVECTORU32 { u: [ XM_SELECT_0, XM_SELECT_1, XM_SELECT_0, XM_SELECT_0 ] };
+        const SelectZ: XMVECTORU32 = XMVECTORU32 { u: [ XM_SELECT_0, XM_SELECT_0, XM_SELECT_1, XM_SELECT_0 ] };
+        const Select0111: XMVECTORU32 = XMVECTORU32 { u: [ XM_SELECT_0, XM_SELECT_1, XM_SELECT_1, XM_SELECT_1 ] };
+        const Select1011: XMVECTORU32 = XMVECTORU32 { u: [ XM_SELECT_1, XM_SELECT_0, XM_SELECT_1, XM_SELECT_1 ] };
+        const Select1101: XMVECTORU32 = XMVECTORU32 { u: [ XM_SELECT_1, XM_SELECT_1, XM_SELECT_0, XM_SELECT_1 ] };
 
-      pub fn IntersectsPlane(
-        _V0: FXMVECTOR,
-        _V1: FXMVECTOR,
-        _V2: FXMVECTOR,
-        _Plane: GXMVECTOR,
-      ) -> bool {
-          todo!()
-      }
+        let Zero: XMVECTOR = XMVectorZero();
+
+        // Compute the normal of triangle A.
+        let N1: XMVECTOR = XMVector3Cross(XMVectorSubtract(A1, A0), XMVectorSubtract(A2, A0));
+
+        // Assert that the triangle is not degenerate.
+        debug_assert!(!XMVector3Equal(N1, Zero));
+
+        // Test points of B against the plane of A.
+        let mut BDist: XMVECTOR = XMVector3Dot(N1, XMVectorSubtract(B0, A0));
+        BDist = XMVectorSelect(BDist, XMVector3Dot(N1, XMVectorSubtract(B1, A0)), SelectY.v());
+        BDist = XMVectorSelect(BDist, XMVector3Dot(N1, XMVectorSubtract(B2, A0)), SelectZ.v());
+
+        // Ensure robustness with co-planar triangles by zeroing small distances.
+        let mut BDistIsZeroCR: u32 = unsafe { uninitialized() };
+        let BDistIsZero: XMVECTOR = XMVectorGreaterR(&mut BDistIsZeroCR, g_RayEpsilon.v(), XMVectorAbs(BDist));
+        BDist = XMVectorSelect(BDist, Zero, BDistIsZero);
+
+        let mut BDistIsLessCR: u32 = unsafe { uninitialized() };
+        let BDistIsLess: XMVECTOR = XMVectorGreaterR(&mut BDistIsLessCR, Zero, BDist);
+
+        let mut BDistIsGreaterCR: u32 = unsafe { uninitialized() };
+        let BDistIsGreater: XMVECTOR = XMVectorGreaterR(&mut BDistIsGreaterCR, BDist, Zero);
+
+        // If all the points are on the same side we don't intersect.
+        if (XMComparisonAllTrue(BDistIsLessCR) || XMComparisonAllTrue(BDistIsGreaterCR)) {
+            return false;
+        }
+
+        // Compute the normal of triangle B.
+        let N2: XMVECTOR = XMVector3Cross(XMVectorSubtract(B1, B0), XMVectorSubtract(B2, B0));
+
+        // Assert that the triangle is not degenerate.
+        debug_assert!(!XMVector3Equal(N2, Zero));
+
+        // Test points of A against the plane of B.
+        let mut ADist: XMVECTOR = XMVector3Dot(N2, XMVectorSubtract(A0, B0));
+        ADist = XMVectorSelect(ADist, XMVector3Dot(N2, XMVectorSubtract(A1, B0)), SelectY.v());
+        ADist = XMVectorSelect(ADist, XMVector3Dot(N2, XMVectorSubtract(A2, B0)), SelectZ.v());
+
+        // Ensure robustness with co-planar triangles by zeroing small distances.
+        let mut ADistIsZeroCR: u32 = unsafe { uninitialized() };
+        let ADistIsZero: XMVECTOR = XMVectorGreaterR(&mut ADistIsZeroCR, g_RayEpsilon.v(), XMVectorAbs(BDist));
+        ADist = XMVectorSelect(ADist, Zero, ADistIsZero);
+
+        let mut ADistIsLessCR: u32 = unsafe { uninitialized() };
+        let ADistIsLess: XMVECTOR = XMVectorGreaterR(&mut ADistIsLessCR, Zero, ADist);
+
+        let mut ADistIsGreaterCR: u32 = unsafe { uninitialized() };
+        let ADistIsGreater: XMVECTOR = XMVectorGreaterR(&mut ADistIsGreaterCR, ADist, Zero);
+
+        // If all the points are on the same side we don't intersect.
+        if (XMComparisonAllTrue(ADistIsLessCR) || XMComparisonAllTrue(ADistIsGreaterCR)) {
+            return false;
+        }
+
+        // Special case for co-planar triangles.
+        if (XMComparisonAllTrue(ADistIsZeroCR) || XMComparisonAllTrue(BDistIsZeroCR))
+        {
+            let mut Axis: XMVECTOR;
+            let mut Dist: XMVECTOR;
+            let mut MinDist: XMVECTOR;
+
+            // Compute an axis perpindicular to the edge (points out).
+            Axis = XMVector3Cross(N1, XMVectorSubtract(A1, A0));
+            Dist = XMVector3Dot(Axis, A0);
+
+            // Test points of B against the axis.
+            MinDist = XMVector3Dot(B0, Axis);
+            MinDist = XMVectorMin(MinDist, XMVector3Dot(B1, Axis));
+            MinDist = XMVectorMin(MinDist, XMVector3Dot(B2, Axis));
+            if (XMVector4GreaterOrEqual(MinDist, Dist)) {
+                return false;
+            }
+
+            // Edge (A1, A2)
+            Axis = XMVector3Cross(N1, XMVectorSubtract(A2, A1));
+            Dist = XMVector3Dot(Axis, A1);
+
+            MinDist = XMVector3Dot(B0, Axis);
+            MinDist = XMVectorMin(MinDist, XMVector3Dot(B1, Axis));
+            MinDist = XMVectorMin(MinDist, XMVector3Dot(B2, Axis));
+            if (XMVector4GreaterOrEqual(MinDist, Dist)) {
+                return false;
+            }
+
+            // Edge (A2, A0)
+            Axis = XMVector3Cross(N1, XMVectorSubtract(A0, A2));
+            Dist = XMVector3Dot(Axis, A2);
+
+            MinDist = XMVector3Dot(B0, Axis);
+            MinDist = XMVectorMin(MinDist, XMVector3Dot(B1, Axis));
+            MinDist = XMVectorMin(MinDist, XMVector3Dot(B2, Axis));
+            if (XMVector4GreaterOrEqual(MinDist, Dist)) {
+                return false;
+            }
+
+            // Edge (B0, B1)
+            Axis = XMVector3Cross(N2, XMVectorSubtract(B1, B0));
+            Dist = XMVector3Dot(Axis, B0);
+
+            MinDist = XMVector3Dot(A0, Axis);
+            MinDist = XMVectorMin(MinDist, XMVector3Dot(A1, Axis));
+            MinDist = XMVectorMin(MinDist, XMVector3Dot(A2, Axis));
+            if (XMVector4GreaterOrEqual(MinDist, Dist)) {
+                return false;
+            }
+
+            // Edge (B1, B2)
+            Axis = XMVector3Cross(N2, XMVectorSubtract(B2, B1));
+            Dist = XMVector3Dot(Axis, B1);
+
+            MinDist = XMVector3Dot(A0, Axis);
+            MinDist = XMVectorMin(MinDist, XMVector3Dot(A1, Axis));
+            MinDist = XMVectorMin(MinDist, XMVector3Dot(A2, Axis));
+            if (XMVector4GreaterOrEqual(MinDist, Dist)) {
+                return false;
+            }
+
+            // Edge (B2,B0)
+            Axis = XMVector3Cross(N2, XMVectorSubtract(B0, B2));
+            Dist = XMVector3Dot(Axis, B2);
+
+            MinDist = XMVector3Dot(A0, Axis);
+            MinDist = XMVectorMin(MinDist, XMVector3Dot(A1, Axis));
+            MinDist = XMVectorMin(MinDist, XMVector3Dot(A2, Axis));
+            if (XMVector4GreaterOrEqual(MinDist, Dist)) {
+                return false;
+            }
+
+            return true;
+        }
+
+        //
+        // Find the single vertex of A and B (ie the vertex on the opposite side
+        // of the plane from the other two) and reorder the edges so we can compute
+        // the signed edge/edge distances.
+        //
+        // if ( (V0 >= 0 && V1 <  0 && V2 <  0) ||
+        //      (V0 >  0 && V1 <= 0 && V2 <= 0) ||
+        //      (V0 <= 0 && V1 >  0 && V2 >  0) ||
+        //      (V0 <  0 && V1 >= 0 && V2 >= 0) ) then V0 is singular;
+        //
+        // If our singular vertex is not on the positive side of the plane we reverse
+        // the triangle winding so that the overlap comparisons will compare the
+        // correct edges with the correct signs.
+        //
+        let ADistIsLessEqual: XMVECTOR = XMVectorOrInt(ADistIsLess, ADistIsZero);
+        let ADistIsGreaterEqual: XMVECTOR = XMVectorOrInt(ADistIsGreater, ADistIsZero);
+
+        let AA0: XMVECTOR;
+        let AA1: XMVECTOR;
+        let AA2: XMVECTOR;
+        let bPositiveA: bool;
+
+        if (internal::XMVector3AllTrue(XMVectorSelect(ADistIsGreaterEqual, ADistIsLess, Select0111.v())) ||
+            internal::XMVector3AllTrue(XMVectorSelect(ADistIsGreater, ADistIsLessEqual, Select0111.v())))
+        {
+            // A0 is singular, crossing from positive to negative.
+            AA0 = A0; AA1 = A1; AA2 = A2;
+            bPositiveA = true;
+        }
+        else if (internal::XMVector3AllTrue(XMVectorSelect(ADistIsLessEqual, ADistIsGreater, Select0111.v())) ||
+            internal::XMVector3AllTrue(XMVectorSelect(ADistIsLess, ADistIsGreaterEqual, Select0111.v())))
+        {
+            // A0 is singular, crossing from negative to positive.
+            AA0 = A0; AA1 = A2; AA2 = A1;
+            bPositiveA = false;
+        }
+        else if (internal::XMVector3AllTrue(XMVectorSelect(ADistIsGreaterEqual, ADistIsLess, Select1011.v())) ||
+            internal::XMVector3AllTrue(XMVectorSelect(ADistIsGreater, ADistIsLessEqual, Select1011.v())))
+        {
+            // A1 is singular, crossing from positive to negative.
+            AA0 = A1; AA1 = A2; AA2 = A0;
+            bPositiveA = true;
+        }
+        else if (internal::XMVector3AllTrue(XMVectorSelect(ADistIsLessEqual, ADistIsGreater, Select1011.v())) ||
+            internal::XMVector3AllTrue(XMVectorSelect(ADistIsLess, ADistIsGreaterEqual, Select1011.v())))
+        {
+            // A1 is singular, crossing from negative to positive.
+            AA0 = A1; AA1 = A0; AA2 = A2;
+            bPositiveA = false;
+        }
+        else if (internal::XMVector3AllTrue(XMVectorSelect(ADistIsGreaterEqual, ADistIsLess, Select1101.v())) ||
+            internal::XMVector3AllTrue(XMVectorSelect(ADistIsGreater, ADistIsLessEqual, Select1101.v())))
+        {
+            // A2 is singular, crossing from positive to negative.
+            AA0 = A2; AA1 = A0; AA2 = A1;
+            bPositiveA = true;
+        }
+        else if (internal::XMVector3AllTrue(XMVectorSelect(ADistIsLessEqual, ADistIsGreater, Select1101.v())) ||
+            internal::XMVector3AllTrue(XMVectorSelect(ADistIsLess, ADistIsGreaterEqual, Select1101.v())))
+        {
+            // A2 is singular, crossing from negative to positive.
+            AA0 = A2; AA1 = A1; AA2 = A0;
+            bPositiveA = false;
+        }
+        else
+        {
+            debug_assert!(false);
+            return false;
+        }
+
+        let BDistIsLessEqual: XMVECTOR = XMVectorOrInt(BDistIsLess, BDistIsZero);
+        let BDistIsGreaterEqual: XMVECTOR = XMVectorOrInt(BDistIsGreater, BDistIsZero);
+
+        let BB0: XMVECTOR;
+        let BB1: XMVECTOR;
+        let BB2: XMVECTOR;
+        let bPositiveB: bool;
+
+        if (internal::XMVector3AllTrue(XMVectorSelect(BDistIsGreaterEqual, BDistIsLess, Select0111.v())) ||
+            internal::XMVector3AllTrue(XMVectorSelect(BDistIsGreater, BDistIsLessEqual, Select0111.v())))
+        {
+            // B0 is singular, crossing from positive to negative.
+            BB0 = B0; BB1 = B1; BB2 = B2;
+            bPositiveB = true;
+        }
+        else if (internal::XMVector3AllTrue(XMVectorSelect(BDistIsLessEqual, BDistIsGreater, Select0111.v())) ||
+            internal::XMVector3AllTrue(XMVectorSelect(BDistIsLess, BDistIsGreaterEqual, Select0111.v())))
+        {
+            // B0 is singular, crossing from negative to positive.
+            BB0 = B0; BB1 = B2; BB2 = B1;
+            bPositiveB = false;
+        }
+        else if (internal::XMVector3AllTrue(XMVectorSelect(BDistIsGreaterEqual, BDistIsLess, Select1011.v())) ||
+            internal::XMVector3AllTrue(XMVectorSelect(BDistIsGreater, BDistIsLessEqual, Select1011.v())))
+        {
+            // B1 is singular, crossing from positive to negative.
+            BB0 = B1; BB1 = B2; BB2 = B0;
+            bPositiveB = true;
+        }
+        else if (internal::XMVector3AllTrue(XMVectorSelect(BDistIsLessEqual, BDistIsGreater, Select1011.v())) ||
+            internal::XMVector3AllTrue(XMVectorSelect(BDistIsLess, BDistIsGreaterEqual, Select1011.v())))
+        {
+            // B1 is singular, crossing from negative to positive.
+            BB0 = B1; BB1 = B0; BB2 = B2;
+            bPositiveB = false;
+        }
+        else if (internal::XMVector3AllTrue(XMVectorSelect(BDistIsGreaterEqual, BDistIsLess, Select1101.v())) ||
+            internal::XMVector3AllTrue(XMVectorSelect(BDistIsGreater, BDistIsLessEqual, Select1101.v())))
+        {
+            // B2 is singular, crossing from positive to negative.
+            BB0 = B2; BB1 = B0; BB2 = B1;
+            bPositiveB = true;
+        }
+        else if (internal::XMVector3AllTrue(XMVectorSelect(BDistIsLessEqual, BDistIsGreater, Select1101.v())) ||
+            internal::XMVector3AllTrue(XMVectorSelect(BDistIsLess, BDistIsGreaterEqual, Select1101.v())))
+        {
+            // B2 is singular, crossing from negative to positive.
+            BB0 = B2; BB1 = B1; BB2 = B0;
+            bPositiveB = false;
+        }
+        else
+        {
+            debug_assert!(false);
+            return false;
+        }
+
+        let Delta0: XMVECTOR;
+        let Delta1: XMVECTOR;
+
+        // Reverse the direction of the test depending on whether the singular vertices are
+        // the same sign or different signs.
+        if (bPositiveA ^ bPositiveB)
+        {
+            Delta0 = XMVectorSubtract(BB0, AA0);
+            Delta1 = XMVectorSubtract(AA0, BB0);
+        }
+        else
+        {
+            Delta0 = XMVectorSubtract(AA0, BB0);
+            Delta1 = XMVectorSubtract(BB0, AA0);
+        }
+
+        // Check if the triangles overlap on the line of intersection between the
+        // planes of the two triangles by finding the signed line distances.
+        let Dist0: XMVECTOR = XMVector3Dot(Delta0, XMVector3Cross(XMVectorSubtract(BB2, BB0), XMVectorSubtract(AA2, AA0)));
+        if (XMVector4Greater(Dist0, Zero)) {
+            return false;
+        }
+
+        let Dist1: XMVECTOR = XMVector3Dot(Delta1, XMVector3Cross(XMVectorSubtract(BB1, BB0), XMVectorSubtract(AA1, AA0)));
+        if (XMVector4Greater(Dist1, Zero)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    pub fn IntersectsPlane(
+        V0: FXMVECTOR,
+        V1: FXMVECTOR,
+        V2: FXMVECTOR,
+        Plane: GXMVECTOR,
+    ) -> PlaneIntersectionType {
+        let One: XMVECTOR = XMVectorSplatOne();
+
+        debug_assert!(internal::XMPlaneIsUnit(Plane));
+
+        // Set w of the points to one so we can dot4 with a plane.
+        // TODO: template
+        let TV0: XMVECTOR = XMVectorInsert(V0, One, 0, 0, 0, 0, 1);
+        let TV1: XMVECTOR = XMVectorInsert(V1, One, 0, 0, 0, 0, 1);
+        let TV2: XMVECTOR = XMVectorInsert(V2, One, 0, 0, 0, 0, 1);
+
+        let mut Outside: XMVECTOR = unsafe { uninitialized() };
+        let mut Inside: XMVECTOR = unsafe { uninitialized() };
+
+        internal::FastIntersectTrianglePlane(TV0, TV1, TV2, Plane, &mut Outside, &mut Inside);
+
+        // If the triangle is outside any plane it is outside.
+        if (XMVector4EqualInt(Outside, XMVectorTrueInt())) {
+            return FRONT;
+        }
+
+        // If the triangle is inside all planes it is inside.
+        if (XMVector4EqualInt(Inside, XMVectorTrueInt())) {
+            return BACK;
+        }
+
+        // The triangle is not inside all planes or outside a plane it intersects.
+        return INTERSECTING;
+    }
+
+    /// Test a triangle vs 6 planes (typically forming a frustum).
+    pub fn ContainedBy(
+        V0: FXMVECTOR,
+        V1: FXMVECTOR,
+        V2: FXMVECTOR,
+        Plane0: GXMVECTOR,
+        Plane1: HXMVECTOR,
+        Plane2: HXMVECTOR,
+        Plane3: CXMVECTOR,
+        Plane4: CXMVECTOR,
+        Plane5: CXMVECTOR,
+    ) -> ContainmentType {
+        let One: XMVECTOR = XMVectorSplatOne();
+
+        // Set w of the points to one so we can dot4 with a plane.
+        // TODO: template
+        let TV0: XMVECTOR = XMVectorInsert(V0, One, 0, 0, 0, 0, 1);
+        let TV1: XMVECTOR = XMVectorInsert(V1, One, 0, 0, 0, 0, 1);
+        let TV2: XMVECTOR = XMVectorInsert(V2, One, 0, 0, 0, 0, 1);
+
+        let mut Outside: XMVECTOR = unsafe { uninitialized() };
+        let mut Inside: XMVECTOR = unsafe { uninitialized() };
+
+        // Test against each plane.
+        internal::FastIntersectTrianglePlane(TV0, TV1, TV2, Plane0, &mut Outside, &mut Inside);
+
+        let mut AnyOutside: XMVECTOR = Outside;
+        let mut AllInside: XMVECTOR = Inside;
+
+        internal::FastIntersectTrianglePlane(TV0, TV1, TV2, Plane1, &mut Outside, &mut Inside);
+        AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+        AllInside = XMVectorAndInt(AllInside, Inside);
+
+        internal::FastIntersectTrianglePlane(TV0, TV1, TV2, Plane2, &mut Outside, &mut Inside);
+        AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+        AllInside = XMVectorAndInt(AllInside, Inside);
+
+        internal::FastIntersectTrianglePlane(TV0, TV1, TV2, *Plane3, &mut Outside, &mut Inside);
+        AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+        AllInside = XMVectorAndInt(AllInside, Inside);
+
+        internal::FastIntersectTrianglePlane(TV0, TV1, TV2, *Plane4, &mut Outside, &mut Inside);
+        AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+        AllInside = XMVectorAndInt(AllInside, Inside);
+
+        internal::FastIntersectTrianglePlane(TV0, TV1, TV2, *Plane5, &mut Outside, &mut Inside);
+        AnyOutside = XMVectorOrInt(AnyOutside, Outside);
+        AllInside = XMVectorAndInt(AllInside, Inside);
+
+        // If the triangle is outside any plane it is outside.
+        if (XMVector4EqualInt(AnyOutside, XMVectorTrueInt())) {
+            return DISJOINT;
+        }
+
+        // If the triangle is inside all planes it is inside.
+        if (XMVector4EqualInt(AllInside, XMVectorTrueInt())) {
+            return CONTAINS;
+        }
+
+        // The triangle is not inside all planes or outside a plane, it may intersect.
+        return INTERSECTS;
+    }
 }
