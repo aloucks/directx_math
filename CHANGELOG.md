@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Documentation updates
+- Added collision API
 
 ### Changed
 - XMMatrixInverse now accepts `None` for the determinant, to match the upstream API
