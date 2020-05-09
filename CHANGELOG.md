@@ -5,13 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.1.0-alpha.3] - 2020-05-09
 ## Added
 - Documentation updates
 ### Changed
-- Removed all traits from collision API. Duplicate methods now have suffixes
-  that match the parameter types. For example,
+- Removed all traits from collision API. Duplicate method names have been updated to
+  have suffixes that match their parameter types. For example,
   `BoundingBox::Contains(&BoundingSphere)` and `BoundingBox::Contains(&BoundingBox)` are now
   `BoundingBox::ContainsSphere(&BoundingSphere)` and `BoundingBox::ContainsBox(&BoundingBox)`.
+- Removed `Ray`, `Direction`, `Triangle`, and related helper typedefs now that the
+  `Contains` and `Intersects` traits no longer exist.
 
 ## [0.1.0-alpha.2] - 2020-05-07
 ### Added
@@ -31,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Load/Store/Accessors
 - Plane
 
-[Unreleased]: https://github.com/aloucks/directx_math/compare/v0.1.0-alpha.2...HEAD
+[Unreleased]: https://github.com/aloucks/directx_math/compare/v0.1.0-alpha.3...HEAD
+[0.1.0-alpha.3]: https://github.com/aloucks/directx_math/releases/tag/v0.1.0-alpha.3
 [0.1.0-alpha.2]: https://github.com/aloucks/directx_math/releases/tag/v0.1.0-alpha.2
 [0.1.0-alpha.1]: https://github.com/aloucks/directx_math/releases/tag/v0.1.0-alpha.1
