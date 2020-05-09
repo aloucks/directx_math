@@ -629,7 +629,7 @@ mod internal {
 // BoundingSphere -------------------------------------------------------------
 
 impl BoundingSphere {
-    /// Transforms the BoundingBox.
+    /// Transforms the BoundingBox by the specified transformation matrix.
     ///
     /// ## Parameters
     ///
@@ -1400,6 +1400,13 @@ impl BoundingSphere {
         XMStoreFloat3(&mut Out.Center, vCenter);
         XMStoreFloat(&mut Out.Radius, vRadius);
     }
+
+    /// Creates a BoundingSphere containing the specified BoundingFrustum.
+    pub fn CreateFromFrustum(Out: &mut Self, fr: &BoundingFrustum) {
+        let mut Corners: [XMFLOAT3; BoundingFrustum::CORNER_COUNT] = unsafe { uninitialized() };
+        fr.GetCorners(&mut Corners);
+        BoundingSphere::CreateFromPoints(Out, &Corners)
+    }
 }
 
 #[test]
@@ -1430,16 +1437,6 @@ fn test_BoundingSphere_CreateFromPoints() {
     assert_eq!(ContainmentType::DISJOINT, bounds.ContainsPoint(XMVectorSet(0.0, 0.0, 0.0, 0.0)));
 }
 
-impl BoundingSphere {
-    /// Creates a BoundingSphere containing the specified BoundingFrustum.
-    pub fn CreateFromFrustum(Out: &mut Self, fr: &BoundingFrustum) {
-        let mut Corners: [XMFLOAT3; BoundingFrustum::CORNER_COUNT] = unsafe { uninitialized() };
-        fr.GetCorners(&mut Corners);
-        BoundingSphere::CreateFromPoints(Out, &Corners)
-    }
-}
-
-
 // BoundingBox ----------------------------------------------------------------
 
 impl BoundingBox {
@@ -1457,6 +1454,20 @@ impl BoundingBox {
         }
     }
 
+    /// Transforms the BoundingBox by the specified transformation matrix..
+    ///
+    /// ## Parameters
+    ///
+    /// `Out` The transformed BoundingBox.
+    ///
+    /// `M` The matrix to transform the BoundingBox by.
+    ///
+    /// ## Return value
+    ///
+    /// None
+    ///
+    /// ## Reference
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-transform>
     pub fn TransformMatrix(&self, Out: &mut Self, M: FXMMATRIX) {
         // Load center and extents.
@@ -1484,6 +1495,24 @@ impl BoundingBox {
         XMStoreFloat3(&mut Out.Extents, XMVectorScale(XMVectorSubtract(Max, Min), 0.5));
     }
 
+    /// Transforms the BoundingBox using the specified `scale`, `rotation` and `translation` vectors.
+    ///
+    /// ## Parameters
+    ///
+    /// `Out` The transformed BoundingBox.
+    ///
+    /// `Scale` The value to scale the BoundingBox by.
+    ///
+    /// `Rotation` The value to rotate the BoundingBox by.
+    ///
+    /// `Translation` The value to translate the BoundingBox by.
+    ///
+    /// ## Return value
+    ///
+    /// This method does not return a value.
+    ///
+    /// ## Reference
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-transform(BoundingBox__float_fxmvector_fxmvector)>
     pub fn TransformDecomposed(&self, Out: &mut Self, Scale: f32, Rotation: FXMVECTOR, Translation: FXMVECTOR) {
         debug_assert!(internal::XMQuaternionIsUnit(Rotation));
@@ -2218,6 +2247,20 @@ impl BoundingBox {
 impl BoundingOrientedBox {
     pub const CORNER_COUNT: usize = 8;
 
+    /// Transforms the BoundingOrientedBox by the specified transformation matrix.
+    ///
+    /// ## Parameters
+    ///
+    /// `Out` The transformed BoundingOrientedBox.
+    ///
+    /// `M` The matrix to transform the BoundingOrientedBox with.
+    ///
+    /// ## Return value
+    ///
+    /// This method does not return a value.
+    ///
+    /// ## Reference
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-transform>
     pub fn TransformMatrix(&self, Out: &mut Self, M: FXMMATRIX) {
         // Load the box.
@@ -2256,6 +2299,24 @@ impl BoundingOrientedBox {
         XMStoreFloat4(&mut Out.Orientation, vOrientation);
     }
 
+    /// Transforms the BoundingOrientedBox using the specified `scale`, `rotation` and `translation` vectors.
+    ///
+    /// ## Parameters
+    ///
+    /// `Out` The transformed BoundingOrientedBox.
+    ///
+    /// `Scale` The value to scale the BoundingOrientedBox by.
+    ///
+    /// `Rotation` The value to rotate the BoundingOrientedBox by.
+    ///
+    /// `Translation` The value to translate the BoundingOrientedBox by.
+    ///
+    /// ## Return value
+    ///
+    /// This method does not return a value.
+    ///
+    /// ## Reference
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-transform(BoundingOrientedBox__float_fxmvector_fxmvector)>
     pub fn TransformDecomposed(&self, Out: &mut Self, Scale: f32, Rotation: FXMVECTOR, Translation: FXMVECTOR) {
         debug_assert!(internal::XMQuaternionIsUnit(Rotation));
@@ -3160,6 +3221,22 @@ impl BoundingFrustum {
     /// The number of corners defining the BoundingFrustum.
     pub const CORNER_COUNT: usize = 8;
 
+    /// Transforms the BoundingFrustum by the specified transformation matrix.
+    ///
+    /// ## Parameters
+    ///
+    /// `Out` The transformed BoundingFrustum.
+    ///
+    /// `M` The transformation matrix.
+    ///
+    /// **Note** The transformation matrix cannot contain a scale transform.
+    ///
+    /// ## Return value
+    ///
+    /// This method does not return a value.
+    ///
+    /// ## Reference
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-transform>
     pub fn TransformMatrix(&self, Out: &mut Self, M: FXMMATRIX) {
         // Load the frustum.
@@ -3204,6 +3281,24 @@ impl BoundingFrustum {
         Out.BottomSlope = self.BottomSlope;
     }
 
+    /// Transforms the BoundingFrustum using the specified `scale`, `rotation` and `translation` vectors.
+    ///
+    /// ## Parameters
+    ///
+    /// `Out` The transformed BoundingFrustum.
+    ///
+    /// `Scale` The value to scale the BoundingFrustum by.
+    ///
+    /// `Rotation` The value to rotate the BoundingFrustum by.
+    ///
+    /// `Translation` The value to translate the BoundingFrustum by.
+    ///
+    /// ## Return value
+    ///
+    /// This method does not return a value.
+    ///
+    /// ## Reference
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-transform(BoundingFrustum__float_fxmvector_fxmvector)>
     pub fn TransformDecomposed(&self, Out: &mut Self, Scale: f32, Rotation: FXMVECTOR, Translation: FXMVECTOR) {
         debug_assert!(internal::XMQuaternionIsUnit(Rotation));
