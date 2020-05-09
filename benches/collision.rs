@@ -12,7 +12,7 @@ benchmarks!({
     use crate::support::*;
 
     fn _BoundingSphere_Intersects_BoundingSphere(a: BoundingSphere, b: BoundingSphere) -> bool {
-        a.Intersects(&b)
+        a.IntersectsSphere(&b)
     }
 
     bench!(
@@ -24,7 +24,7 @@ benchmarks!({
     );
 
     fn _BoundingSphere_Intersects_BoundingBox(a: BoundingSphere, b: BoundingBox) -> bool {
-        a.Intersects(&b)
+        a.IntersectsBox(&b)
     }
 
     bench!(
@@ -36,7 +36,7 @@ benchmarks!({
     );
 
     fn _BoundingSphere_Intersects_BoundingOrientedBox(a: BoundingSphere, b: BoundingOrientedBox) -> bool {
-        a.Intersects(&b)
+        a.IntersectsOrientedBox(&b)
     }
 
     bench!(
@@ -49,7 +49,7 @@ benchmarks!({
 
     fn _BoundingSphere_Intersects_Ray(a: BoundingSphere, ray: Ray) -> bool {
         let (Origin, Direction, mut Dist) = ray;
-        a.Intersects((Origin, Direction, &mut Dist))
+        a.IntersectsRay((Origin, Direction, &mut Dist))
     }
 
     bench!(
@@ -63,7 +63,7 @@ benchmarks!({
     // --
 
     fn _BoundingBox_Intersects_BoundingBox(a: BoundingBox, b: BoundingBox) -> bool {
-        a.Intersects(&b)
+        a.IntersectsBox(&b)
     }
 
     bench!(
@@ -75,7 +75,7 @@ benchmarks!({
     );
 
     fn _BoundingBox_Intersects_BoundingOrientedBox(a: BoundingBox, b: BoundingOrientedBox) -> bool {
-        a.Intersects(&b)
+        a.IntersectsOrientedBox(&b)
     }
 
     bench!(
@@ -88,7 +88,7 @@ benchmarks!({
 
     fn _BoundingBox_Intersects_Ray(a: BoundingBox, ray: Ray) -> bool {
         let (Origin, Direction, mut Dist) = ray;
-        a.Intersects((Origin, Direction, &mut Dist))
+        a.IntersectsRay((Origin, Direction, &mut Dist))
     }
 
     bench!(
@@ -102,7 +102,7 @@ benchmarks!({
     // --
 
     fn _BoundingOrientedBox_Intersects_BoundingOrientedBox(a: BoundingOrientedBox, b: BoundingOrientedBox) -> bool {
-        a.Intersects(&b)
+        a.IntersectsOrientedBox(&b)
     }
 
     bench!(
@@ -115,7 +115,7 @@ benchmarks!({
 
     fn _BoundingOrientedBox_Intersects_Ray(a: BoundingOrientedBox, ray: Ray) -> bool {
         let (Origin, Direction, mut Dist) = ray;
-        a.Intersects((Origin, Direction, &mut Dist))
+        a.IntersectsRay((Origin, Direction, &mut Dist))
     }
 
     bench!(
@@ -129,7 +129,7 @@ benchmarks!({
     // --
 
     fn _BoundingSphere_Contains_BoundingSphere(a: BoundingSphere, b: BoundingSphere) -> ContainmentType {
-        a.Contains(&b)
+        a.ContainsSphere(&b)
     }
 
     bench!(
@@ -141,7 +141,7 @@ benchmarks!({
     );
 
     fn _BoundingSphere_Contains_BoundingBox(a: BoundingSphere, b: BoundingBox) -> ContainmentType {
-        a.Contains(&b)
+        a.ContainsBox(&b)
     }
 
     bench!(
@@ -153,7 +153,7 @@ benchmarks!({
     );
 
     fn _BoundingSphere_Contains_BoundingOrientedBox(a: BoundingSphere, b: BoundingOrientedBox) -> ContainmentType {
-        a.Contains(&b)
+        a.ContainsOrientedBox(&b)
     }
 
     bench!(
@@ -167,7 +167,7 @@ benchmarks!({
     // --
 
     fn _BoundingBox_Contains_BoundingSphere(a: BoundingBox, b: BoundingSphere) -> ContainmentType {
-        a.Contains(&b)
+        a.ContainsSphere(&b)
     }
 
     bench!(
@@ -179,7 +179,7 @@ benchmarks!({
     );
 
     fn _BoundingBox_Contains_BoundingBox(a: BoundingBox, b: BoundingBox) -> ContainmentType {
-        a.Contains(&b)
+        a.ContainsBox(&b)
     }
 
     bench!(
@@ -191,7 +191,7 @@ benchmarks!({
     );
 
     fn _BoundingBox_Contains_BoundingOrientedBox(a: BoundingBox, b: BoundingOrientedBox) -> ContainmentType {
-        a.Contains(&b)
+        a.ContainsOrientedBox(&b)
     }
 
     bench!(
@@ -205,7 +205,7 @@ benchmarks!({
     // --
 
     fn _BoundingOrientedBox_Contains_BoundingSphere(a: BoundingOrientedBox, b: BoundingSphere) -> ContainmentType {
-        a.Contains(&b)
+        a.ContainsSphere(&b)
     }
 
     bench!(
@@ -217,7 +217,7 @@ benchmarks!({
     );
 
     fn _BoundingOrientedBox_Contains_BoundingBox(a: BoundingOrientedBox, b: BoundingBox) -> ContainmentType {
-        a.Contains(&b)
+        a.ContainsBox(&b)
     }
 
     bench!(
@@ -229,7 +229,7 @@ benchmarks!({
     );
 
     fn _BoundingOrientedBox_Contains_BoundingOrientedBox(a: BoundingOrientedBox, b: BoundingOrientedBox) -> ContainmentType {
-        a.Contains(&b)
+        a.ContainsOrientedBox(&b)
     }
 
     bench!(
