@@ -670,9 +670,7 @@ impl BoundingSphere {
             Out.Radius = self.Radius * Scale;
         }
     }
-}
 
-impl BoundingSphere {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-transform(boundingsphere__float_fxmvector_fxmvector)>
     pub fn TransformDecomposed(&self, Out: &mut Self, Scale: f32, Rotation: FXMVECTOR, Translation: FXMVECTOR) {
         // Load the center of the sphere.
@@ -1122,9 +1120,7 @@ impl BoundingSphere {
         // The sphere is not inside all planes or outside a plane, it may intersect.
         return INTERSECTS;
     }
-}
 
-impl BoundingSphere {
     /// Creates a BoundingSphere that contains the two specified BoundingSphere objects.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-createmerged>
@@ -1166,10 +1162,7 @@ impl BoundingSphere {
         XMStoreFloat3(&mut Out.Center, NCenter);
         Out.Radius = t_5;
     }
-}
 
-
-impl BoundingSphere {
     /// Creates a BoundingSphere containing the specified BoundingBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-createfromboundingbox>
@@ -1188,9 +1181,7 @@ impl BoundingSphere {
         let vExtents: XMVECTOR = XMLoadFloat3(&box_.Extents);
         Out.Radius = XMVectorGetX(XMVector3Length(vExtents));
     }
-}
 
-impl BoundingSphere {
     /// Creates a new BoundingSphere from a list of points.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-createfrompoints>
@@ -1372,9 +1363,7 @@ impl BoundingBox {
             XMStoreFloat3(&mut Corners[i], C);
         }
     }
-}
 
-impl BoundingBox {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-transform>
     pub fn TransformMatrix(&self, Out: &mut Self, M: FXMMATRIX) {
         // Load center and extents.
@@ -1401,9 +1390,7 @@ impl BoundingBox {
         XMStoreFloat3(&mut Out.Center, XMVectorScale(XMVectorAdd(Min, Max), 0.5));
         XMStoreFloat3(&mut Out.Extents, XMVectorScale(XMVectorSubtract(Max, Min), 0.5));
     }
-}
 
-impl BoundingBox {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-transform(BoundingBox__float_fxmvector_fxmvector)>
     pub fn TransformDecomposed(&self, Out: &mut Self, Scale: f32, Rotation: FXMVECTOR, Translation: FXMVECTOR) {
         debug_assert!(internal::XMQuaternionIsUnit(Rotation));
@@ -2021,9 +2008,7 @@ impl BoundingBox {
         // The box is not inside all planes or outside a plane, it may intersect.
         return INTERSECTS;
     }
-}
 
-impl BoundingBox {
     /// Creates a BoundingBox that contains the two specified BoundingBox objects.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-createmerged>
@@ -2045,9 +2030,7 @@ impl BoundingBox {
         XMStoreFloat3(&mut Out.Center, XMVectorScale(XMVectorAdd(Min, Max), 0.5));
         XMStoreFloat3(&mut Out.Extents, XMVectorScale(XMVectorSubtract(Max, Min), 0.5));
     }
-}
 
-impl BoundingBox {
     /// Creates a BoundingBox large enough to contain the a specified BoundingSphere.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingbox-createfromsphere>
@@ -2063,9 +2046,7 @@ impl BoundingBox {
         XMStoreFloat3(&mut Out.Center, XMVectorScale(XMVectorAdd(Min, Max), 0.5));
         XMStoreFloat3(&mut Out.Extents, XMVectorScale(XMVectorSubtract(Max, Min), 0.5));
     }
-}
 
-impl BoundingBox {
     /// Creates a new BoundingBox from a list of points.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-createfrompoints>
@@ -2136,9 +2117,7 @@ impl BoundingOrientedBox {
         XMStoreFloat3(&mut Out.Extents, vExtents);
         XMStoreFloat4(&mut Out.Orientation, vOrientation);
     }
-}
 
-impl BoundingOrientedBox {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-transform(BoundingOrientedBox__float_fxmvector_fxmvector)>
     pub fn TransformDecomposed(&self, Out: &mut Self, Scale: f32, Rotation: FXMVECTOR, Translation: FXMVECTOR) {
         debug_assert!(internal::XMQuaternionIsUnit(Rotation));
@@ -2831,11 +2810,8 @@ impl BoundingOrientedBox {
         // The box is not inside all planes or outside a plane, it may intersect.
         return INTERSECTS;
     }
-}
 
-// Create oriented bounding box from axis-aligned bounding box
-impl BoundingOrientedBox {
-    /// Creates a BoundingBox large enough to contain the a specified BoundingSphere.
+    /// Create oriented bounding box from axis-aligned bounding box
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-CreateFromBoundingBox>
     pub fn CreateFromBoundingBox(Out: &mut Self, box_: &BoundingBox) {
@@ -2843,24 +2819,23 @@ impl BoundingOrientedBox {
         Out.Extents = box_.Extents;
         Out.Orientation = XMFLOAT4::set(0.0, 0.0, 0.0, 1.0);
     }
-}
 
-//-----------------------------------------------------------------------------
-// Find the approximate minimum oriented bounding box containing a set of
-// points.  Exact computation of minimum oriented bounding box is possible but
-// is slower and requires a more complex algorithm.
-// The algorithm works by computing the inertia tensor of the points and then
-// using the eigenvectors of the intertia tensor as the axes of the box.
-// Computing the intertia tensor of the convex hull of the points will usually
-// result in better bounding box but the computation is more complex.
-// Exact computation of the minimum oriented bounding box is possible but the
-// best know algorithm is O(N^3) and is significanly more complex to implement.
-//-----------------------------------------------------------------------------
-impl BoundingOrientedBox {
     /// Creates a new BoundingOrientedBox from a list of points.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-createfrompoints>
     pub fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl IntoIterator<Item=&'a XMFLOAT3> + Clone) {
+        //-----------------------------------------------------------------------------
+        // Find the approximate minimum oriented bounding box containing a set of
+        // points.  Exact computation of minimum oriented bounding box is possible but
+        // is slower and requires a more complex algorithm.
+        // The algorithm works by computing the inertia tensor of the points and then
+        // using the eigenvectors of the intertia tensor as the axes of the box.
+        // Computing the intertia tensor of the convex hull of the points will usually
+        // result in better bounding box but the computation is more complex.
+        // Exact computation of the minimum oriented bounding box is possible but the
+        // best know algorithm is O(N^3) and is significanly more complex to implement.
+        //-----------------------------------------------------------------------------
+
         let Count = pPoints.clone().into_iter().count();
 
         if Count == 0 {
@@ -3044,9 +3019,7 @@ impl BoundingFrustum {
         Out.TopSlope = self.TopSlope;
         Out.BottomSlope = self.BottomSlope;
     }
-}
 
-impl BoundingFrustum {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-transform(BoundingFrustum__float_fxmvector_fxmvector)>
     pub fn TransformDecomposed(&self, Out: &mut Self, Scale: f32, Rotation: FXMVECTOR, Translation: FXMVECTOR) {
         debug_assert!(internal::XMQuaternionIsUnit(Rotation));
@@ -3307,18 +3280,19 @@ impl Contains<&BoundingFrustum> for BoundingFrustum {
     }
 }
 
-//-----------------------------------------------------------------------------
-// Exact sphere vs frustum test.  The algorithm first checks the sphere against
-// the planes of the frustum, then if the plane checks were indeterminate finds
-// the nearest feature (plane, line, point) on the frustum to the center of the
-// sphere and compares the distance to the nearest feature to the radius of the
-// sphere
-//-----------------------------------------------------------------------------
 impl Intersects<&BoundingSphere> for BoundingFrustum {
     /// Tests the BoundingFrustum for intersection with a BoundingSphere.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-intersects>
     fn Intersects(&self, sh: &BoundingSphere) -> bool {
+        //-----------------------------------------------------------------------------
+        // Exact sphere vs frustum test.  The algorithm first checks the sphere against
+        // the planes of the frustum, then if the plane checks were indeterminate finds
+        // the nearest feature (plane, line, point) on the frustum to the center of the
+        // sphere and compares the distance to the nearest feature to the radius of the
+        // sphere
+        //-----------------------------------------------------------------------------
+
         let Zero: XMVECTOR = XMVectorZero();
 
         // Build the frustum planes.
@@ -4381,9 +4355,7 @@ impl BoundingFrustum {
         // The frustum is not inside all planes or outside a plane, it may intersect.
         return INTERSECTS;
     }
-}
 
-impl BoundingFrustum {
     pub fn CreateFromMatrix(Out: &mut Self, Projection: FXMMATRIX) {
         // Corners of the projection frustum in homogenous space.
         const HomogenousPoints: [XMVECTORF32; 6] =
