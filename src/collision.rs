@@ -983,7 +983,7 @@ impl BoundingSphere {
     /// Tests the BoundingSphere for intersection with a triangle.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-intersects(fxmvector_fxmvector_fxmvector)>
-    fn IntersectsTriangle(&self, V0: FXMVECTOR, V1: FXMVECTOR, V2: FXMVECTOR) -> bool {
+    pub fn IntersectsTriangle(&self, V0: FXMVECTOR, V1: FXMVECTOR, V2: FXMVECTOR) -> bool {
         // Load the sphere.
         let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
         let vRadius: XMVECTOR = XMVectorReplicatePtr(&self.Radius);
@@ -1736,7 +1736,7 @@ impl BoundingBox {
     /// Tests the BoundingBox for intersection with a BoundingSphere.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-intersects>
-    fn IntersectsSphere(&self, sh: &BoundingSphere) -> bool {
+    pub fn IntersectsSphere(&self, sh: &BoundingSphere) -> bool {
         let SphereCenter: XMVECTOR = XMLoadFloat3(&sh.Center);
         let SphereRadius: XMVECTOR = XMVectorReplicatePtr(&sh.Radius);
 
@@ -3577,7 +3577,7 @@ impl BoundingFrustum {
     /// Tests the BoundingFrustum for intersection with a BoundingSphere.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-intersects>
-    fn IntersectsSphere(&self, sh: &BoundingSphere) -> bool {
+    pub fn IntersectsSphere(&self, sh: &BoundingSphere) -> bool {
         //-----------------------------------------------------------------------------
         // Exact sphere vs frustum test.  The algorithm first checks the sphere against
         // the planes of the frustum, then if the plane checks were indeterminate finds
@@ -3780,7 +3780,7 @@ impl BoundingFrustum {
     /// Test the BoundingFrustum for intersection with a BoundingOrientedBox.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-intersects(constboundingorientedbox_)>
-    fn IntersectsOrientedBox(&self, box_: &BoundingOrientedBox) -> bool {
+    pub fn IntersectsOrientedBox(&self, box_: &BoundingOrientedBox) -> bool {
         const SelectY: XMVECTOR = unsafe { XMVECTORU32 { u: [ XM_SELECT_0, XM_SELECT_1, XM_SELECT_0, XM_SELECT_0 ] }.v };
         const SelectZ: XMVECTOR = unsafe { XMVECTORU32 { u: [ XM_SELECT_0, XM_SELECT_0, XM_SELECT_1, XM_SELECT_0 ] }.v };
 
