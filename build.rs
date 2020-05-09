@@ -27,6 +27,7 @@ fn main() {
     } else if cfg!(all(target_arch="arm", not(feature="no_intrinsics"))) {
         // NOTE: ARM intrinics require nightly and don't seem to be fully
         //       implemented/available (or some are missing on docs.rs).
+        //       https://github.com/aloucks/directx_math/issues/1
         // println!("cargo:rustc-cfg=_XM_ARM_NEON_INTRINSICS_");
         // intrinics = true;
     }
@@ -35,12 +36,15 @@ fn main() {
         println!("cargo:rustc-cfg=_XM_NO_INTRINSICS_");
     }
 
-    if is_nightly() {
-        #[cfg(feature="specialization")]
-        println!("cargo:rustc-cfg=nightly_specialization");
+    #[cfg(feature="specialization")]
+    {
+        if is_nightly() {
+            println!("cargo:rustc-cfg=nightly_specialization");
+        }
     }
 }
 
+#[cfg(feature="specialization")]
 fn is_nightly() -> bool {
     use std::env;
     let rustc = env::var("RUSTC").unwrap_or(String::from("rustc"));
