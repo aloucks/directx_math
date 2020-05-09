@@ -61,7 +61,7 @@ pub struct BoundingBox {
 }
 
 impl BoundingBox {
-    const CORNER_COUNT: usize = 8;
+    pub const CORNER_COUNT: usize = 8;
 }
 
 #[repr(C)]
@@ -78,7 +78,7 @@ pub struct BoundingOrientedBox {
 }
 
 impl BoundingOrientedBox {
-    const CORNER_COUNT: usize = 8;
+    pub const CORNER_COUNT: usize = 8;
 }
 
 #[repr(C)]
@@ -109,7 +109,7 @@ pub struct BoundingFrustum {
 }
 
 impl BoundingFrustum {
-    const CORNER_COUNT: usize = 8;
+    pub const CORNER_COUNT: usize = 8;
 }
 
 pub trait Contains<T> {
@@ -4403,19 +4403,7 @@ impl BoundingFrustum {
         Out.Near = XMVectorGetZ(Points[4]);
         Out.Far = XMVectorGetZ(Points[5]);
     }
-}
 
-//-----------------------------------------------------------------------------
-// Build the 6 frustum planes from a frustum.
-//
-// The intended use for these routines is for fast culling to a view frustum.
-// When the volume being tested against a view frustum is small relative to the
-// view frustum it is usually either inside all six planes of the frustum
-// (CONTAINS) or outside one of the planes of the frustum (DISJOINT). If neither
-// of these cases is true then it may or may not be intersecting the frustum
-// (INTERSECTS)
-//-----------------------------------------------------------------------------
-impl BoundingFrustum {
     pub fn GetPlanes(
         &self,
         NearPlane: Option<&mut XMVECTOR>,
@@ -4425,6 +4413,17 @@ impl BoundingFrustum {
         TopPlane: Option<&mut XMVECTOR>,
         BottomPlane: Option<&mut XMVECTOR>,
     ) {
+        //-----------------------------------------------------------------------------
+        // Build the 6 frustum planes from a frustum.
+        //
+        // The intended use for these routines is for fast culling to a view frustum.
+        // When the volume being tested against a view frustum is small relative to the
+        // view frustum it is usually either inside all six planes of the frustum
+        // (CONTAINS) or outside one of the planes of the frustum (DISJOINT). If neither
+        // of these cases is true then it may or may not be intersecting the frustum
+        // (INTERSECTS)
+        //-----------------------------------------------------------------------------
+
         // Load origin and orientation of the frustum.
         let vOrigin: XMVECTOR = XMLoadFloat3(&self.Origin);
         let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
