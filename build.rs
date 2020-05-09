@@ -43,7 +43,7 @@ fn main() {
 
 fn is_nightly() -> bool {
     use std::env;
-    let rustc = env::var("RUSTC").unwrap();
+    let rustc = env::var("RUSTC").unwrap_or(String::from("rustc"));
     let output = std::process::Command::new(rustc).arg("--version").output().unwrap();
     let output = String::from_utf8_lossy(&output.stdout);
     output.contains("nightly")
