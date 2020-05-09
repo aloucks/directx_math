@@ -111,6 +111,9 @@ mod inner {
     use directx_math::*;
     use directx_math::collision::*;
 
+    /// (`Origin`, `Direction`)
+    pub type Ray = (XMVECTOR, XMVECTOR);
+
     pub fn random_f32(rng: &mut Pcg) -> f32 {
         (rng.next_u32() & 0xffffff) as f32 / 16777216.0
     }

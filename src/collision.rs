@@ -32,27 +32,6 @@ pub enum PlaneIntersectionType {
 use ContainmentType::{DISJOINT, INTERSECTS, CONTAINS};
 use PlaneIntersectionType::{FRONT, INTERSECTING, BACK};
 
-/// The corners (i.e. vertices) of a triangle: `V0`, `V1`, and `V2`.
-pub type Triangle = (XMVECTOR, XMVECTOR, XMVECTOR);
-
-/// A 3D vector
-pub type Point = XMVECTOR;
-
-/// The coefficients of the plane equation, `Ax+By+Cz+D = 0`, where the `X`-component is `A`,
-/// `Y`-component is `B`, `Z`-component is `C` and `W`-component is `D`.
-pub type Plane = XMVECTOR;
-
-/// A 3D unit vector
-pub type Direction = XMVECTOR;
-
-/// A Ray composed of `(Origin, Direction)`
-///
-/// `Origin` The origin point of the ray.
-///
-/// `Direction` The direction of the ray.
-pub type Ray = (Point, Direction);
-
-
 /// A bounding sphere object.
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
@@ -734,7 +713,7 @@ impl BoundingSphere {
     /// ## Reference
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-contains>
-    pub fn ContainsPoint(&self, Point: Point) -> ContainmentType {
+    pub fn ContainsPoint(&self, Point: FXMVECTOR) -> ContainmentType {
         let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
         let vRadius: XMVECTOR = XMVectorReplicatePtr(&self.Radius);
 
@@ -765,8 +744,8 @@ impl BoundingSphere {
     /// ## Reference
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-contains(fxmvector_fxmvector_fxmvector)>
-    pub fn ContainsTriangle(&self, (V0, V1, V2): Triangle) -> ContainmentType {
-        if (!self.IntersectsTriangle((V0, V1, V2))) {
+    pub fn ContainsTriangle(&self, V0: FXMVECTOR, V1: FXMVECTOR, V2: FXMVECTOR) -> ContainmentType {
+        if (!self.IntersectsTriangle(V0, V1, V2)) {
             return ContainmentType::DISJOINT;
         }
 
@@ -1004,7 +983,7 @@ impl BoundingSphere {
     /// Tests the BoundingSphere for intersection with a triangle.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-intersects(fxmvector_fxmvector_fxmvector)>
-    fn IntersectsTriangle(&self, (V0, V1, V2): Triangle) -> bool {
+    fn IntersectsTriangle(&self, V0: FXMVECTOR, V1: FXMVECTOR, V2: FXMVECTOR) -> bool {
         // Load the sphere.
         let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
         let vRadius: XMVECTOR = XMVectorReplicatePtr(&self.Radius);
@@ -1059,8 +1038,18 @@ impl BoundingSphere {
 
     /// Tests the BoundingSphere for intersection with a Plane.
     ///
+    /// ## Parameters
+    ///
+    /// `Plane` A vector describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
+    ///
+    /// ## Return value
+    ///
+    /// A PlaneIntersectionType value indicating whether the BoundingSphere intersects the specified plane.
+    ///
+    /// ## Reference
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-intersects(fxmvector)>
-    pub fn IntersectsPlane(&self, Plane: Plane) -> PlaneIntersectionType {
+    pub fn IntersectsPlane(&self, Plane: FXMVECTOR) -> PlaneIntersectionType {
         debug_assert!(internal::XMPlaneIsUnit(Plane));
 
         // Load the sphere.
@@ -1111,7 +1100,7 @@ impl BoundingSphere {
     /// ## Reference
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-intersects(fxmvector_fxmvector_float_)>
-    pub fn IntersectsRay(&self, (Origin, Direction): Ray, Dist: &mut f32) -> bool {
+    pub fn IntersectsRay(&self, Origin: FXMVECTOR, Direction: FXMVECTOR, Dist: &mut f32) -> bool {
         debug_assert!(internal::XMVector3IsUnit(Direction));
 
         let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
@@ -1526,17 +1515,45 @@ impl BoundingBox {
         XMStoreFloat3(&mut Out.Extents, XMVectorScale(XMVectorSubtract(Max, Min), 0.5));
     }
 
+    /// Tests the whether the BoundingBox contains a specified point.
+    ///
+    /// ## Parameters
+    ///
+    /// `Point` The point to test against.
+    ///
+    /// ## Return value
+    ///
+    /// A ContainmentType value indicating whether the point is contained in the BoundingBox.
+    ///
+    /// ## Reference
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-contains>
-    pub fn ContainsPoint(&self, Point: Point) -> ContainmentType {
+    pub fn ContainsPoint(&self, Point: FXMVECTOR) -> ContainmentType {
         let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
         let vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
 
         return if XMVector3InBounds(XMVectorSubtract(Point, vCenter), vExtents) { CONTAINS } else { DISJOINT };
     }
 
+    /// Test whether the BoundingBox contains a specified triangle.
+    ///
+    /// ## Parameters
+    ///
+    /// `V0` A corner of the triangle.
+    ///
+    /// `V1` A corner of the triangle.
+    ///
+    /// `V2` A corner of the triangle.
+    ///
+    /// ## Return value
+    ///
+    /// A ContainmentType value indicating whether the BoundingBox contains the specified triangle.
+    ///
+    /// ## Reference
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-contains(fxmvector_fxmvector_fxmvector)>
-    pub fn ContainsTriangle(&self, (V0, V1, V2): Triangle) -> ContainmentType {
-        if (!self.IntersectsTriangle((V0, V1, V2))) {
+    pub fn ContainsTriangle(&self, V0: FXMVECTOR, V1: FXMVECTOR, V2: FXMVECTOR) -> ContainmentType {
+        if (!self.IntersectsTriangle(V0, V1, V2)) {
             return DISJOINT;
         }
 
@@ -1762,8 +1779,22 @@ impl BoundingBox {
 
     /// Tests the BoundingSphere for intersection with a triangle.
     ///
+    /// ## Parameters
+    ///
+    /// `V0` A vector describing the triangle.
+    ///
+    /// `V1` A vector describing the triangle.
+    ///
+    /// `V2` A vector describing the triangle.
+    ///
+    /// ## Return value
+    ///
+    /// A bool value indicating whether the BoundingBox intersects the triangle.
+    ///
+    /// ## Reference
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-intersects(fxmvector_fxmvector_fxmvector)>
-    pub fn IntersectsTriangle(&self, (V0, V1, V2): Triangle) -> bool {
+    pub fn IntersectsTriangle(&self, V0: FXMVECTOR, V1: FXMVECTOR, V2: FXMVECTOR) -> bool {
         let Zero: XMVECTOR = XMVectorZero();
 
         // Load the box.
@@ -1932,8 +1963,18 @@ impl BoundingBox {
 
     /// Tests the BoundingBox for intersection with a Plane.
     ///
+    /// ## Parameters
+    ///
+    /// `Plane` A vector describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
+    ///
+    /// ## Return value
+    ///
+    /// A PlaneIntersectionType value indicating whether the BoundingSphere intersects the specified plane.
+    ///
+    /// ## Reference
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-intersects(fxmvector)>
-    pub fn IntersectsPlane(&self, Plane: Plane) -> PlaneIntersectionType {
+    pub fn IntersectsPlane(&self, Plane: FXMVECTOR) -> PlaneIntersectionType {
         debug_assert!(internal::XMPlaneIsUnit(Plane));
 
         // Load the box.
@@ -1984,7 +2025,7 @@ impl BoundingBox {
     /// ## Reference
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-intersects(fxmvector_fxmvector_float_)>
-    pub fn IntersectsRay(&self, (Origin, Direction): Ray, Dist: &mut f32) -> bool {
+    pub fn IntersectsRay(&self, Origin: FXMVECTOR, Direction: FXMVECTOR, Dist: &mut f32) -> bool {
         debug_assert!(internal::XMVector3IsUnit(Direction));
 
         // Load the box.
@@ -2242,8 +2283,20 @@ impl BoundingOrientedBox {
         XMStoreFloat4(&mut Out.Orientation, vOrientation);
     }
 
+    /// Tests whether the BoundingOrientedBox contains a specified point.
+    ///
+    /// ## Parameters
+    ///
+    /// `Point` The point to test against.
+    ///
+    /// ## Return value
+    ///
+    /// A ContainmentType indicating whether point is contained in the BoundingOrientedBox.
+    ///
+    /// ## Reference
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-contains>
-    pub fn ContainsPoint(&self, Point: Point) -> ContainmentType {
+    pub fn ContainsPoint(&self, Point: FXMVECTOR) -> ContainmentType {
         let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
         let vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
         let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
@@ -2254,8 +2307,24 @@ impl BoundingOrientedBox {
         return if XMVector3InBounds(TPoint, vExtents) { CONTAINS } else { DISJOINT };
     }
 
+    /// Tests whether the BoundingOrientedBox contains a triangle.
+    ///
+    /// ## Parameters
+    ///
+    /// `V0` A vector describing the triangle.
+    ///
+    /// `V1` A vector describing the triangle.
+    ///
+    /// `V2` A vector describing the triangle.
+    ///
+    /// ## Return value
+    ///
+    /// A ContainmentType indicating whether triangle is contained in the BoundingOrientedBox.
+    ///
+    /// ## Reference
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-contains(fxmvector_fxmvector_fxmvector)>
-    pub fn ContainsTriangle(&self, (V0, V1, V2): Triangle) -> ContainmentType {
+    pub fn ContainsTriangle(&self, V0: FXMVECTOR, V1: FXMVECTOR, V2: FXMVECTOR) -> ContainmentType {
         // Load the box center & orientation.
         let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
         let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
@@ -2270,7 +2339,7 @@ impl BoundingOrientedBox {
         box_.Extents = self.Extents;
 
         // Use the triangle vs axis aligned box intersection routine.
-        return box_.ContainsTriangle((TV0, TV1, TV2));
+        return box_.ContainsTriangle(TV0, TV1, TV2);
     }
 
     /// Tests whether the BoundingOrientedBox contains a specified BoundingSphere.
@@ -2675,8 +2744,22 @@ impl BoundingOrientedBox {
 
     /// Tests the BoundingOrientedBox for intersection with a triangle.
     ///
+    /// ## Parameters
+    ///
+    /// `V0` A vector describing the triangle.
+    ///
+    /// `V1` A vector describing the triangle.
+    ///
+    /// `V2` A vector describing the triangle.
+    ///
+    /// ## Return value
+    ///
+    /// A boolean value indicating whether the BoundingOrientedBox intersects the triangle.
+    ///
+    /// ## Reference
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-intersects(fxmvector_fxmvector_fxmvector)>
-    pub fn IntersectsTriangle(&self, (V0, V1, V2): Triangle) -> bool {
+    pub fn IntersectsTriangle(&self, V0: FXMVECTOR, V1: FXMVECTOR, V2: FXMVECTOR) -> bool {
         // Load the box center & orientation.
         let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
         let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
@@ -2691,13 +2774,23 @@ impl BoundingOrientedBox {
         box_.Extents = self.Extents;
 
         // Use the triangle vs axis aligned box intersection routine.
-        return box_.IntersectsTriangle((TV0, TV1, TV2));
+        return box_.IntersectsTriangle(TV0, TV1, TV2);
     }
 
     /// Tests the BoundingOrientedBox for intersection with a Plane.
     ///
+    /// ## Parameters
+    ///
+    /// `Plane` A vector describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
+    ///
+    /// ## Return value
+    ///
+    /// A PlaneIntersectionType value indicating whether the BoundingSphere intersects the specified plane.
+    ///
+    /// ## Reference
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-intersects(fxmvector)>
-    pub fn IntersectsPlane(&self, Plane: Plane) -> PlaneIntersectionType {
+    pub fn IntersectsPlane(&self, Plane: FXMVECTOR) -> PlaneIntersectionType {
         debug_assert!(internal::XMPlaneIsUnit(Plane));
 
         // Load the box.
@@ -2756,7 +2849,7 @@ impl BoundingOrientedBox {
     /// ## Reference
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-intersects(fxmvector_fxmvector_float_)>
-    pub fn IntersectsRay(&self, (Origin, Direction): Ray, Dist: &mut f32) -> bool {
+    pub fn IntersectsRay(&self, Origin: FXMVECTOR, Direction: FXMVECTOR, Dist: &mut f32) -> bool {
         unsafe {
             debug_assert!(internal::XMVector3IsUnit(Direction));
 
@@ -3142,8 +3235,20 @@ impl BoundingFrustum {
         Out.BottomSlope = self.BottomSlope;
     }
 
+    /// Tests whether the BoundingFrustum contains the specified point.
+    ///
+    /// ## Parameters
+    ///
+    /// `Point` The point to test against.
+    ///
+    /// ## Return value
+    ///
+    /// A ContainmentType value indicating whether the point is contained in the BoundingFrustum.
+    ///
+    /// ## Reference
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-contains>
-    pub fn ContainsPoint(&self, Point: Point) -> ContainmentType {
+    pub fn ContainsPoint(&self, Point: FXMVECTOR) -> ContainmentType {
         // Build frustum planes.
         let mut Planes: [XMVECTOR; 6] = unsafe { uninitialized() };
         Planes[0] = XMVectorSet(0.0, 0.0, -1.0, self.Near);
@@ -3180,8 +3285,24 @@ impl BoundingFrustum {
         return if XMVector4NotEqualInt(Outside, XMVectorTrueInt()) { CONTAINS } else { DISJOINT };
     }
 
+    /// Tests whether the BoundingFrustum contains the specified triangle.
+    ///
+    /// ## Parameters
+    ///
+    /// `V0` A corner of the triangle.
+    ///
+    /// `V1` A corner of the triangle.
+    ///
+    /// `V2` A corner of the triangle.
+    ///
+    /// ## Return value
+    ///
+    /// A ContainmentType value indicating whether the triangle is contained in the BoundingFrustum.
+    ///
+    /// ## Reference
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-contains(fxmvector_fxmvector_fxmvector)>
-    pub fn ContainsTriangle(&self, (V0, V1, V2): Triangle) -> ContainmentType {
+    pub fn ContainsTriangle(&self, V0: FXMVECTOR, V1: FXMVECTOR, V2: FXMVECTOR) -> ContainmentType {
         // Load origin and orientation of the frustum.
         let vOrigin: XMVECTOR = XMLoadFloat3(&self.Origin);
         let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
@@ -3998,8 +4119,22 @@ impl BoundingFrustum {
 
     /// Tests the BoundingFrustum for intersection with a triangle.
     ///
+    /// ## Parameters
+    ///
+    /// `V0` A vector describing the triangle.
+    ///
+    /// `V1` A vector describing the triangle.
+    ///
+    /// `V2` A vector describing the triangle.
+    ///
+    /// ## Return value
+    ///
+    /// A boolean value indicating whether the BoundingFrustum intersects the triangle.
+    ///
+    /// ## Reference
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-intersects(fxmvector_fxmvector_fxmvector)>
-    pub fn IntersectsTriangle(&self, (V0, V1, V2): Triangle) -> bool {
+    pub fn IntersectsTriangle(&self, V0: FXMVECTOR, V1: FXMVECTOR, V2: FXMVECTOR) -> bool {
        // Build the frustum planes (NOTE: D is negated from the usual).
        let mut Planes: [XMVECTOR; 6] = unsafe { uninitialized() };
        Planes[0] = XMVectorSet(0.0, 0.0, -1.0, -self.Near);
@@ -4159,8 +4294,18 @@ impl BoundingFrustum {
 
     /// Tests the BoundingFrustum for intersection with a Plane.
     ///
+    /// ## Parameters
+    ///
+    /// `Plane` A vector describing the plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
+    ///
+    /// ## Return value
+    ///
+    /// A PlaneIntersectionType value indicating whether the BoundingSphere intersects the specified plane.
+    ///
+    /// ## Reference
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-intersects(fxmvector)>
-    pub fn IntersectsPlane(&self, Plane: Plane) -> PlaneIntersectionType {
+    pub fn IntersectsPlane(&self, Plane: FXMVECTOR) -> PlaneIntersectionType {
         debug_assert!(internal::XMPlaneIsUnit(Plane));
 
         // Load origin and orientation of the frustum.
@@ -4238,7 +4383,7 @@ impl BoundingFrustum {
     /// ## Reference
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-intersects(fxmvector_fxmvector_float_)>
-    pub fn IntersectsRay(&self, (rayOrigin, Direction): Ray, Dist: &mut f32) -> bool {
+    pub fn IntersectsRay(&self, rayOrigin: FXMVECTOR, Direction: FXMVECTOR, Dist: &mut f32) -> bool {
         // If ray starts inside the frustum, return a distance of 0 for the hit
         if (self.ContainsPoint(rayOrigin) == CONTAINS)
         {
@@ -5062,7 +5207,7 @@ pub mod triangle_tests {
     ///
     /// `V2` A vector defining a triangle.
     ///
-    /// `Plane` A vector defining a plane.
+    /// `Plane` A vector defining a plane coefficients (`A`, `B`, `C`, `D`) for the plane equation `Ax+By+Cz+D=0`.
     ///
     /// ## Return value
     ///

@@ -50,7 +50,7 @@ benchmarks!({
     fn _BoundingSphere_Intersects_Ray(a: BoundingSphere, ray: Ray) -> bool {
         let (Origin, Direction) = ray;
         let mut Dist = 0.0;
-        a.IntersectsRay((Origin, Direction), &mut Dist)
+        a.IntersectsRay(Origin, Direction, &mut Dist)
     }
 
     bench!(
@@ -90,7 +90,7 @@ benchmarks!({
     fn _BoundingBox_Intersects_Ray(a: BoundingBox, ray: Ray) -> bool {
         let (Origin, Direction) = ray;
         let mut Dist = 0.0;
-        a.IntersectsRay((Origin, Direction), &mut Dist)
+        a.IntersectsRay(Origin, Direction, &mut Dist)
     }
 
     bench!(
@@ -118,7 +118,7 @@ benchmarks!({
     fn _BoundingOrientedBox_Intersects_Ray(a: BoundingOrientedBox, ray: Ray) -> bool {
         let (Origin, Direction) = ray;
         let mut Dist = 0.0;
-        a.IntersectsRay((Origin, Direction), &mut Dist)
+        a.IntersectsRay(Origin, Direction, &mut Dist)
     }
 
     bench!(
