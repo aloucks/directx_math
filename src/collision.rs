@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 
 use crate::*;
 
@@ -111,14 +110,6 @@ pub struct BoundingFrustum {
 
 impl BoundingFrustum {
     const CORNER_COUNT: usize = 8;
-}
-
-pub trait MatrixTransform: Sized {
-    fn Transform(&self, Out: &mut Self, M: FXMMATRIX);
-}
-
-pub trait DecomposedTransform: Sized {
-    fn Transform(&self, Out: &mut Self, Scale: f32, Rotation: FXMVECTOR, Translation: FXMVECTOR);
 }
 
 pub trait Contains<T> {
@@ -655,9 +646,9 @@ mod internal {
 
 // BoundingSphere -------------------------------------------------------------
 
-impl MatrixTransform for BoundingSphere {
+impl BoundingSphere {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-transform>
-    fn Transform(&self, Out: &mut Self, M: FXMMATRIX) {
+    pub fn TransformMatrix(&self, Out: &mut Self, M: FXMMATRIX) {
         unsafe {
             // Load the center of the sphere.
             let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
@@ -681,9 +672,9 @@ impl MatrixTransform for BoundingSphere {
     }
 }
 
-impl DecomposedTransform for BoundingSphere {
+impl BoundingSphere {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-transform(boundingsphere__float_fxmvector_fxmvector)>
-    fn Transform(&self, Out: &mut Self, Scale: f32, Rotation: FXMVECTOR, Translation: FXMVECTOR) {
+    pub fn TransformDecomposed(&self, Out: &mut Self, Scale: f32, Rotation: FXMVECTOR, Translation: FXMVECTOR) {
         // Load the center of the sphere.
         let mut vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
 
@@ -1383,9 +1374,9 @@ impl BoundingBox {
     }
 }
 
-impl MatrixTransform for BoundingBox {
+impl BoundingBox {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-transform>
-    fn Transform(&self, Out: &mut Self, M: FXMMATRIX) {
+    pub fn TransformMatrix(&self, Out: &mut Self, M: FXMMATRIX) {
         // Load center and extents.
         let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
         let vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
@@ -1412,9 +1403,9 @@ impl MatrixTransform for BoundingBox {
     }
 }
 
-impl DecomposedTransform for BoundingBox {
+impl BoundingBox {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-transform(BoundingBox__float_fxmvector_fxmvector)>
-    fn Transform(&self, Out: &mut Self, Scale: f32, Rotation: FXMVECTOR, Translation: FXMVECTOR) {
+    pub fn TransformDecomposed(&self, Out: &mut Self, Scale: f32, Rotation: FXMVECTOR, Translation: FXMVECTOR) {
         debug_assert!(internal::XMQuaternionIsUnit(Rotation));
 
         // Load center and extents.
@@ -2060,7 +2051,7 @@ impl BoundingBox {
     /// Creates a BoundingBox large enough to contain the a specified BoundingSphere.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingbox-createfromsphere>
-    fn CreateFromSphere(Out: &mut Self, sh: &BoundingSphere) {
+    pub fn CreateFromSphere(Out: &mut Self, sh: &BoundingSphere) {
         let spCenter: XMVECTOR = XMLoadFloat3(&sh.Center);
         let shRadius: XMVECTOR = XMVectorReplicatePtr(&sh.Radius);
 
@@ -2078,7 +2069,7 @@ impl BoundingBox {
     /// Creates a new BoundingBox from a list of points.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-createfrompoints>
-    pub fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl Iterator<Item=&'a XMFLOAT3>) {
+    pub fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl IntoIterator<Item=&'a XMFLOAT3>) {
         // assert(Count > 0);
         // assert(pPoints);
 
@@ -2087,7 +2078,7 @@ impl BoundingBox {
         let mut vMin: XMVECTOR = g_XMInfinity.v();
         let mut vMax: XMVECTOR = g_XMNegInfinity.v();
 
-        for (i, pPoint) in pPoints.enumerate()
+        for (i, pPoint) in pPoints.into_iter().enumerate()
         {
             let Point: XMVECTOR = XMLoadFloat3(pPoint);
             if i == 0 {
@@ -2107,9 +2098,9 @@ impl BoundingBox {
 
 // BoundingOrientedBox --------------------------------------------------------
 
-impl MatrixTransform for BoundingOrientedBox {
+impl BoundingOrientedBox {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-transform>
-    fn Transform(&self, Out: &mut Self, M: FXMMATRIX) {
+    pub fn TransformMatrix(&self, Out: &mut Self, M: FXMMATRIX) {
         // Load the box.
         let mut vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
         let mut vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
@@ -2147,9 +2138,9 @@ impl MatrixTransform for BoundingOrientedBox {
     }
 }
 
-impl DecomposedTransform for BoundingOrientedBox {
+impl BoundingOrientedBox {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-transform(BoundingOrientedBox__float_fxmvector_fxmvector)>
-    fn Transform(&self, Out: &mut Self, Scale: f32, Rotation: FXMVECTOR, Translation: FXMVECTOR) {
+    pub fn TransformDecomposed(&self, Out: &mut Self, Scale: f32, Rotation: FXMVECTOR, Translation: FXMVECTOR) {
         debug_assert!(internal::XMQuaternionIsUnit(Rotation));
 
         // Load the box.
@@ -3009,9 +3000,9 @@ fn test_BoundingOrientedBox_CreateFromPoints() {
 
 // BoundingFrustum ----------------------------------------------------------------
 
-impl MatrixTransform for BoundingFrustum {
+impl BoundingFrustum {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-transform>
-    fn Transform(&self, Out: &mut Self, M: FXMMATRIX) {
+    pub fn TransformMatrix(&self, Out: &mut Self, M: FXMMATRIX) {
         // Load the frustum.
         let mut vOrigin: XMVECTOR = XMLoadFloat3(&self.Origin);
         let mut vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
@@ -3055,9 +3046,9 @@ impl MatrixTransform for BoundingFrustum {
     }
 }
 
-impl DecomposedTransform for BoundingFrustum {
+impl BoundingFrustum {
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-transform(BoundingFrustum__float_fxmvector_fxmvector)>
-    fn Transform(&self, Out: &mut Self, Scale: f32, Rotation: FXMVECTOR, Translation: FXMVECTOR) {
+    pub fn TransformDecomposed(&self, Out: &mut Self, Scale: f32, Rotation: FXMVECTOR, Translation: FXMVECTOR) {
         debug_assert!(internal::XMQuaternionIsUnit(Rotation));
 
         // Load the frustum.
