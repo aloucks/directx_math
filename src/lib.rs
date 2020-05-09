@@ -3,7 +3,7 @@
 //! A pure rust translation of [DirectXMath], an all inline SIMD linear algebra library for use in
 //! games and graphics apps.
 //!
-//! All functions and structs are exported at the crate root. Modules are organized according
+//! Most functions and structs are exported at the crate root. Modules are organized according
 //! to the `C++` [reference documentation].
 //!
 //! [DirectXMath]: https://github.com/microsoft/DirectXMath
@@ -578,6 +578,9 @@ mod doc {
     }
 
     /// Plane functions
+    ///
+    /// These functions use an XMVECTOR 4-vector to represent the coefficients of the plane equation, `Ax+By+Cz+D = 0`,
+    /// where the `X`-component is `A`, the `Y`-component is `B`, the `Z`-component is `C`, and the `W`-component is `D`.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-plane>
     pub mod plane {
@@ -1562,24 +1565,28 @@ macro_rules! xm_struct {
         }
 
         impl From<[$type; $length]> for $Name {
+            #[inline(always)]
             fn from(a: [$type; $length]) -> $Name {
                 unsafe { std::mem::transmute(a) }
             }
         }
 
         impl Into<[$type; $length]> for $Name {
+            #[inline(always)]
             fn into(self) -> [$type; $length] {
                 unsafe { std::mem::transmute(self) }
             }
         }
 
         impl<'a> From<&'a [$type; $length]> for &'a $Name {
+            #[inline(always)]
             fn from(a: &'a [$type; $length]) -> &'a $Name {
                 unsafe { std::mem::transmute(a) }
             }
         }
 
         impl<'a> Into<&'a [$type; $length]> for &'a $Name {
+            #[inline(always)]
             fn into(self) -> &'a [$type; $length] {
                 unsafe { std::mem::transmute(self) }
             }

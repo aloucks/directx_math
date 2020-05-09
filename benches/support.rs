@@ -265,8 +265,7 @@ mod inner {
         let origin = range_f32(rng, -10.0, 10.0);
         let Origin = XMVectorSet(origin, origin, origin, 0.0);
         let Direction = XMVector3Normalize(random_vec3(rng));
-        let Dist = range_f32(rng, 0.1, 10.0);
-        (Origin, Direction, Dist)
+        (Origin, Direction)
     }
 
     pub const ZERO: XMVECTOR = unsafe { XMVECTORF32 { f: [0.0, 0.0, 0.0, 0.0] }.v };
