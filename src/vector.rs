@@ -1602,10 +1602,30 @@ fn test_XMVectorSwizzle() {
 
 /// Permutes the components of two vectors to create a new vector.
 ///
-/// ### Remarks
+/// ## Parameters
 ///
-/// If all 4 indices reference only a single vector (i.e. they are all in the range 0-3 or all in the range 4-7),
+/// `V1` First vector.
+///
+/// `V2` Second vector.
+///
+/// `PermuteX` Index form `0-7` indicating where the `X` component of the new vector should be copied from.
+///
+/// `PermuteY` Index form `0-7` indicating where the `Y` component of the new vector should be copied from.
+///
+/// `PermuteZ` Index form `0-7` indicating where the `Z` component of the new vector should be copied from.
+///
+/// `PermuteW` Index form `0-7` indicating where the `W` component of the new vector should be copied from.
+///
+/// ## Return value
+///
+/// Returns the permuted vector that resulted from combining the source vectors.
+///
+/// ## Remarks
+///
+/// If all 4 indices reference only a single vector (i.e. they are all in the range `0-3` or all in the range `4-7`),
 /// use `XMVectorSwizzle` instead for better performance.
+///
+/// The `XM_PERMUTE_` constants are provided to use as input values for `PermuteX`, `PermuteY`, `PermuteZ`, and `PermuteW`.
 ///
 /// For constant PermuteX/Y/Z/W parameters, it may more efficent to use the template form of [`XMVectorPermute`]
 ///
@@ -1701,7 +1721,52 @@ fn test_XMVectorPermute() {
     assert_eq!(XMVectorGetW(e), XMVectorGetW(f));
 }
 
-/// Defines a control vector for use in XMVectorSelect.
+/// Defines a control vector for use in [XMVectorSelect].
+///
+/// ## Parameters
+///
+/// `VectorIndex0` Index that determines which vector in XMVectorSelect will be selected. If zero, the first vector's first
+/// component will be selected. Otherwise, the second vector's component will be selected.
+///
+/// `VectorIndex1` Index that determines which vector in XMVectorSelect will be selected. If zero, the first vector's second
+/// component will be selected. Otherwise, the second vector's component will be selected.
+///
+/// `VectorIndex2` Index that determines which vector in XMVectorSelect will be selected. If zero, the first vector's third
+/// component will be selected. Otherwise, the second vector's component will be selected.
+///
+/// `VectorIndex3` Index that determines which vector in XMVectorSelect will be selected. If zero, the first vector's fourth
+/// component will be selected. Otherwise, the second vector's component will be selected.
+///
+/// ## Return value
+///
+/// Returns the control vector.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR    ControlVector;
+/// const uint32_t  ControlElement[] =
+///             {
+///                 XM_SELECT_0,
+///                 XM_SELECT_1
+///             };
+///
+/// assert(VectorIndex0 < 2);
+/// assert(VectorIndex1 < 2);
+/// assert(VectorIndex2 < 2);
+/// assert(VectorIndex3 < 2);
+///
+/// ControlVector.u[0] = ControlElement[VectorIndex0];
+/// ControlVector.u[1] = ControlElement[VectorIndex1];
+/// ControlVector.u[2] = ControlElement[VectorIndex2];
+/// ControlVector.u[3] = ControlElement[VectorIndex3];
+///
+/// return ControlVector;
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSelectControl>
 #[inline]
@@ -1745,6 +1810,60 @@ pub fn XMVectorSelectControl(
 
 /// Performs a per-component selection between two input vectors and returns the resulting vector.
 ///
+/// ## Parameters
+///
+/// `V1` First vector to compare.
+///
+/// `V2` Second vector to compare.
+///
+/// `Control` Vector mask used to select a vector component from either `V1` or `V2`. If a component of Control is zero,
+/// the returned vector's corresponding component will be the first vector's component. If a component of
+/// Control is 0xFF, the returned vector's corresponding component will be the second vector's component.
+/// For full details on how the vector mask works, see the "Remarks". Typically, the vector used for Control
+/// will be either the output of a vector comparison function (such as [XMVectorEqual], [XMVectorLess], or [XMVectorGreater])
+/// or it will be the output of [XMVectorSelectControl].
+///
+/// ## Return value
+///
+/// Returns the result of the per-component selection.
+///
+/// ## Remarks
+///
+/// If any given bit of Control is set, the corresponding bit from `V2` is used, otherwise, the corresponding
+/// bit from `V1` is used. The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.u[0] = (V1.u[0] & ~Control.u[0]) | (V2.u[0] & Control.u[0]);
+/// Result.u[1] = (V1.u[1] & ~Control.u[1]) | (V2.u[1] & Control.u[1]);
+/// Result.u[2] = (V1.u[2] & ~Control.u[2]) | (V2.u[2] & Control.u[2]);
+/// Result.u[3] = (V1.u[3] & ~Control.u[3]) | (V2.u[3] & Control.u[3]);
+///
+/// return Result;
+/// ```
+///
+/// Manual construction of a control vector is not necessary. There are two simple ways of constructing
+/// an appropriate control vector:
+///
+/// * Using the XMVectorSelectControlfunction to construct a control vector.
+/// See Using XMVectorSelect and XMVectorSelectControl for a demonstration of how this function can be used.
+///
+/// * The control vector can be constructed using the `XM_SELECT_[0,1]` constant (see DirectXMath Library
+/// Constants). As an example, in pseudo-code, an instance of Control with the elements:
+///
+/// ```text
+/// Control = { XM_SELECT_0, XM_SELECT_1, XM_SELECT_0, XM_SELECT_1 }
+/// ```
+///
+/// would return a vector Result with the following components of `V1` and `V2`
+///
+/// ```text
+/// Result = { V1.X,  V2.Y,   V1.Z,   V2.W }
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSelect>
 #[inline]
 pub fn XMVectorSelect(
@@ -1779,7 +1898,34 @@ pub fn XMVectorSelect(
     }
 }
 
-/// Creates a new vector by combining the x and y-components of two vectors.
+/// Creates a new vector by combining the `x` and `y`-components of two vectors.
+///
+/// ## Parameters
+///
+/// `V1` First vector.
+///
+/// `V2` Second vector.
+///
+/// ## Return value
+///
+/// Returns the merged vector.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = V1.x;
+/// Result.y = V2.x;
+/// Result.z = V1.y;
+/// Result.w = V2.y;
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorMergeXY>
 #[inline]
@@ -1812,7 +1958,34 @@ pub fn XMVectorMergeXY(
     }
 }
 
-/// Creates a new vector by combining the z and w-components of two vectors.
+/// Creates a new vector by combining the `z` and `w`-components of two vectors.
+///
+/// ## Parameters
+///
+/// `V1` First vector.
+///
+/// `V2` Second vector.
+///
+/// ## Return value
+///
+/// Returns the merged vector.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = V1.z;
+/// Result.y = V2.z;
+/// Result.z = V1.w;
+/// Result.w = V2.w;
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorMergeZW>
 #[inline]
@@ -1847,6 +2020,34 @@ pub fn XMVectorMergeZW(
 
 /// Shifts a vector left by a given number of 32-bit elements, filling the vacated elements with elements from a second vector.
 ///
+/// ## Parameters
+///
+/// `V1` Vector to shift left.
+///
+/// `V2` Vector used to fill in the vacated components of `V1` after it is shifted left.
+///
+/// `Elements` Number of 32-bit elements by which to shift `V` left. This parameter must be 0, 1, 2, or 3.
+///
+/// ## Return value
+///
+/// Returns the shifted and filled in XMVECTOR.
+///
+/// ## Remarks
+///
+/// The following code demonstrates how this function might be used.
+///
+/// ```text
+/// XMVECTOR v1 = XMVectorSet( 10.0f, 20.0f, 30.0f, 40.0f );
+/// XMVECTOR v2 = XMVectorSet( 50.0f, 60.0f, 70.0f, 80.0f );
+/// XMVECTOR result = XMVectorShiftLeft( v1, v2, 1 );
+/// ```
+///
+/// The shifted vector (result) will be <`20.0`, `30.0`, `40.0`, `50.0`>.
+///
+/// In the case of a constant shift value, it is more efficent to use the template form of XMVectorShiftLeft:
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorShiftLeft>
 #[inline]
 pub fn XMVectorShiftLeft(V1: FXMVECTOR, V2: FXMVECTOR, Elements: u32) -> XMVECTOR {
@@ -1855,6 +2056,31 @@ pub fn XMVectorShiftLeft(V1: FXMVECTOR, V2: FXMVECTOR, Elements: u32) -> XMVECTO
 }
 
 /// Rotates the vector left by a given number of 32-bit elements.
+///
+/// ## Parameters
+///
+/// `V` Vector to rotate left.
+///
+/// `Elements` Number of 32-bit elements by which to rotate `V` left. This parameter must be `0`, `1`, `2`, or `3`.
+///
+/// ## Return value
+///
+/// Returns the rotated XMVECTOR.
+///
+/// ## Remarks
+///
+/// The following code demonstrates how this function may be used.
+///
+/// ```text
+/// XMVECTOR v = XMVectorSet( 10.0f, 20.0f, 30.0f, 40.0f );
+/// XMVECTOR result = XMVectorRotateLeft( v, 1 );
+/// ```
+///
+/// The rotated vector (result) will be <`40.0`, `10.0`, `20.0`, `30.0`>.
+///
+/// In the case of a constant rotate value, it is more efficient to use the template form of XMVectorRotateRight:
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorRotateLeft>
 #[inline]
@@ -1865,6 +2091,31 @@ pub fn XMVectorRotateLeft(V: FXMVECTOR, Elements: u32) -> XMVECTOR {
 
 /// Rotates the vector right by a given number of 32-bit elements.
 ///
+/// ## Parameters
+///
+/// `V` Vector to rotate right.
+///
+/// `Elements` Number of 32-bit elements by which to rotate `V` right. This parameter must be `0`, `1`, `2`, or `3`.
+///
+/// ## Return value
+///
+/// Returns the rotated XMVECTOR.
+///
+/// ## Remarks
+///
+/// The following code demonstrates how this function may be used.
+///
+/// ```text
+/// XMVECTOR v = XMVectorSet( 10.0f, 20.0f, 30.0f, 40.0f );
+/// XMVECTOR result = XMVectorRotateRight( v, 1 );
+/// ```
+///
+/// The rotated vector (result) will be <`40.0`, `10.0`, `20.0`, `30.0`>.
+///
+/// In the case of a constant rotate value, it is more efficient to use the template form of XMVectorRotateRight:
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorRotateRight>
 #[inline]
 pub fn XMVectorRotateRight(V: FXMVECTOR, Elements: u32) -> XMVECTOR {
@@ -1873,6 +2124,38 @@ pub fn XMVectorRotateRight(V: FXMVECTOR, Elements: u32) -> XMVECTOR {
 }
 
 /// Rotates a vector left by a given number of 32-bit components and insert selected elements of that result into another vector.
+///
+/// ## Parameters
+///
+/// `VD` Vector to insert into.
+///
+/// `VS` Vector to rotate left.
+///
+/// `VSLeftRotateElements` Number of 32-bit components by which to rotate `VS` left.
+///
+/// `Select0` Either `0` or 1. If one, the `x`-component of the rotated vector will be inserted into the corresponding
+/// component of VD. Otherwise, the `x`-component of `VD` is left alone.
+///
+/// `Select1` Either `0` or 1. If one, the `y`-component of the rotated vector will be inserted into the corresponding
+/// component of VD. Otherwise, the `y`-component of `VD` is left alone.
+///
+/// `Select2` Either `0` or 1. If one, the `z`-component of the rotated vector will be inserted into the corresponding
+/// component of VD. Otherwise, the `z`-component of `VD` is left alone.
+///
+/// `Select3` Either `0` or 1. If one, the `w`-component of the rotated vector will be inserted into the corresponding
+/// component of VD. Otherwise, the `w`-component of `VD` is left alone.
+///
+/// ## Return value
+///
+/// Returns the XMVECTOR that results from the rotation and insertion.
+///
+/// ## Remarks
+///
+/// For best performance, the result of XMVectorInsertshould be assigned back to `VD`.
+///
+/// For cases with constant uint32_t parameters, it is more efficent to use the template form of XMVectorInsert:
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorInsert>
 #[inline]
@@ -2395,6 +2678,33 @@ pub fn XMVectorLessOrEqual(V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
 
 /// Tests whether the components of a given vector are within set bounds.
 ///
+/// ## Parameters
+///
+/// `V` Vector to test.
+///
+/// `Bounds` Vector that determines the bounds.
+///
+/// ## Return value
+///
+/// Returns a vector containing the results of each component test.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Control;
+///
+/// Control.x = (V.x <= Bounds.x && V.x >= -Bounds.x) ? 0xFFFFFFFF : 0;
+/// Control.y = (V.y <= Bounds.y && V.y >= -Bounds.y) ? 0xFFFFFFFF : 0;
+/// Control.z = (V.z <= Bounds.z && V.z >= -Bounds.z) ? 0xFFFFFFFF : 0;
+/// Control.w = (V.w <= Bounds.w && V.w >= -Bounds.w) ? 0xFFFFFFFF : 0;
+///
+/// return Control;
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorInBounds>
 #[inline]
 pub fn XMVectorInBounds(V: FXMVECTOR, Bounds: FXMVECTOR) -> XMVECTOR {
@@ -2431,6 +2741,37 @@ pub fn XMVectorInBounds(V: FXMVECTOR, Bounds: FXMVECTOR) -> XMVECTOR {
 }
 
 /// Tests whether the components of a given vector are within certain bounds and sets a comparison value that can be examined using functions such as XMComparisonAllTrue.
+///
+/// ## Parameters
+///
+/// `pCR` Pointer to a uint32_t comparison value that can be examined using functions such as XMComparisonAllInBounds.
+/// The XMComparisonXXXX functions may be used to further test the number of components that passed the
+/// comparison.
+///
+/// `V` Vector to test.
+///
+/// `Bounds` Vector that determines the bounds.
+///
+/// ## Return value
+///
+/// Returns a vector containing the results of each component test.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the comparison operation of the function:
+///
+/// ```text
+/// XMVECTOR Control;
+///
+/// Control.x = (V.x <= Bounds.x && V.x >= -Bounds.x) ? 0xFFFFFFFF : 0;
+/// Control.y = (V.y <= Bounds.y && V.y >= -Bounds.y) ? 0xFFFFFFFF : 0;
+/// Control.z = (V.z <= Bounds.z && V.z >= -Bounds.z) ? 0xFFFFFFFF : 0;
+/// Control.w = (V.w <= Bounds.w && V.w >= -Bounds.w) ? 0xFFFFFFFF : 0;
+///
+/// return Control;
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorInBoundsR>
 #[inline]
@@ -2636,6 +2977,21 @@ fn test_round_to_nearest() {
 
 /// Rounds each component of a vector to the nearest even integer (known as "Bankers Rounding").
 ///
+/// ## Parameters
+///
+/// `V` Vector whose components should be rounded.
+///
+/// ## Return value
+///
+/// Returns a vector, each of whose components are rounded to the nearest integer.
+///
+/// ## Remarks
+///
+/// Banker's Rounding is used because it is the native vector rounding intrinsic method for both SSE4 and
+/// ARMv8 NEON.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorRound>
 #[inline]
 pub fn XMVectorRound(V: FXMVECTOR) -> XMVECTOR {
@@ -2678,6 +3034,27 @@ pub fn XMVectorRound(V: FXMVECTOR) -> XMVECTOR {
 }
 
 /// Rounds each component of a vector to the nearest integer value in the direction of zero.
+///
+/// ## Parameters
+///
+/// `V` Vector whose components are to be truncated.
+///
+/// ## Return value
+///
+/// Returns a vector whose components are rounded to the nearest integer value in the direction of zero.
+///
+/// ## Remarks
+///
+/// The return value is computed based on the following logic, which preserves special values (INF,+INF,NaN,-NaN).
+///
+/// ```text
+/// Result[0] = (fabsf(V[0]) < 8388608.0f) ? ((float)((int32_t)V[0])) : V[0];
+/// Result[1] = (fabsf(V[1]) < 8388608.0f) ? ((float)((int32_t)V[1])) : V[1];
+/// Result[2] = (fabsf(V[2]) < 8388608.0f) ? ((float)((int32_t)V[2])) : V[2];
+/// Result[3] = (fabsf(V[3]) < 8388608.0f) ? ((float)((int32_t)V[3])) : V[3];
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorTruncate>
 #[inline]
@@ -2834,6 +3211,35 @@ pub fn XMVectorCeiling(V: FXMVECTOR) -> XMVECTOR {
 
 /// Clamps the components of a vector to a specified minimum and maximum range.
 ///
+/// ## Parameters
+///
+/// `V` Vector whose components are to be clamped.
+///
+/// `Min` Minimum range vector.
+///
+/// `Max` Maximum range vector.
+///
+/// ## Return value
+///
+/// Returns a vector whose components are clamped to the specified minimum and maximum values.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = min( max( V.x, Min.x ), Max.x );
+/// Result.y = min( max( V.y, Min.y ), Max.y );
+/// Result.z = min( max( V.z, Min.z ), Max.z );
+/// Result.w = min( max( V.w, Min.w ), Max.w );
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorClamp>
 #[inline]
 pub fn XMVectorClamp(
@@ -2868,6 +3274,31 @@ pub fn XMVectorClamp(
 
 /// Saturates each component of a vector to the range 0.0f to 1.0f.
 ///
+/// ## Parameters
+///
+/// `V` Vector to saturate.
+///
+/// ## Return value
+///
+/// Returns a vector, each of whose components are saturated.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = min(max(V1.x, 0.0f), 1.0f);
+/// Result.y = min(max(V1.y, 0.0f), 1.0f);
+/// Result.z = min(max(V1.z, 0.0f), 1.0f);
+/// Result.w = min(max(V1.w, 0.0f), 1.0f);
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSaturate>
 #[inline]
 pub fn XMVectorSaturate(
@@ -2895,6 +3326,34 @@ pub fn XMVectorSaturate(
 }
 
 /// Computes the logical AND of two vectors, treating each component as an unsigned integer.
+///
+/// ## Parameters
+///
+/// `V1` First vector.
+///
+/// `V2` Second vector.
+///
+/// ## Return value
+///
+/// Returns a vector each of whose components are the logical AND of the corresponding components of V1
+/// and V2.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = V1.x & V2.x;
+/// Result.y = V1.y & V2.y;
+/// Result.z = V1.z & V2.z;
+/// Result.w = V1.w & V2.w;
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorAndInt>
 #[inline]
@@ -2928,6 +3387,34 @@ pub fn XMVectorAndInt(
 }
 
 /// Computes the logical AND of one vector with the negation of a second vector, treating each component as an unsigned integer.
+///
+/// ## Parameters
+///
+/// `V1` First vector.
+///
+/// `V2` Second vector.
+///
+/// ## Return value
+///
+/// Returns a vector whose components are the logical AND of each of the components of `V1` with the negation
+/// of the corresponding components of V2.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = V1.x & ~V2.x;
+/// Result.y = V1.y & ~V2.y;
+/// Result.z = V1.z & ~V2.z;
+/// Result.w = V1.w & ~V2.w;
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorAndCInt>
 #[inline]
@@ -2963,6 +3450,34 @@ pub fn XMVectorAndCInt(
 
 /// Computes the logical OR of two vectors, treating each component as an unsigned integer.
 ///
+/// ## Parameters
+///
+/// `V1` First vector.
+///
+/// `V2` Second vector.
+///
+/// ## Return value
+///
+/// Returns a vector, each of whose components are the logical OR of the corresponding components of V1
+/// and V2.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = V1.x | V2.x;
+/// Result.y = V1.y | V2.y;
+/// Result.z = V1.z | V2.z;
+/// Result.w = V1.w | V2.w;
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorOrInt>
 #[inline]
 pub fn XMVectorOrInt(
@@ -2996,6 +3511,34 @@ pub fn XMVectorOrInt(
 }
 
 /// Computes the logical NOR of two vectors, treating each component as an unsigned integer.
+///
+/// ## Parameters
+///
+/// `V1` First vector.
+///
+/// `V2` Second vector.
+///
+/// ## Return value
+///
+/// Returns a vector, each of whose components are the logical NOR of the corresponding components of V1
+/// and V2.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = ~(V1.x | V2.x);
+/// Result.y = ~(V1.y | V2.y);
+/// Result.z = ~(V1.z | V2.z);
+/// Result.w = ~(V1.w | V2.w);
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorNorInt>
 #[inline]
@@ -3033,6 +3576,34 @@ pub fn XMVectorNorInt(
 
 /// Computes the logical XOR of two vectors, treating each component as an unsigned integer.
 ///
+/// ## Parameters
+///
+/// `V1` First vector.
+///
+/// `V2` Second vector.
+///
+/// ## Return value
+///
+/// Returns a vector, each of whose components are the logical XOR of the corresponding components of V1
+/// and V2.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = V1.x ^ V2.x;
+/// Result.y = V1.y ^ V2.y;
+/// Result.z = V1.z ^ V2.z;
+/// Result.w = V1.w ^ V2.w;
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorXorInt>
 #[inline]
 pub fn XMVectorXorInt(
@@ -3066,6 +3637,31 @@ pub fn XMVectorXorInt(
 }
 
 /// Computes the negation of a vector.
+///
+/// ## Parameters
+///
+/// `V` Vector to negate.
+///
+/// ## Return value
+///
+/// Returns the negation of the vector.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR result;
+///
+/// result.x = -V.x;
+/// result.y = -V.y;
+/// result.z = -V.z;
+/// result.w = -V.w;
+///
+/// return result;
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorNegate>
 #[inline]
@@ -3175,6 +3771,19 @@ pub fn XMVectorSum(
 
 /// Adds two vectors representing angles.
 ///
+/// ## Parameters
+///
+/// `V1` First vector of angles. Each angle must satisfy `-XM_PI` <= `V1` < `XM_PI`.
+///
+/// `V2` Second vector of angles. Each angle must satisfy -XM_2PI <= `V1` < `XM_2PI`.
+///
+/// ## Return value
+///
+/// Returns a vector whose components are the sums of the angles of the corresponding components. Each component
+/// of the returned vector will be an angle less than `XM_PI` and greater than or equal to `-XM_PI`.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorAddAngles>
 #[inline]
 pub fn XMVectorAddAngles(
@@ -3260,7 +3869,21 @@ pub fn XMVectorSubtract(
     }
 }
 
-/// Adds two vectors representing angles.
+/// Subtracts two vectors representing angles.
+///
+/// ## Parameters
+///
+/// `V1` First vector of angles. Each angle must satisfy `-XM_PI` <= `V1` < `XM_PI`.
+///
+/// `V2` Second vector of angles. Each angle must satisfy `-XM_2PI` <= `V1` < `XM_2PI`.
+///
+/// ## Return value
+///
+/// Returns a vector whose components are the differences of the angles of the corresponding components.
+/// Each component of the returned vector will be an angle less than `XM_PI` and greater than or equal to
+/// `-XM_PI`.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSubtractAngles>
 #[inline]
@@ -3350,6 +3973,35 @@ pub fn XMVectorMultiply(
 
 /// Computes the product of the first two vectors added to the third vector.
 ///
+/// ## Parameters
+///
+/// `V1` Vector multiplier.
+///
+/// `V2` Vector multiplicand.
+///
+/// `V3` Vector addend.
+///
+/// ## Return value
+///
+/// Returns the product-sum of the vectors.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = V1.x * V2.x + V3.x;
+/// Result.y = V1.y * V2.y+ V3.y;
+/// Result.z = V1.z * V2.z+ V3.z;
+/// Result.w = V1.w * V2.w+ V3.w;
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorMultiplyAdd>
 #[inline]
 pub fn XMVectorMultiplyAdd(
@@ -3384,6 +4036,28 @@ pub fn XMVectorMultiplyAdd(
 
 /// Divides one instance of XMVECTOR by a second instance, returning the result in a third instance.
 ///
+/// ## Parameters
+///
+/// `V1` XMVECTOR instance whose components are the dividends of the division operation.
+///
+/// `V2` XMVECTOR instance whose components are the divisors of the division operation.
+///
+/// ## Return value
+///
+/// XMVECTOR instance whose components are the quotient of the division of each component of `V1` by each
+/// corresponding component of V2.
+///
+/// ## Remarks
+///
+/// The following code is generally faster than calling XMVectorDivide if the loss of precision is tolerable.
+///
+/// ```text
+/// XMVECTOR R = XMVectorReciprocalEst(V2)
+/// XMVectorMultiply(V1,R)
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorDivide>
 #[inline]
 pub fn XMVectorDivide(
@@ -3416,6 +4090,35 @@ pub fn XMVectorDivide(
 }
 
 /// Computes the difference of a third vector and the product of the first two vectors.
+///
+/// ## Parameters
+///
+/// `V1` Vector multiplier.
+///
+/// `V2` Vector multiplicand.
+///
+/// `V3` Vector subtrahend.
+///
+/// ## Return value
+///
+/// Returns the resulting vector. See the remarks.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR result;
+///
+/// result.x = V3.x - V1.x * V2.x;
+/// result.y = V3.y - V1.y * V2.y;
+/// result.z = V3.z - V1.z * V2.z;
+/// result.w = V3.w - V1.w * V2.w;
+///
+/// return result;
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorNegativeMultiplySubtract>
 #[inline]
@@ -3679,6 +4382,30 @@ pub fn XMVectorReciprocalSqrt(
 
 /// Computes two raised to the power for each component.
 ///
+/// ## Parameters
+///
+/// `V` Vector used for the exponents of base two.
+///
+/// ## Return value
+///
+/// Returns a vector whose components are two raised to the power of the corresponding component of `V`.
+///
+/// ## Remarks
+///
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = powf(2.0f, V.x);
+/// Result.y = powf(2.0f, V.y);
+/// Result.z = powf(2.0f, V.z);
+/// Result.w = powf(2.0f, V.w);
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorExp2>
 #[inline]
 pub fn XMVectorExp2(
@@ -3794,6 +4521,34 @@ pub fn XMVectorExp(
 
 /// Computes V1 raised to the power of V2.
 ///
+/// ## Parameters
+///
+/// `V1` First vector.
+///
+/// `V2` Second vector.
+///
+/// ## Return value
+///
+/// Returns a vector. Each component is the corresponding component of `V1` raised to the power of the corresponding
+/// component in V2.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = pow(V1.x, V2.x);
+/// Result.y = pow(V1.y, V2.y);
+/// Result.z = pow(V1.z, V2.z);
+/// Result.w = pow(V1.w, V2.w);
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorPow>
 #[inline]
 pub fn XMVectorPow(
@@ -3871,6 +4626,33 @@ pub fn XMVectorAbs(
 
 /// Computes the per-component floating-point remainder of the quotient of two vectors.
 ///
+/// ## Parameters
+///
+/// `V1` Vector dividend.
+///
+/// `V2` Vector divisor.
+///
+/// ## Return value
+///
+/// Returns a vector whose components are the floating-point remainders of the divisions.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = fmod(V1.x, V2.x);
+/// Result.y = fmod(V1.y, V2.y);
+/// Result.z = fmod(V1.z, V2.z);
+/// Result.w = fmod(V1.w, V2.w);
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorMod>
 #[inline]
 pub fn XMVectorMod(
@@ -3902,6 +4684,31 @@ pub fn XMVectorMod(
 }
 
 /// Computes the per-component angle modulo 2PI.
+///
+/// ## Parameters
+///
+/// `Angles` Vector of angle components.
+///
+/// ## Return value
+///
+/// Returns a vector whose components are the corresponding components of Angles modulo 2PI.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR result;
+///
+/// result.x = Angles.x - XM_2PI * round( Angles.x / XM_2PI );
+/// result.y = Angles.y - XM_2PI * round( Angles.y / XM_2PI );
+/// result.z = Angles.z - XM_2PI * round( Angles.z / XM_2PI );
+/// result.w = Angles.w - XM_2PI * round( Angles.w / XM_2PI );
+///
+/// return result;
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorModAngles>
 #[inline]
@@ -3939,6 +4746,20 @@ pub fn XMVectorModAngles(
 }
 
 /// Computes the sine of each component of an XMVECTOR.
+///
+/// ## Parameters
+///
+/// `V` Vector for which to compute the sine.
+///
+/// ## Return value
+///
+/// Returns a vector. Each component is the sine of the corresponding component of `V`.
+///
+/// ## Remarks
+///
+/// This function uses a 11-degree minimax approximation.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSin>
 #[inline]
@@ -4019,6 +4840,20 @@ fn test_XMVectorSin() {
 }
 
 /// Computes the cosine of each component of an XMVECTOR.
+///
+/// ## Parameters
+///
+/// `V` Vector for which to compute the cosine.
+///
+/// ## Return value
+///
+/// Returns a vector. Each component is the cosine of the corresponding component of `V`.
+///
+/// ## Remarks
+///
+/// This function uses a 10-degree minimax approximation.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorCos>
 #[inline]
@@ -4102,6 +4937,24 @@ fn test_XMVectorCos() {
 }
 
 /// Computes the sine and cosine of each component of an XMVECTOR.
+///
+/// ## Parameters
+///
+/// `pSin` Address of a vector, each of whose components is the sine of the corresponding component of `V`.
+///
+/// `pCos` Address of a vector, each of whose components is the cosine of the corresponding component of `V`.
+///
+/// `V` Vector for which to compute the sine and cosine.
+///
+/// ## Return value
+///
+/// None.
+///
+/// ## Remarks
+///
+/// This function uses an 11-degree minimax approximation for sine, 10-degree for cosine.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSinCos>
 #[inline]
@@ -4203,6 +5056,16 @@ pub fn XMVectorSinCos(
 }
 
 /// Computes the tangent of each component of an XMVECTOR.
+///
+/// ## Parameters
+///
+/// `V` Vector for which to compute the tangent.
+///
+/// ## Return value
+///
+/// Returns a vector. Each component is the tangent of the corresponding component of `V`.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorTan>
 #[inline]
@@ -4326,6 +5189,16 @@ fn test_XMVectorTan() {
 
 /// Computes the hyperbolic sine of each component of an XMVECTOR.
 ///
+/// ## Parameters
+///
+/// `V` Vector for which to compute the hyperbolic sine.
+///
+/// ## Return value
+///
+/// Returns a vector. Each component is the hyperbolic sine of the corresponding component of `V`.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSinH>
 #[inline]
 pub fn XMVectorSinH(
@@ -4362,6 +5235,16 @@ pub fn XMVectorSinH(
 
 /// Computes the hyperbolic cosine of each component of an XMVECTOR.
 ///
+/// ## Parameters
+///
+/// `V` Vector for which to compute the hyperbolic cosine.
+///
+/// ## Return value
+///
+/// Returns a vector. Each component is the hyperbolic cosine of the corresponding component of `V`.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorCosH>
 #[inline]
 pub fn XMVectorCosH(
@@ -4396,6 +5279,16 @@ pub fn XMVectorCosH(
 
 /// Computes the hyperbolic tangent of each component of an XMVECTOR.
 ///
+/// ## Parameters
+///
+/// `V` Vector for which to compute the hyperbolic tangent.
+///
+/// ## Return value
+///
+/// Returns a vector. Each component is the hyperbolic tangent of the corresponding component of `V`.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorTanH>
 #[inline]
 pub fn XMVectorTanH(
@@ -4428,6 +5321,20 @@ pub fn XMVectorTanH(
 }
 
 /// Computes the arcsine of each component of an XMVECTOR.
+///
+/// ## Parameters
+///
+/// `V` Vector for which to compute the arcsine. Each component should be between `-1.0` and `1.0`.
+///
+/// ## Return value
+///
+/// Returns a vector whose components are the arcsine of the corresponding components of `V`.
+///
+/// ## Remarks
+///
+/// This function uses a 7-degree minimax approximation.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorASin>
 #[inline]
@@ -4498,6 +5405,20 @@ pub fn XMVectorASin(
 
 /// Computes the arccosine of each component of an XMVECTOR.
 ///
+/// ## Parameters
+///
+/// `V` Vector for which to compute the arccosine. Each component should be between `-1.0` and `1.0`.
+///
+/// ## Return value
+///
+/// Returns a vector whose components are the arccosine of the corresponding components of `V`.
+///
+/// ## Remarks
+///
+/// This function uses a 7-degree minimax approximation.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorACos>
 #[inline]
 pub fn XMVectorACos(
@@ -4565,6 +5486,20 @@ pub fn XMVectorACos(
 }
 
 /// Computes the arctangent of each component of an XMVECTOR.
+///
+/// ## Parameters
+///
+/// `V` Vector for which to compute the arctangent.
+///
+/// ## Return value
+///
+/// Returns a vector whose components are the arctangent of the corresponding components of `V`.
+///
+/// ## Remarks
+///
+/// This function uses a 17-degree minimax approximation.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorATan>
 #[inline]
@@ -4652,6 +5587,35 @@ pub fn XMVectorATan(
 
 /// Computes the arctangent of Y/X.
 ///
+/// ## Parameters
+///
+/// `Y` First vector.
+///
+/// `X` Second vector.
+///
+/// ## Return value
+///
+/// Returns a vector. Each component is the arctangent of the corresponding `Y` component divided by the corresponding
+/// X component. Each component is in the range (-PI/2, PI/2).
+/// XMVectorATan2 returns the following values for the specified special input values.
+///
+/// | Input Value | Return Value |
+/// | --- | --- |
+/// | Y == 0 and X < 0 | Pi with the same sign as Y |
+/// | Y == 0 and X > 0 | 0 with the same sign as Y |
+/// | Y != 0 and X == 0 | Pi / 2 with the same sign as Y |
+/// | X == -Infinity and Y is finite | Pi with the same sign as Y |
+/// | X == +Infinity and Y is finite | 0 with the same sign as Y |
+/// | Y == Infinity and X is finite | Pi / 2 with the same sign as Y |
+/// | Y == Infinity and X == -Infinity | 3Pi / 4 with the same sign as Y |
+/// | Y == Infinity and X == +Infinity | Pi / 4 with the same sign as Y |
+///
+/// ## Remarks
+///
+/// This function uses a 17-degree minimax approximation.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorATan2>
 #[inline]
 pub fn XMVectorATan2(
@@ -4731,6 +5695,24 @@ pub fn XMVectorATan2(
 
 /// Estimates the sine of each component of an XMVECTOR.
 ///
+/// ## Parameters
+///
+/// `V` Vector for which to compute the sine.
+///
+/// ## Return value
+///
+/// Returns a vector. Each component is an estimate of the sine of the corresponding component of `V`.
+///
+/// ## Remarks
+///
+/// `Est` functions offer increased performance at the expense of reduced accuracy. `Est` functions are appropriate
+/// for non-critical calculations where accuracy can be sacrificed for speed. The exact amount of lost accuracy
+/// and speed increase are platform dependent.
+///
+/// This function uses an 7-degree minimax approximation.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSinEst>
 #[inline]
 pub fn XMVectorSinEst(
@@ -4785,6 +5767,24 @@ pub fn XMVectorSinEst(
 
 
 /// Estimates the cosine of each component of an XMVECTOR.
+///
+/// ## Parameters
+///
+/// `V` Vector for which to compute the cosine.
+///
+/// ## Return value
+///
+/// Returns a vector. Each component is an estimate of the cosine of the corresponding component of `V`.
+///
+/// ## Remarks
+///
+/// `Est` functions offer increased performance at the expense of reduced accuracy. `Est` functions are appropriate
+/// for non-critical calculations where accuracy can be sacrificed for speed. The exact amount of lost accuracy
+/// and speed increase are platform dependent.
+///
+/// This function uses a 7-degree minimax approximation.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorCosEst>
 #[inline]
@@ -4848,6 +5848,30 @@ pub fn XMVectorCosEst(
 
 
 /// Estimates the sine and cosine of each component of an XMVECTOR.
+///
+/// ## Parameters
+///
+/// `pSin` Address of a vector, each of whose components is an estimate of the sine of the corresponding component
+/// of `V`.
+///
+/// `pCos` Address of a vector, each of whose components is an estimate of the cosine of the corresponding component
+/// of `V`.
+///
+/// `V` Vector for which to compute the sine and cosine.
+///
+/// ## Return value
+///
+/// None.
+///
+/// ## Remarks
+///
+/// `Est` functions offer increased performance at the expense of reduced accuracy. `Est` functions are appropriate
+/// for non-critical calculations where accuracy can be sacrificed for speed. The exact amount of lost accuracy
+/// and speed increase are platform dependent.
+///
+/// This function uses a 7-degree minimax approximation for sine, 6-degree for cosine.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorSinCosEst>
 #[inline]
@@ -4934,6 +5958,22 @@ pub fn XMVectorSinCosEst(
 
 /// Estimates the tangent of each component of an XMVECTOR.
 ///
+/// ## Parameters
+///
+/// `V` Vector for which to compute the tangent.
+///
+/// ## Return value
+///
+/// Returns a vector. Each component is an estimate of the tangent of the corresponding component of `V`.
+///
+/// ## Remarks
+///
+/// `Est` functions offer increased performance at the expense of reduced accuracy. `Est` functions are appropriate
+/// for non-critical calculations where accuracy can be sacrificed for speed. The exact amount of lost accuracy
+/// and speed increase are platform dependent.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorTanEst>
 #[inline]
 pub fn XMVectorTanEst(
@@ -4984,6 +6024,24 @@ pub fn XMVectorTanEst(
 }
 
 /// Estimates the arcsine of each component of an XMVECTOR.
+///
+/// ## Parameters
+///
+/// `V` Vector for which to compute the arcsine. Each component should be between `-1.0` and `1.0`.
+///
+/// ## Return value
+///
+/// Returns a vector whose components are estimates of the arcsine of the corresponding components of `V`.
+///
+/// ## Remarks
+///
+/// `Est` functions offer increased performance at the expense of reduced accuracy. `Est` functions are appropriate
+/// for non-critical calculations where accuracy can be sacrificed for speed. The exact amount of lost accuracy
+/// and speed increase are platform dependent.
+///
+/// This function uses an 3-term minimax approximation.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorASinEst>
 #[inline]
@@ -5044,6 +6102,25 @@ pub fn XMVectorASinEst(
 
 /// Estimates the arccosine of each component of an XMVECTOR.
 ///
+/// ## Parameters
+///
+/// `V` Vector for which to compute the arccosine. Each component should be between `-1.0` and `1.0`.
+///
+/// ## Return value
+///
+/// Returns a vector whose components are estimates of the arccosine of the corresponding components of
+/// V.
+///
+/// ## Remarks
+///
+/// `Est` functions offer increased performance at the expense of reduced accuracy. `Est` functions are appropriate
+/// for non-critical calculations where accuracy can be sacrificed for speed. The exact amount of lost accuracy
+/// and speed increase are platform dependent.
+///
+/// This function uses a 3-degree minimax approximation.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorACosEst>
 #[inline]
 pub fn XMVectorACosEst(
@@ -5101,6 +6178,25 @@ pub fn XMVectorACosEst(
 }
 
 /// Estimates the arctangent of each component of an XMVECTOR.
+///
+/// ## Parameters
+///
+/// `V` Vector for which to compute the arctangent.
+///
+/// ## Return value
+///
+/// Returns a vector whose components are estimates of the arctangent of the corresponding components of
+/// V.
+///
+/// ## Remarks
+///
+/// `Est` functions offer increased performance at the expense of reduced accuracy. `Est` functions are appropriate
+/// for non-critical calculations where accuracy can be sacrificed for speed. The exact amount of lost accuracy
+/// and speed increase are platform dependent.
+///
+/// This function uses a 9-degree minimax approximation.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorATanEst>
 #[inline]
@@ -5172,6 +6268,39 @@ pub fn XMVectorATanEst(
 
 /// Estimates the arctangent of Y/X.
 ///
+/// ## Parameters
+///
+/// `Y` First vector.
+///
+/// `X` Second vector.
+///
+/// ## Return value
+///
+/// Returns a vector. Each component is an estimate of the arctangent of the corresponding `Y` component divided
+/// by the corresponding `X` component. Each component is in the range (`-PI/2`, `PI/2`).
+/// XMVectorATan2Est returns the following values for the specified special input values.
+///
+/// | Input Value | Return Value |
+/// | --- | --- |
+/// | Y == 0 and X < 0 | Pi with the same sign as Y |
+/// | Y == 0 and X > 0 | 0 with the same sign as Y |
+/// | Y != 0 and X == 0 | Pi / 2 with the same sign as Y |
+/// | X == -Infinity and Y is finite | Pi with the same sign as Y |
+/// | X == +Infinity and Y is finite | 0 with the same sign as Y |
+/// | Y == Infinity and X is finite | Pi / 2 with the same sign as Y |
+/// | Y == Infinity and X == -Infinity | 3Pi / 4 with the same sign as Y |
+/// | Y == Infinity and X == +Infinity | Pi / 4 with the same sign as Y |
+///
+/// ## Remarks
+///
+/// `Est` functions offer increased performance at the expense of reduced accuracy. `Est` functions are appropriate
+/// for non-critical calculations where accuracy can be sacrificed for speed. The exact amount of lost accuracy
+/// and speed increase are platform dependent.
+///
+/// This function uses a 9-degree minimax approximation.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorATan2Est>
 #[inline]
 pub fn XMVectorATan2Est(
@@ -5239,6 +6368,47 @@ pub fn XMVectorATan2Est(
 
 /// Performs a linear interpolation between two vectors.
 ///
+/// ## Parameters
+///
+/// `V0` First vector to interpolate from.
+///
+/// `V1` Second vector to interpolate from.
+///
+/// `t` Interpolation control factor.
+///
+/// ## Return value
+///
+/// Returns a vector containing the interpolation.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = V0.x + t * (V1.x - V0.x);
+/// Result.y = V0.y + t * (V1.y - V0.y);
+/// Result.z = V0.z + t * (V1.z - V0.z);
+/// Result.w = V0.w + t * (V1.w - V0.w);
+///
+/// return Result;
+/// ```
+///
+/// Note it is fairly simple to use this function for doing a cubic interpolation instead of a linear interpolation
+/// as follows:
+///
+/// ```text
+/// XMVECTOR SmoothStep( XMVECTOR V0, XMVECTOR V1, float t )
+/// {
+///     t = (t > 1.0f) ? 1.0f : ((t < 0.0f) ? 0.0f : t);  // Clamp value to 0 to 1
+///     t = t*t*(3.f - 2.f*t);
+///     return XMVectorLerp( V0, V1, t );
+/// }
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorLerp>
 #[inline]
 pub fn XMVectorLerp(
@@ -5271,6 +6441,35 @@ pub fn XMVectorLerp(
 
 /// Performs a linear interpolation between two vectors.
 ///
+/// ## Parameters
+///
+/// `V0` First vector to interpolate from.
+///
+/// `V1` Second vector to interpolate from.
+///
+/// `T` Interpolating control factor for the corresponding components of the position.
+///
+/// ## Return value
+///
+/// Returns a vector containing the interpolation.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = V0.x + T.x * (V1.x - V0.x);
+/// Result.y = V0.y + T.y * (V1.y - V0.y);
+/// Result.z = V0.z + T.z * (V1.z - V0.z);
+/// Result.w = V0.w + T.w * (V1.w - V0.w);
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorLerpV>
 #[inline]
 pub fn XMVectorLerpV(
@@ -5300,6 +6499,47 @@ pub fn XMVectorLerpV(
 }
 
 /// Performs a Hermite spline interpolation, using the specified vectors.
+///
+/// ## Parameters
+///
+/// `Position0` First position to interpolate from.
+///
+/// `Tangent0` Tangent vector for the first position.
+///
+/// `Position1` Second position to interpolate from.
+///
+/// `Tangent1` Tangent vector for the second position.
+///
+/// `t` Interpolation control factor.
+///
+/// ## Return value
+///
+/// Returns a vector containing the interpolation.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// float t2 = t * t;
+/// float t3 = t2* t;
+///
+/// float P0 = 2.0f * t3 - 3.0f * t2 + 1.0f;
+/// float T0 = t3 - 2.0f * t2 + t;
+/// float P1 = -2.0f * t3 + 3.0f * t2;
+/// float T1 = t3 - t2;
+///
+/// Result.x = P0 * Position0.x + T0 * Tangent0.x + P1 * Position1.x + T1 * Tangent1.x;
+/// Result.y = P0 * Position0.y + T0 * Tangent0.y + P1 * Position1.y + T1 * Tangent1.y;
+/// Result.z = P0 * Position0.z + T0 * Tangent0.z + P1 * Position1.z + T1 * Tangent1.z;
+/// Result.w = P0 * Position0.w + T0 * Tangent0.w + P1 * Position1.w + T1 * Tangent1.w;
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorHermite>
 #[inline]
@@ -5358,6 +6598,24 @@ pub fn XMVectorHermite(
 }
 
 /// Performs a Hermite spline interpolation, using the specified vectors.
+///
+/// ## Parameters
+///
+/// `Position0` First position to interpolate from.
+///
+/// `Tangent0` Tangent vector for the first position.
+///
+/// `Position1` Second position to interpolate from.
+///
+/// `Tangent1` Tangent vector for the second position.
+///
+/// `T` Interpolating control factor with each component corresponding to a term of the Hermite equation.
+///
+/// ## Return value
+///
+/// Returns a vector containing the interpolation.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorHermiteV>
 #[inline]
@@ -5433,6 +6691,24 @@ pub fn XMVectorHermiteV(
 
 /// Performs a Catmull-Rom interpolation, using the specified position vectors.
 ///
+/// ## Parameters
+///
+/// `Position0` First position.
+///
+/// `Position1` Second position.
+///
+/// `Position2` Third position.
+///
+/// `Position3` Fourth position.
+///
+/// `t` Interpolating control factor.
+///
+/// ## Return value
+///
+/// Returns the results of the Catmull-Rom interpolation.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorCatmullRom>
 #[inline]
 pub fn XMVectorCatmullRom(
@@ -5491,6 +6767,24 @@ pub fn XMVectorCatmullRom(
 }
 
 /// Performs a Catmull-Rom interpolation, using the specified position vectors.
+///
+/// ## Parameters
+///
+/// `Position0` First position.
+///
+/// `Position1` Second position.
+///
+/// `Position2` Third position.
+///
+/// `Position3` Fourth position.
+///
+/// `T` Interpolating control factor for the corresponding components of the position.
+///
+/// ## Return value
+///
+/// Returns the results of the Catmull-Rom interpolation.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorCatmullRomV>
 #[inline]
@@ -5577,6 +6871,24 @@ pub fn XMVectorCatmullRomV(
 
 /// Returns a point in Barycentric coordinates, using the specified position vectors.
 ///
+/// ## Parameters
+///
+/// `Position0` First position.
+///
+/// `Position1` Second position.
+///
+/// `Position2` Third position.
+///
+/// `f` Weighting factor. See the remarks.
+///
+/// `g` Weighting factor. See the remarks.
+///
+/// ## Return value
+///
+/// Returns the Barycentric coordinates.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorBaryCentric>
 #[inline]
 pub fn XMVectorBaryCentric(
@@ -5620,6 +6932,24 @@ pub fn XMVectorBaryCentric(
 }
 
 /// Returns a point in Barycentric coordinates, using the specified position vectors.
+///
+/// ## Parameters
+///
+/// `Position0` First position.
+///
+/// `Position1` Second position.
+///
+/// `Position2` Third position.
+///
+/// `F` Weighting factors for the corresponding components of the position.
+///
+/// `G` Weighting factors for the corresponding components of the position.
+///
+/// ## Return value
+///
+/// Returns the Barycentric coordinates.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorBaryCentricV>
 #[inline]
@@ -6231,6 +7561,37 @@ pub fn XMVector2Dot(
 
 /// Computes the 2D cross product.
 ///
+/// ## Parameters
+///
+/// `V1` 2D vector.
+///
+/// `V2` 2D vector.
+///
+/// ## Return value
+///
+/// Returns a vector. The 2D cross product is replicated into each component.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = V1.x * V2.y - v1.y * V2.x;
+/// Result.y = V1.x * V2.y - v1.y * V2.x;
+/// Result.z = V1.x * V2.y - v1.y * V2.x;
+/// Result.w = V1.x * V2.y - v1.y * V2.x;
+///
+/// return Result;
+/// ```
+///
+/// Note that a 'cross-product' in 2D is not well-defined. This function computes a geometric cross-product
+/// often used in 2D graphics. XMVector2Orthogonal is another possible interpretation of a 'cross-product'
+/// in 2D.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2Cross>
 #[inline]
 pub fn XMVector2Cross(
@@ -6730,6 +8091,35 @@ pub fn XMVector2ClampLengthV(
 
 /// Reflects an incident 2D vector across a 2D normal vector.
 ///
+/// ## Parameters
+///
+/// `Incident` 2D incident vector to reflect.
+///
+/// `Normal` 2D normal vector to reflect the incident vector across.
+///
+/// ## Return value
+///
+/// Returns the reflected incident angle.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// float s = 2.0f * (Incident.x * Normal.x + Incident.y * Normal.y);	// 2.0 * dot(Incident, Normal);
+///
+/// Result.x = Incident.x - s * Normal.x;
+/// Result.y = Incident.y - s * Normal.y;
+/// Result.z = undefined;
+/// Result.w = undefined;
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2Reflect>
 #[inline]
 pub fn XMVector2Reflect(
@@ -6748,6 +8138,54 @@ pub fn XMVector2Reflect(
 
 /// Refracts an incident 2D vector across a 2D normal vector.
 ///
+/// ## Parameters
+///
+/// `Incident` 2D incident vector to refract.
+///
+/// `Normal` 2D normal vector to refract the incident vector through.
+///
+/// `RefractionIndex` Index of refraction. See remarks.
+///
+/// ## Return value
+///
+/// Returns the refracted incident vector. If the refraction index and the angle between the incident vector
+/// and the normal are such that the result is a total internal reflection, the function will return a vector
+/// of the form < `0.0`, `0.0`, undefined, undefined >.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// float t = (Incident.x * Normal.x + Incident.y * Normal.y); // dot(Incident, Normal);
+/// float r = 1.0f - RefractionIndex * RefractionIndex * (1.0f - t * t);
+///
+/// if (r < 0.0f) // Total internal reflection
+/// {
+/// 	Result.x = 0.0f;
+/// 	Result.y = 0.0f;
+/// }
+/// else
+/// {
+/// 	float s = RefractionIndex * t + sqrt(r);
+/// 	Result.x = RefractionIndex * Incident.x - s * Normal.x;
+/// 	Result.y = RefractionIndex * Incident.y - s * Normal.y;
+/// }
+///
+/// Result.z = undefined;
+/// Result.w = undefined;
+///
+/// return Result;
+/// ```
+///
+/// The index of refraction is the ratio of the index of refraction of the medium containing the incident
+/// vector to the index of refraction of the medium being entered (where the index of refraction of a medium
+/// is itself the ratio of the speed of light in a vacuum to the speed of light in the medium).
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2Refract>
 #[inline]
 pub fn XMVector2Refract(
@@ -6761,6 +8199,27 @@ pub fn XMVector2Refract(
 }
 
 /// Refracts an incident 2D vector across a 2D normal vector.
+///
+/// ## Parameters
+///
+/// `Incident` 2D incident vector to refract.
+///
+/// `Normal` 2D normal vector to refract the incident vector through.
+///
+/// `RefractionIndex` 2D vector whose `x` and `y`-components are both equal to the index of refraction.
+///
+/// ## Return value
+///
+/// Returns the refracted incident vector. If the refraction index and the angle between the incident vector
+/// and the normal are such that the result is a total internal reflection, the function will return a vector
+/// of the form < `0.0`, `0.0`, undefined, undefined >.
+///
+/// ## Remarks
+///
+/// This function is identical to XMVector2Refract except that the RefractionIndex is supplied using a 2D
+/// vector instead of a float value.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2RefractV>
 #[inline]
@@ -6835,6 +8294,34 @@ pub fn XMVector2RefractV(
 
 /// Computes a vector perpendicular to a 2D vector.
 ///
+/// ## Parameters
+///
+/// `V` 2D vector.
+///
+/// ## Return value
+///
+/// Returns the 2D vector orthogonal to `V`.
+///
+/// ## Remarks
+///
+/// Note that a 'cross-product' in 2D is not well-defined. This function computes a generalized cross-product
+/// in 2D. XMVector2Cross is another possible interpretation of a 'cross-product' in 2D.
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = -V.y;
+/// Result.y = V.x;
+/// Result.z = 0;
+/// Result.w = 0;
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2Orthogonal>
 #[inline]
 pub fn XMVector2Orthogonal(
@@ -6867,6 +8354,25 @@ pub fn XMVector2Orthogonal(
 
 /// Estimates the radian angle between two normalized 2D vectors.
 ///
+/// ## Parameters
+///
+/// `N1` Normalized 2D vector.
+///
+/// `N2` Normalized 2D vector.
+///
+/// ## Return value
+///
+/// Returns a vector. The estimate of the radian angle (between `N1` and `N2`) is replicated to each of the
+/// components.
+///
+/// ## Remarks
+///
+/// `Est` functions offer increased performance at the expense of reduced accuracy. `Est` functions are appropriate
+/// for non-critical calculations where accuracy can be sacrificed for speed. The exact amount of lost accuracy
+/// and speed increase are platform dependent.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2AngleBetweenNormalsEst>
 #[inline]
 pub fn XMVector2AngleBetweenNormalsEst(
@@ -6884,6 +8390,18 @@ pub fn XMVector2AngleBetweenNormalsEst(
 
 /// Computes the radian angle between two normalized 2D vectors.
 ///
+/// ## Parameters
+///
+/// `N1` Normalized 2D vector.
+///
+/// `N2` Normalized 2D vector.
+///
+/// ## Return value
+///
+/// Returns a vector. The radian angle between `N1` and `N2` is replicated to each of the components.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2AngleBetweenNormals>
 #[inline]
 pub fn XMVector2AngleBetweenNormals(
@@ -6900,6 +8418,22 @@ pub fn XMVector2AngleBetweenNormals(
 }
 
 /// Computes the radian angle between two 2D vectors.
+///
+/// ## Parameters
+///
+/// `V1` 2D vector.
+///
+/// `V2` 2D vector.
+///
+/// ## Return value
+///
+/// Returns a vector. The radian angle between `V1` and `V2` is replicated to each of the components.
+///
+/// ## Remarks
+///
+/// If `V1` and `V2` are normalized 2D vectors, it is faster to use XMVector2AngleBetweenNormals.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2AngleBetweenVectors>
 #[inline]
@@ -6924,6 +8458,20 @@ pub fn XMVector2AngleBetweenVectors(
 }
 
 /// Computes the minimum distance between a line and a point.
+///
+/// ## Parameters
+///
+/// `LinePoint1` 2D vector describing a point on the line.
+///
+/// `LinePoint2` 2D vector describing a point on the line.
+///
+/// `Point` 2D vector describing the reference point.
+///
+/// ## Return value
+///
+/// Returns a vector. The minimum distance between the line and the point is replicated to each of the components.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2LinePointDistance>
 #[inline]
@@ -6955,6 +8503,23 @@ pub fn XMVector2LinePointDistance(
 }
 
 /// Finds the intersection of two lines.
+///
+/// ## Parameters
+///
+/// `Line1Point1` 2D vector describing the first point on the first line.
+///
+/// `Line1Point2` 2D vector describing a second point on the first line.
+///
+/// `Line2Point1` 2D vector describing the first point on the second line.
+///
+/// `Line2Point2` 2D vector describing a second point on the second line.
+///
+/// ## Return value
+///
+/// Returns the intersection point. If the lines are parallel, the returned vector will be a `NaN`. If the
+/// two lines are coincident, the returned vector will be positive infinity.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2IntersectLine>
 #[inline]
@@ -7808,6 +9373,18 @@ pub fn XMVector3IsInfinite(
 
 /// Computes the dot product between 3D vectors.
 ///
+/// ## Parameters
+///
+/// `V1` 3D vector.
+///
+/// `V2` 3D vector.
+///
+/// ## Return value
+///
+/// Returns a vector. The dot product between `V1` and `V2` is replicated into each component.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3Dot>
 #[inline]
 pub fn XMVector3Dot(
@@ -7847,7 +9424,7 @@ pub fn XMVector3Dot(
     // }
     //
     // #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE3_INTRINSICS_), not(_XM_SSE4_INTRINSICS_)))]
-    
+
     #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_SSE4_INTRINSICS_)))]
     unsafe {
         // Perform the dot product
@@ -7866,6 +9443,31 @@ pub fn XMVector3Dot(
 }
 
 /// Computes the cross product between 3D vectors.
+///
+/// ## Parameters
+///
+/// `V1` 3D vector.
+///
+/// `V2` 3D vector.
+///
+/// ## Return value
+///
+/// Returns the cross product of `V1` and V2.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+/// Result.x = (V1.y * V2.z) - (V1.z * V2.y);
+/// Result.y = (V1.z * V2.x) - (V1.x * V2.z);
+/// Result.z = (V1.x * V2.y) - (V1.y * V2.x);
+/// Result.w = 0;
+/// return Result;
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3Cross>
 #[inline]
@@ -8095,6 +9697,16 @@ pub fn XMVector3LengthEst(
 
 /// Computes the length of a 3D vector.
 ///
+/// ## Parameters
+///
+/// `V` 3D vector.
+///
+/// ## Return value
+///
+/// Returns a vector. The length of `V` is replicated into each component.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3Length>
 #[inline]
 pub fn XMVector3Length(
@@ -8153,6 +9765,24 @@ pub fn XMVector3Length(
 }
 
 /// Estimates the normalized version of a 3D vector.
+///
+/// ## Parameters
+///
+/// `V` 3D vector.
+///
+/// ## Return value
+///
+/// Returns an estimate of the normalized version of `V`.
+///
+/// ## Remarks
+///
+/// For a vector with `0` length or infinite length, this function returns a vector of `QNaN`.
+///
+/// `Est` functions offer increased performance at the expense of reduced accuracy. `Est` functions are appropriate
+/// for non-critical calculations where accuracy can be sacrificed for speed. The exact amount of lost accuracy
+/// and speed increase are platform dependent.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3NormalizeEst>
 #[inline]
@@ -8216,6 +9846,56 @@ pub fn XMVector3NormalizeEst(
 }
 
 /// Returns the normalized version of a 3D vector.
+///
+/// ## Parameters
+///
+/// `V` 3D vector.
+///
+/// ## Return value
+///
+/// Returns the normalized version of `V`.
+///
+/// ## Remarks
+///
+/// For a vector of length `0`, this function returns a zero vector. For a vector with infinite length, it
+/// returns a vector of `QNaN`.
+///
+/// Note that for most graphics applications, ensuring the vectors have well-defined lengths that don't
+/// cause problems for normalization is common practice. However, if you need a robust normalization that
+/// works for all floating-point inputs, you can use the following code instead:
+///
+/// ```text
+/// inline XMVECTOR XMVector3NormalizeRobust( FXMVECTOR V )
+/// {
+///     // Compute the maximum absolute value component.
+///     XMVECTOR vAbs = XMVectorAbs(V);
+///     XMVECTOR max0 = XMVectorSplatX(vAbs);
+///     XMVECTOR max1 = XMVectorSplatY(vAbs);
+///     XMVECTOR max2 = XMVectorSplatZ(vAbs);
+///     max0 = XMVectorMax(max0, max1);
+///     max0 = XMVectorMax(max0, max2);
+///
+///     // Divide by the maximum absolute component.
+///     XMVECTOR normalized = XMVectorDivide(V, max0);
+///
+///     // Set to zero when the original length is zero.
+///     XMVECTOR mask = XMVectorNotEqual(g_XMZero, max0);
+///     normalized = XMVectorAndInt(normalized, mask);
+///
+///     XMVECTOR t0 = XMVector3LengthSq(normalized);
+///     XMVECTOR length = XMVectorSqrt(t0);
+///
+///     // Divide by the length to normalize.
+///     normalized = XMVectorDivide(normalized, length);
+///
+///     // Set to zero when the original length is zero or infinity.  In the
+///     // latter case, this is considered to be an unexpected condition.
+///     normalized = XMVectorAndInt(normalized, mask);
+///     return normalized;
+/// }
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3Normalize>
 #[inline]
@@ -8332,6 +10012,27 @@ pub fn XMVector3Normalize(
 
 /// Clamps the length of a 3D vector to a given range.
 ///
+/// ## Parameters
+///
+/// `V` 3D vector to clamp.
+///
+/// `LengthMin` 3D vector whose `x`, `y`, and `z`-components are equal to the minimum clamp length. The `x`, `y`, and
+/// `z`-components must be greater-than-or-equal to zero.
+///
+/// `LengthMax` 3D vector whose `x`, `y`, and `z`-components are equal to the minimum clamp length. The `x`, `y`, and
+/// `z`-components must be greater-than-or-equal to zero.
+///
+/// ## Return value
+///
+/// Returns a 3D vector whose length is clamped to the specified minimum and maximum.
+///
+/// ## Remarks
+///
+/// This function is identical to XMVector3ClampLength except that LengthMin and LengthMax are supplied
+/// using 3D vectors instead of float values.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3ClampLength>
 #[inline]
 pub fn XMVector3ClampLength(
@@ -8406,14 +10107,14 @@ pub fn XMVector3ClampLengthV(
 ///
 /// ```text
 /// XMVECTOR Result;
-/// 
+///
 /// float s = 2.0f * ( Incident.x * Normal.x + Incident.y * Normal.y + Incident.z * Normal.z );
-/// 
+///
 /// Result.x = Incident.x - s * Normal.x;
 /// Result.y = Incident.y - s * Normal.y;
 /// Result.z = Incident.z - s * Normal.z;
 /// Result.w = undefined;
-/// 
+///
 /// return Result;
 /// ```
 /// ## Reference
@@ -8456,10 +10157,10 @@ pub fn XMVector3Reflect(
 ///
 /// ```text
 /// XMVECTOR Result;
-/// 
+///
 /// float t = ( Incident.x * Normal.x + Incident.y * Normal.y + Incident.z * Normal.z );
 /// float r = 1.0f - RefractionIndex * RefractionIndex * (1.0f - t * t);
-/// 
+///
 /// if (r < 0.0f) // Total internal reflection
 /// {
 /// 	Result.x = 0.0f;
@@ -8473,9 +10174,9 @@ pub fn XMVector3Reflect(
 /// 	Result.y = RefractionIndex * Incident.y - s * Normal.y;
 /// 	Result.z = RefractionIndex * Incident.z - s * Normal.z;
 /// }
-/// 
+///
 /// Result.w = undefined;
-/// 
+///
 /// return Result;
 /// ```
 ///
@@ -8498,6 +10199,27 @@ pub fn XMVector3Refract(
 }
 
 /// Refracts an incident 3D vector across a 3D normal vector.
+///
+/// ## Parameters
+///
+/// `Incident` 3D incident vector to refract.
+///
+/// `Normal` 3D normal vector to refract the incident vector through.
+///
+/// `RefractionIndex` 3D vector whose `x`, `y`, and `z-component`s are equal to the index of refraction.
+///
+/// ## Return value
+///
+/// Returns the refracted incident vector. If the refraction index and the angle between the incident vector
+/// and the normal are such that the result is a total internal reflection, the function will return a vector
+/// of the form < `0.0`, `0.0`, `0.0`, undefined >.
+///
+/// ## Remarks
+///
+/// This function is identical to XMVector3Refract except that the RefractionIndex is supplied using a 3D
+/// vector instead of a float value.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3RefractV>
 #[inline]
@@ -8576,6 +10298,16 @@ pub fn XMVector3RefractV(
 
 /// Computes a vector perpendicular to a 3D vector.
 ///
+/// ## Parameters
+///
+/// `V` 3D vector.
+///
+/// ## Return value
+///
+/// Returns a 3D vector orthogonal to `V`.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3Orthogonal>
 #[inline]
 pub fn XMVector3Orthogonal(
@@ -8613,6 +10345,25 @@ pub fn XMVector3Orthogonal(
 
 /// Estimates the radian angle between two normalized 3D vectors.
 ///
+/// ## Parameters
+///
+/// `N1` Normalized 3D vector.
+///
+/// `N2` Normalized 3D vector.
+///
+/// ## Return value
+///
+/// Returns a vector. The estimate of the radian angle (between `N1` and `N2`) is replicated to each of the
+/// components.
+///
+/// ## Remarks
+///
+/// `Est` functions offer increased performance at the expense of reduced accuracy. `Est` functions are appropriate
+/// for non-critical calculations where accuracy can be sacrificed for speed. The exact amount of lost accuracy
+/// and speed increase are platform dependent.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3AngleBetweenNormalsEst>
 #[inline]
 pub fn XMVector3AngleBetweenNormalsEst(
@@ -8630,6 +10381,18 @@ pub fn XMVector3AngleBetweenNormalsEst(
 
 /// Computes the radian angle between two normalized 3D vectors.
 ///
+/// ## Parameters
+///
+/// `N1` Normalized 3D vector.
+///
+/// `N2` Normalized 3D vector.
+///
+/// ## Return value
+///
+/// Returns a vector. The radian angle between `N1` and `N2` is replicated to each of the components.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3AngleBetweenNormals>
 #[inline]
 pub fn XMVector3AngleBetweenNormals(
@@ -8646,6 +10409,22 @@ pub fn XMVector3AngleBetweenNormals(
 }
 
 /// Computes the radian angle between two 3D vectors.
+///
+/// ## Parameters
+///
+/// `V1` 3D vector.
+///
+/// `V2` 3D vector.
+///
+/// ## Return value
+///
+/// Returns a vector. The radian angle between `V1` and `V2` is replicated to each of the components.
+///
+/// ## Remarks
+///
+/// If `V1` and `V2` are normalized 3D vectors, it is faster to use XMVector3AngleBetweenNormals.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3AngleBetweenVectors>
 #[inline]
@@ -8716,6 +10495,22 @@ pub fn XMVector3LinePointDistance(
 
 /// Using a reference normal vector, splits a 3D vector into components that are parallel and perpendicular to the normal.
 ///
+/// ## Parameters
+///
+/// `pParallel` Address of the component of `V` that is parallel to Normal.
+///
+/// `pPerpendicular` Address of the component of `V` that is perpendicular to Normal.
+///
+/// `V` 3D vector to break into components.
+///
+/// `Normal` 3D reference normal vector.
+///
+/// ## Return value
+///
+/// None.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3ComponentsFromNormal>
 #[inline]
 pub fn XMVector3ComponentsFromNormal(
@@ -8736,6 +10531,18 @@ pub fn XMVector3ComponentsFromNormal(
 
 /// Rotates a 3D vector using a quaternion.
 ///
+/// ## Parameters
+///
+/// `V` 3D vector to rotate.
+///
+/// `RotationQuaternion` Quaternion that describes the rotation to apply to the vector.
+///
+/// ## Return value
+///
+/// Returns the rotated 3D vector.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3Rotate>
 #[inline]
 pub fn XMVector3Rotate(
@@ -8753,6 +10560,18 @@ pub fn XMVector3Rotate(
 
 
 /// Rotates a 3D vector using the inverse of a quaternion.
+///
+/// ## Parameters
+///
+/// `V` 3D vector to rotate.
+///
+/// `RotationQuaternion` Quaternion that describes the inverse of the rotation to apply to the vector.
+///
+/// ## Return value
+///
+/// Returns the rotated 3D vector.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3InverseRotate>
 #[inline]
@@ -8846,7 +10665,7 @@ pub fn XMVector3Transform(
 /// and uses a value of `1.0` instead. The `w` component of the returned vector
 /// will always be `1.0`.
 ///
-/// Reference
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3TransformCoord>
 ///
@@ -8937,6 +10756,50 @@ pub fn XMVector3TransformNormal(
 
 /// Project a 3D vector from object space into screen space.
 ///
+/// ## Parameters
+///
+/// `V` 3D vector in object space that will be projected into screen space.
+///
+/// `ViewportX` Pixel coordinate of the upper-left corner of the viewport. Unless you want to render to a subset of
+/// the surface, this parameter can be set to 0.
+///
+/// `ViewportY` Pixel coordinate of the upper-left corner of the viewport on the render-target surface. Unless you want
+/// to render to a subset of the surface, this parameter can be set to `0`.
+///
+/// `ViewportWidth` Width dimension of the clip volume, in pixels. Unless you are rendering only to a subset of the surface,
+/// this parameter should be set to the width dimension of the render-target surface.
+///
+/// `ViewportHeight` Height dimension of the clip volume, in pixels. Unless you are rendering only to a subset of the surface,
+/// this parameter should be set to the height dimension of the render-target surface.
+///
+/// `ViewportMinZ` Together with `ViewportMaxZ`, value describing the range of depth values into which a scene is to be
+/// rendered, the minimum and maximum values of the clip volume. Most applications set this value to `0.0`.
+/// Clipping is performed after applying the projection matrix.
+///
+/// `ViewportMaxZ` Together with `MinZ`, value describing the range of depth values into which a scene is to be rendered,
+/// the minimum and maximum values of the clip volume. Most applications set this value to `1.0`. Clipping
+/// is performed after applying the projection matrix.
+///
+/// `Projection` Projection matrix.
+///
+/// `View` View matrix.
+///
+/// `World` World matrix.
+///
+/// ## Return value
+///
+/// Returns a vector in screen space.
+///
+/// ## Remarks
+///
+/// The `ViewportX`, `ViewportY`, `ViewportWidth`, and `ViewportHeight` parameters describe the position and dimensions
+/// of the viewport on the render-target surface. `Usually`, applications render to the entire target surface;
+/// when rendering on a `640*480` surface, these parameters should be `0`, `0`, `640`, and `480`, respectively. The
+/// `ViewportMinZ` and `ViewportMaxZ` are typically set to `0.0` and `1.0` but can be set to other values to achieve
+/// specific effects.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3Project>
 #[inline]
 pub fn XMVector3Project(
@@ -8971,6 +10834,51 @@ pub fn XMVector3Project(
 // TODO: XMVector3ProjectStream
 
 /// Projects a 3D vector from screen space into object space.
+///
+/// ## Parameters
+///
+/// `V` 3D vector in screen space that will be projected into object space. `X` and `Y` are in pixels, while
+/// `Z` is `0.0` (at ViewportMinZ) to `1.0` (at `ViewportMaxZ`).
+///
+/// `ViewportX` Pixel coordinate of the upper-left corner of the viewport. Unless you want to render to a subset of
+/// the surface, this parameter can be set to `0`.
+///
+/// `ViewportY` Pixel coordinate of the upper-left corner of the viewport on the render-target surface. Unless you want
+/// to render to a subset of the surface, this parameter can be set to `0`.
+///
+/// `ViewportWidth` Width dimension of the clip volume, in pixels. Unless you are rendering only to a subset of the surface,
+/// this parameter should be set to the width dimension of the render-target surface.
+///
+/// `ViewportHeight` Height dimension of the clip volume, in pixels. Unless you are rendering only to a subset of the surface,
+/// this parameter should be set to the height dimension of the render-target surface.
+///
+/// `ViewportMinZ` Together with `ViewportMaxZ`, value describing the range of depth values into which a scene is to be
+/// rendered, the minimum and maximum values of the clip volume. Most applications set this value to `0.0`.
+/// Clipping is performed after applying the projection matrix.
+///
+/// `ViewportMaxZ` Together with `MinZ`, value describing the range of depth values into which a scene is to be rendered,
+/// the minimum and maximum values of the clip volume. Most applications set this value to `1.0`. Clipping
+/// is performed after applying the projection matrix.
+///
+/// `Projection` Projection matrix.
+///
+/// `View` View matrix.
+///
+/// `World` World matrix.
+///
+/// ## Return value
+///
+/// Returns a vector in object space.
+///
+/// ## Remarks
+///
+/// The `ViewportX`, `ViewportY`, `ViewportWidth`, and `ViewportHeight` parameters describe the position and dimensions
+/// of the viewport on the render-target surface. Usually`, applications render to the entire target surface;
+/// when rendering on a `640*480` surface, these parameters should be `0`, `0`, `640`, and `480`, respectively. The
+/// `ViewportMinZ` and `ViewportMaxZ` are typically set to `0.0` and `1.0` but can be set to other values to achieve
+/// specific effects.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3Unproject>
 #[inline]
@@ -9493,6 +11401,29 @@ pub fn XMVector4LessOrEqual(
 
 /// Tests whether the components of a 4D vector are within set bounds.
 ///
+/// ## Parameters
+///
+/// `V` 4D vector to test.
+///
+/// `Bounds` 4D vector that determines the bounds.
+///
+/// ## Return value
+///
+/// Returns `true` if all of the components of `V` are within the set bounds, and `false` otherwise.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// return (V.x <= Bounds.x && V.x >= -Bounds.x) &&
+///        (V.y <= Bounds.y && V.y >= -Bounds.y) &&
+///        (V.z <= Bounds.z && V.z >= -Bounds.z) &&
+///        (V.w <= Bounds.w && V.w >= -Bounds.w);
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4InBounds>
 #[inline]
 pub fn XMVector4InBounds(
@@ -9648,6 +11579,49 @@ pub fn XMVector4Dot(
 
 
 /// Computes the cross product between 4D vectors.
+///
+/// ## Parameters
+///
+/// `V1` 4D vector.
+///
+/// `V2` 4D vector.
+///
+/// `V3` 4D vector.
+///
+/// ## Return value
+///
+/// Returns the 4D cross product of V1, V2, and V3.
+///
+/// ## Remarks
+///
+/// A 4D cross-product is not well-defined. This function computes a geometric analog to the 3D cross product.
+/// XMVector4Orthogonal is another generalized 'cross-product' for 4D vectors.
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = V1.y * (V2.z * V3.w - V3.z * V2.w)
+///            -  V1.z * (V2.y * V3.w - V3.y * V2.w )
+///            +  V1.w * (V2.y * V3.z - V3.y * V2.z);
+///
+/// Result.y = V1.x * (V3.z * V2.w - V2.z * V3.w)
+///            - V1.z * (V3.x * V2.w - V2.x * V3.w)
+///            + V1.w * (V3.x * V2.z - V2.x * V3.z);
+///
+/// Result.z = V1.x * (V2.y * V3.w - V3.y * V2.w)
+///            - V1.y * (V2.x * V3.w - V3.x * V2.w)
+///            + V1.w * (V2.x * V3.y - V3.x * V2.y);
+///
+/// Result.w = V1.x * (V3.y * V2.z - V2.y * V3.z)
+///            - V1.y * (V3.x * V2.z - V2.x * V3.z)
+///            + V1.z * (V3.x * V2.y - V2.x * V3.y);
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4Cross>
 #[inline]
@@ -10163,6 +12137,20 @@ pub fn XMVector4Normalize(
 
 /// Clamps the length of a 4D vector to a given range.
 ///
+/// ## Parameters
+///
+/// `V` 4D vector.
+///
+/// `LengthMin` Minimum clamp length.
+///
+/// `LengthMax` Maximum clamp length.
+///
+/// ## Return value
+///
+/// Returns a 4D vector whose length is clamped to the specified minimum and maximum.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4ClampLength>
 #[inline]
 pub fn XMVector4ClampLength(
@@ -10179,6 +12167,27 @@ pub fn XMVector4ClampLength(
 
 
 /// Clamps the length of a 4D vector to a given range.
+///
+/// ## Parameters
+///
+/// `V` 4D vector to clamp.
+///
+/// `LengthMin` 4D vector, all of whose components are equal to the minimum clamp length. The components must be greater-than-or-equal
+/// to zero.
+///
+/// `LengthMax` 4D vector, all of whose components are equal to the maximum clamp length. The components must be greater-than-or-equal
+/// to zero.
+///
+/// ## Return value
+///
+/// Returns a 4D vector whose length is clamped to the specified minimum and maximum.
+///
+/// ## Remarks
+///
+/// This function is identical to XMVector4ClampLength except that `LengthMin` and `LengthMax` are supplied
+/// using 4D vectors instead of float values.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4ClampLengthV>
 #[inline]
@@ -10230,6 +12239,35 @@ pub fn XMVector4ClampLengthV(
 
 /// Reflects an incident 4D vector across a 4D normal vector.
 ///
+/// ## Parameters
+///
+/// `Incident` 4D incident vector to reflect.
+///
+/// `Normal` 4D normal vector to reflect the incident vector across.
+///
+/// ## Return value
+///
+/// Returns the reflected incident angle.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// MVECTOR Result;
+///
+/// float s = 2.0f * dot(Incident, Normal);
+///
+/// Result.x = Incident.x - s * Normal.x;
+/// Result.y = Incident.y - s * Normal.y;
+/// Result.z = Incident.z - s * Normal.z;
+/// Result.w = Incident.w - s * Normal.w;
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4Reflect>
 #[inline]
 pub fn XMVector4Reflect(
@@ -10248,6 +12286,55 @@ pub fn XMVector4Reflect(
 
 /// Reflects an incident 4D vector across a 4D normal vector.
 ///
+/// ## Parameters
+///
+/// `Incident` 4D incident vector to refract.
+///
+/// `Normal` 4D normal vector to refract the incident vector through.
+///
+/// `RefractionIndex` Index of refraction. See remarks.
+///
+/// ## Return value
+///
+/// Returns the refracted incident vector. If the refraction index and the angle between the incident vector
+/// and the normal are such that the result is a total internal reflection, the function will return a vector
+/// of the form < `0.0`, `0.0`, `0.0`, `0.0` >.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// float t = dot(Incident, Normal);
+/// float r = 1.0f - RefractionIndex * RefractionIndex * (1.0f - t * t);
+///
+/// if (r < 0.0f) // Total internal reflection
+/// {
+/// 	Result.x = 0.0f;
+/// 	Result.y = 0.0f;
+/// 	Result.z = 0.0f;
+/// 	Result.w = 0.0f;
+/// }
+/// else
+/// {
+/// 	float s = RefractionIndex * t + sqrt(r);
+/// 	Result.x = RefractionIndex * Incident.x - s * Normal.x;
+/// 	Result.y = RefractionIndex * Incident.y - s * Normal.y;
+/// 	Result.z = RefractionIndex * Incident.z - s * Normal.z;
+/// 	Result.w = RefractionIndex * Incident.w - s * Normal.w;
+/// }
+///
+/// return Result;
+/// ```
+///
+/// The index of refraction is the ratio of the index of refraction of the medium containing the incident
+/// vector to the index of refraction of the medium being entered (where the index of refraction of a medium
+/// is itself the ratio of the speed of light in a vacuum to the speed of light in the medium).
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4Refract>
 #[inline]
 pub fn XMVector4Refract(
@@ -10261,6 +12348,27 @@ pub fn XMVector4Refract(
 }
 
 /// Computes a vector perpendicular to a 4D vector.
+///
+/// ## Parameters
+///
+/// `Incident` 4D incident vector to refract.
+///
+/// `Normal` 4D normal vector to refract the incident vector through.
+///
+/// `RefractionIndex` 4D vector, all of whose components are equal to the index of refraction.
+///
+/// ## Return value
+///
+/// Returns the refracted incident vector. If the refraction index and the angle between the incident vector
+/// and the normal are such that the result is a total internal reflection, the function will return a vector
+/// of the form < `0.0`, `0.0`, `0.0`, `0.0` >.
+///
+/// ## Remarks
+///
+/// This function is identical to XMVector4Refract except that the RefractionIndex is supplied using a 4D
+/// vector instead of a float value.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4RefractV>
 #[inline]
@@ -10343,6 +12451,34 @@ pub fn XMVector4RefractV(
 
 /// Computes a vector perpendicular to a 4D vector.
 ///
+/// ## Parameters
+///
+/// `V` 4D vector.
+///
+/// ## Return value
+///
+/// Returns the 4D vector orthogonal to `V`.
+///
+/// ## Remarks
+///
+/// A 4D cross-product is not well-defined. This function computes a generalized 'cross-product' for 4D
+/// vectors. XMVector4Cross is another geometric 'cross-product' for 4D vectors.
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = V.z;
+/// Result.y = V.w;
+/// Result.z = -V.x;
+/// Result.w = -V.y;
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4Orthogonal>
 #[inline]
 pub fn XMVector4Orthogonal(
@@ -10376,6 +12512,25 @@ pub fn XMVector4Orthogonal(
 
 /// Estimates the radian angle between two normalized 4D vectors.
 ///
+/// ## Parameters
+///
+/// `N1` Normalized 4D vector.
+///
+/// `N2` Normalized 4D vector.
+///
+/// ## Return value
+///
+/// Returns a vector. The estimate of the radian angle (between `N1` and `N2`) is replicated to each of the
+/// components.
+///
+/// ## Remarks
+///
+/// `Est` functions offer increased performance at the expense of reduced accuracy. `Est` functions are appropriate
+/// for non-critical calculations where accuracy can be sacrificed for speed. The exact amount of lost accuracy
+/// and speed increase are platform dependent.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4AngleBetweenNormalsEst>
 #[inline]
 pub fn XMVector4AngleBetweenNormalsEst(
@@ -10393,6 +12548,18 @@ pub fn XMVector4AngleBetweenNormalsEst(
 
 /// Computes the radian angle between two normalized 4D vectors.
 ///
+/// ## Parameters
+///
+/// `N1` Normalized 4D vector.
+///
+/// `N2` Normalized 4D vector.
+///
+/// ## Return value
+///
+/// Returns a vector. The radian angle between N1 and N2 is replicated to each of the components.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4AngleBetweenNormals>
 #[inline]
 pub fn XMVector4AngleBetweenNormals(
@@ -10409,6 +12576,22 @@ pub fn XMVector4AngleBetweenNormals(
 }
 
 /// Compute the radian angle between two 4D vectors.
+///
+/// ## Parameters
+///
+/// `V1` 4D vector.
+///
+/// `V2` 4D vector.
+///
+/// ## Return value
+///
+/// Returns a vector. The radian angle between `V1` and `V2` is replicated to each of the components.
+///
+/// ## Remarks
+///
+/// If `V1` and `V2` are normalized 4D vectors, it is faster to use XMVector4AngleBetweenNormals.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4AngleBetweenVectors>
 #[inline]
@@ -10433,6 +12616,18 @@ pub fn XMVector4AngleBetweenVectors(
 }
 
 /// Transforms a 4D vector by a matrix.
+///
+/// ## Parameters
+///
+/// `V` 4D vector.
+///
+/// `M` Transformation matrix.
+///
+/// ## Return value
+///
+/// Returns the transformed vector.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4Transform>
 #[inline]
