@@ -2549,9 +2549,23 @@ pub fn XMScalarCos(
 
 /// Estimates the cosine of a radian angle.
 ///
-/// # Remarks
+/// ## Parameters
+///
+/// `Value` float value describing the radian angle.
+///
+/// ## Return value
+///
+/// Returns the cosine of Value.
+///
+/// ## Remarks
+///
+/// `Est` functions offer increased performance at the expense of reduced accuracy. `Est` functions are appropriate
+/// for non-critical calculations where accuracy can be sacrificed for speed. The exact amount of lost accuracy
+/// and speed increase are platform dependent.
 ///
 /// This function uses a 6-degree minimax approximation.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarCosEst>
 #[inline]
@@ -2596,9 +2610,23 @@ pub fn XMScalarCosEst(
 
 /// Computes both the sine and cosine of a radian angle.
 ///
-/// # Remarks
+/// ## Parameters
+///
+/// `pSin` Address of a float that will contain the result of the sine of Value.
+///
+/// `pCos` Address of a float that will contain the result of the cosine of Value.
+///
+/// `Value` float value describing the radian angle.
+///
+/// ## Return value
+///
+/// None
+///
+/// ## Remarks
 ///
 /// This function uses a 11-degree minimax approximation for sine; 10-degree for cosine.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarSinCos>
 #[inline]
@@ -2652,9 +2680,27 @@ pub fn XMScalarSinCos(
 
 /// Estimates both the sine and cosine of a radian angle.
 ///
-/// # Remarks
+/// ## Parameters
+///
+/// `pSin` Address of a float that will contain the result of the sine of Value.
+///
+/// `pCos` Address of a float that will contain the result of the cosine of Value.
+///
+/// `Value` float value describing the radian angle.
+///
+/// ## Return value
+///
+/// None
+///
+/// ## Remarks
+///
+/// `Est` functions offer increased performance at the expense of reduced accuracy. `Est` functions are appropriate
+/// for non-critical calculations where accuracy can be sacrificed for speed. The exact amount of lost accuracy
+/// and speed increase are platform dependent.
 ///
 /// This function uses a 7-degree minimax approximation for sine; 6-degree for cosine.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarSinCosEst>
 #[inline]
@@ -2708,9 +2754,19 @@ pub fn XMScalarSinCosEst(
 
 /// Computes the arcsine of a floating-point number.
 ///
-/// # Remarks
+/// ## Parameters
 ///
-/// This function uses a 7-degree minimax approximation.
+/// `Value` float value between `-1.0` and `1.0`.
+///
+/// ## Return value
+///
+/// Returns the inverse sine of Value.
+///
+/// ## Remarks
+///
+/// This function uses a 7-degree minimax approximation
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarASin>
 #[inline]
@@ -2739,9 +2795,24 @@ pub fn XMScalarASin(
 
 /// Estimates the arcsine of a floating-point number.
 ///
-/// # Remarks
+/// ## Parameters
+///
+/// `Value` float value between `-1.0` and `1.0`.
+///
+/// ## Return value
+///
+/// Returns the inverse sine of Value.
+///
+/// ## Remarks
+///
+/// `Est` functions offer increased performance at the expense of reduced accuracy. `Est` functions are appropriate
+/// for non-critical calculations where accuracy can be sacrificed for speed. The exact amount of lost accuracy
+/// and speed increase are platform dependent.
 ///
 /// This function uses a 3-degree minimax approximation.
+///
+/// ## Reference
+///
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarASinEst>
 #[inline]
@@ -2770,9 +2841,19 @@ pub fn XMScalarASinEst(
 
 /// Computes the arccosine of a floating-point number.
 ///
-/// # Remarks
+/// ## Parameters
+///
+/// `Value` float value between `-1.0` and `1.0`.
+///
+/// ## Return value
+///
+/// Returns the inverse cosine of Value.
+///
+/// ## Remarks
 ///
 /// This function uses a 7-degree minimax approximation.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarACos>
 #[inline]
@@ -2800,9 +2881,23 @@ pub fn XMScalarACos(
 
 /// Estimates the arccosine of a floating-point number.
 ///
-/// # Remarks
+/// ## Parameters
+///
+/// `Value` float value between `-1.0` and `1.0`.
+///
+/// ## Return value
+///
+/// Returns the inverse cosine of Value.
+///
+/// ## Remarks
+///
+/// `Est` functions offer increased performance at the expense of reduced accuracy. `Est` functions are appropriate
+/// for non-critical calculations where accuracy can be sacrificed for speed. The exact amount of lost accuracy
+/// and speed increase are platform dependent.
 ///
 /// This function uses a 3-degree minimax approximation.
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMScalarACosEst>
 #[inline]

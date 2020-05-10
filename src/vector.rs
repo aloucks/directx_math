@@ -3993,9 +3993,9 @@ pub fn XMVectorMultiply(
 /// XMVECTOR Result;
 ///
 /// Result.x = V1.x * V2.x + V3.x;
-/// Result.y = V1.y * V2.y+ V3.y;
-/// Result.z = V1.z * V2.z+ V3.z;
-/// Result.w = V1.w * V2.w+ V3.w;
+/// Result.y = V1.y * V2.y + V3.y;
+/// Result.z = V1.z * V2.z + V3.z;
+/// Result.w = V1.w * V2.w + V3.w;
 ///
 /// return Result;
 /// ```
