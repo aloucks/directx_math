@@ -324,7 +324,8 @@ const fn ibool(a: i32) -> bool {
 }
 
 #[repr(C, align(16))]
-struct Align16<T>(T);
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Align16<T>(pub T);
 
 impl<T> std::ops::Deref for Align16<T> {
     type Target = T;
@@ -338,6 +339,27 @@ impl<T> std::ops::DerefMut for Align16<T> {
     #[inline(always)]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
+    }
+}
+
+impl<T> std::convert::AsRef<T> for Align16<T> {
+    #[inline(always)]
+    fn as_ref(&self) -> &T {
+        &self.0
+    }
+}
+
+impl<T> std::convert::AsMut<T> for Align16<T> {
+    #[inline(always)]
+    fn as_mut(&mut self) -> &mut T {
+        &mut self.0
+    }
+}
+
+impl<T> std::convert::From<T> for Align16<T> {
+    #[inline(always)]
+    fn from(value: T) -> Align16<T> {
+        Align16(value)
     }
 }
 
@@ -1085,18 +1107,18 @@ mod doc {
         pub use crate::convert::XMLoadFloat2;
         // TODO: pub use crate::convert::XMLoadFloat2A;
         pub use crate::convert::XMLoadFloat3;
-        // TODO: pub use crate::convert::XMLoadFloat3A;
+        pub use crate::convert::XMLoadFloat3A;
         // TODO: pub use crate::convert::XMLoadFloat3PK;
         // TODO: pub use crate::convert::XMLoadFloat3SE;
         pub use crate::convert::XMLoadFloat3x3;
         // TODO: pub use crate::convert::XMLoadFloat3x4;
         // TODO: pub use crate::convert::XMLoadFloat3x4A;
         pub use crate::convert::XMLoadFloat4;
-        // TODO: pub use crate::convert::XMLoadFloat4A;
+        pub use crate::convert::XMLoadFloat4A;
         // TODO: pub use crate::convert::XMLoadFloat4x3;
         // TODO: pub use crate::convert::XMLoadFloat4x3A;
         pub use crate::convert::XMLoadFloat4x4;
-        // TODO: pub use crate::convert::XMLoadFloat4x4A;
+        pub use crate::convert::XMLoadFloat4x4A;
         // TODO: pub use crate::convert::XMLoadHalf2;
         // TODO: pub use crate::convert::XMLoadHalf4;
         // TODO: pub use crate::convert::XMLoadInt;
@@ -1149,18 +1171,18 @@ mod doc {
         pub use crate::convert::XMStoreFloat2;
         // TODO: pub use crate::convert::XMStoreFloat2A;
         pub use crate::convert::XMStoreFloat3;
-        // TODO: pub use crate::convert::XMStoreFloat3A;
+        pub use crate::convert::XMStoreFloat3A;
         // TODO: pub use crate::convert::XMStoreFloat3PK;
         // TODO: pub use crate::convert::XMStoreFloat3SE;
         pub use crate::convert::XMStoreFloat3x3;
         // TODO: pub use crate::convert::XMStoreFloat3x4;
         // TODO: pub use crate::convert::XMStoreFloat3x4A;
         pub use crate::convert::XMStoreFloat4;
-        // TODO: pub use crate::convert::XMStoreFloat4A;
+        pub use crate::convert::XMStoreFloat4A;
         // TODO: pub use crate::convert::XMStoreFloat4x3;
         // TODO: pub use crate::convert::XMStoreFloat4x3A;
         pub use crate::convert::XMStoreFloat4x4;
-        // TODO: pub use crate::convert::XMStoreFloat4x4A;
+        pub use crate::convert::XMStoreFloat4x4A;
         // TODO: pub use crate::convert::XMStoreHalf2;
         // TODO: pub use crate::convert::XMStoreHalf4;
         // TODO: pub use crate::convert::XMStoreInt;
@@ -1827,8 +1849,10 @@ pub fn XMMax<T: PartialOrd>(a: T, b: T) -> T {
 
 // TODO: Internal / PermuteHelper template
 
-/// XMVectorPermute trait parameters
-pub unsafe trait Permute: private::Sealed {
+/// [XMVectorPermute] trait parameters
+///
+/// [XMVectorPermute]: trait@crate::XMVectorPermute
+pub unsafe trait Permute {
     const PERMUTE: u32;
 }
 
@@ -2191,8 +2215,10 @@ impl XMVectorPermute for (Permute1Z, Permute1W, Permute0Z, Permute0W) {
 // TODO: XMVectorPermute template specializations: _XM_SSE4_INTRINSICS_
 // TODO: XMVectorSwizzle template specializations: _XM_ARM_NEON_INTRINSICS_
 
-/// XMVectorSwizzle trait parameters
-pub unsafe trait Swizzle: private::Sealed {
+/// [XMVectorSwizzle] trait parameters
+///
+/// [XMVectorSwizzle]: trait@crate::XMVectorSwizzle
+pub unsafe trait Swizzle {
     const SWIZZLE: u32;
 }
 

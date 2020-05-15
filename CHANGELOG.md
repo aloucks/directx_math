@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ## Added
 - Documentation updates
+- Aligned load and store for vector3/4 and matrix
+- Unsealed Swizzle and Permute traits
+## Changed
+- PartialEq for XMVector now uses `XMVector4Equal` instead of `XMVector4NearEqual`
 
 ## [0.1.0-alpha.4] - 2020-05-10
 ## Added

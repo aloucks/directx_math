@@ -2357,6 +2357,33 @@ pub fn XMVectorEqualIntR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTO
 
 /// Performs a per-component test for equality of two vectors within a given threshold.
 ///
+/// ## Parameters
+///
+/// `V1` First vector to compare.
+///
+/// `V2` Second vector compare.
+///
+/// `Epsilon` Tolerance value used for judging equality.
+///
+/// ## Return value
+///
+/// Returns a vector containing the results of each component test.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = (abs(V1.x - V2.x) <= Epsilon) ? 0xFFFFFFFF : 0;
+/// Result.y = (abs(V1.y - V2.y) <= Epsilon) ? 0xFFFFFFFF : 0;
+/// Result.z = (abs(V1.z - V2.z) <= Epsilon) ? 0xFFFFFFFF : 0;
+/// Result.w = (abs(V1.w - V2.w) <= Epsilon) ? 0xFFFFFFFF : 0;
+///
+/// return Result;
+/// ```
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorNearEqual>
 #[inline]
 pub fn XMVectorNearEqual(V1: FXMVECTOR, V2: FXMVECTOR, Epsilon: FXMVECTOR) -> XMVECTOR {
@@ -12808,7 +12835,7 @@ impl std::ops::Neg for XMVector {
 impl std::cmp::PartialEq for XMVector {
     #[inline]
     fn eq(&self, rhs: &Self) -> bool {
-        XMVector4NearEqual(self.0, rhs.0, unsafe { g_XMEpsilon.v })
+        XMVector4Equal(self.0, rhs.0)
     }
 }
 
