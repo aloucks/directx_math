@@ -1310,55 +1310,55 @@ pub type XM_PERMUTE_1W = Permute1W;
 /// Converts an angle measured in degrees into one measured in radians.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMConvertToRadians>
-#[inline]
+#[inline(always)]
 pub fn XMConvertToRadians(fDegrees: f32) -> f32 { return fDegrees * (XM_PI / 180.0); }
 
 /// Converts an angle measured in radians into one measured in degrees.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMConvertToDegrees>
-#[inline]
+#[inline(always)]
 pub fn XMConvertToDegrees(fRadians: f32) -> f32 { return fRadians * (180.0 / XM_PI); }
 
 /// Tests the comparison value to determine if all of the compared components are true.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMComparisonAllTrue>
-#[inline]
+#[inline(always)]
 pub fn XMComparisonAllTrue(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6TRUE) == XM_CRMASK_CR6TRUE); }
 
 /// Tests the comparison value to determine if any of the compared components are true.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMComparisonAnyTrue>
-#[inline]
+#[inline(always)]
 pub fn XMComparisonAnyTrue(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6FALSE) != XM_CRMASK_CR6FALSE); }
 
 /// Tests the comparison value to determine if all of the compared components are false.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMComparisonAllFalse>
-#[inline]
+#[inline(always)]
 pub fn XMComparisonAllFalse(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6FALSE) == XM_CRMASK_CR6FALSE); }
 
 /// Tests the comparison value to determine if any of the compared components are false.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMComparisonAnyFalse>
-#[inline]
+#[inline(always)]
 pub fn XMComparisonAnyFalse(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6TRUE) != XM_CRMASK_CR6TRUE); }
 
 /// Tests the comparison value to determine if the compared components had mixed results--some true and some false.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMComparisonMixed>
-#[inline]
+#[inline(always)]
 pub fn XMComparisonMixed(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6) == 0); }
 
 /// Tests the comparison value to determine if all of the compared components are within set bounds.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMComparisonAllInBounds>
-#[inline]
+#[inline(always)]
 pub fn XMComparisonAllInBounds(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6BOUNDS) == XM_CRMASK_CR6BOUNDS); }
 
 /// Tests the comparison value to determine if any of the compared components are outside the set bounds.
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMComparisonAnyOutOfBounds>
-#[inline]
+#[inline(always)]
 pub fn XMComparisonAnyOutOfBounds(CR: u32) -> bool { return (((CR)&XM_CRMASK_CR6BOUNDS) != XM_CRMASK_CR6BOUNDS); }
 
 #[cfg(_XM_NO_INTRINSICS_)]
