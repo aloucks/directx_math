@@ -2878,7 +2878,32 @@ pub fn XMVectorIsNaN(V: FXMVECTOR) -> XMVECTOR {
     }
 }
 
-/// Makes a per-component comparison between two vectors, and returns a vector containing the smallest components.
+/// Performs a per-component test for +/- infinity on a vector.
+///
+/// ## Parameters
+///
+/// `V` Vector to test.
+///
+/// ## Return value
+///
+/// Returns a vector containing the results of each component test.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = (V.x == +infinity || V.x == -infinity) ? 0xFFFFFFFF : 0;
+/// Result.y = (V.y == +infinity || V.y == -infinity) ? 0xFFFFFFFF : 0;
+/// Result.z = (V.z == +infinity || V.z == -infinity) ? 0xFFFFFFFF : 0;
+/// Result.w = (V.w == +infinity || V.w == -infinity) ? 0xFFFFFFFF : 0;
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorIsInfinite>
 #[inline]
