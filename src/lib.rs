@@ -168,8 +168,8 @@ use arch::*;
 /// is nightly-only.
 #[inline(always)]
 #[allow(dead_code)]
-pub(crate) const fn _MM_SHUFFLE(z: u32, y: u32, x: u32, w: u32) -> i32 {
-    ((z << 6) | (y << 4) | (x << 2) | w) as i32
+pub(crate) const fn _MM_SHUFFLE(fp3: u32, fp2: u32, fp1: u32, fp0: u32) -> i32 {
+    ((fp3 << 6) | (fp2 << 4) | (fp1 << 2) | fp0) as i32
 }
 
 #[inline(always)]
