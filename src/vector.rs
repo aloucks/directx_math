@@ -2174,6 +2174,33 @@ pub fn XMVectorInsert(
 
 /// Performs a per-component test for equality of two vectors.
 ///
+/// ## Parameters
+///
+/// `V1` First vector to compare.
+///
+/// `V2` Second vector to compare.
+///
+/// ## Return value
+///
+/// Returns a vector containing the results of each component test.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = (V1.x == V2.x) ? 0xFFFFFFFF : 0;
+/// Result.y = (V1.y == V2.y) ? 0xFFFFFFFF : 0;
+/// Result.z = (V1.z == V2.z) ? 0xFFFFFFFF : 0;
+/// Result.w = (V1.w == V2.w) ? 0xFFFFFFFF : 0;
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorEqual>
 #[inline]
 pub fn XMVectorEqual(
@@ -2206,7 +2233,25 @@ pub fn XMVectorEqual(
 
 /// Performs a per-component test for equality of two vectors and sets a comparison value that can be examined using functions such as XMComparisonAllTrue.
 ///
+/// ## Parameters
+///
+/// `pCR` Pointer to a uint32_t comparison value that can be examined using functions such as [`XMComparisonAllTrue`].
+/// The XMComparisonXXXX functions may be used to further test the number of components that passed the
+/// comparison.
+///
+/// `V1` First vector to compare.
+///
+/// `V2` Second vector to compare.
+///
+/// ## Return value
+///
+/// Returns a vector containing the results of each component test.
+///
+/// ## Reference
+///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorEqualR>
+///
+/// [`XMComparisonAllTrue`]: function@crate::XMComparisonAllTrue
 #[inline]
 pub fn XMVectorEqualR(pCR: &mut u32, V1: FXMVECTOR, V2: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
@@ -2278,6 +2323,33 @@ fn test_XMVectorEqualR() {
 }
 
 /// Performs a per-component test for the equality of two vectors, treating each component as an unsigned integer.
+///
+/// ## Parameters
+///
+/// `V1` First vector to compare.
+///
+/// `V2` Second vector to compare.
+///
+/// ## Return value
+///
+/// Returns a vector containing the results of each component test.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = (V1.x == V2.x) ? 0xFFFFFFFF : 0;
+/// Result.y = (V1.y == V2.y) ? 0xFFFFFFFF : 0;
+/// Result.z = (V1.z == V2.z) ? 0xFFFFFFFF : 0;
+/// Result.w = (V1.w == V2.w) ? 0xFFFFFFFF : 0;
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorEqualInt>
 #[inline]
@@ -2429,6 +2501,33 @@ pub fn XMVectorNearEqual(V1: FXMVECTOR, V2: FXMVECTOR, Epsilon: FXMVECTOR) -> XM
 }
 
 /// Performs a per-component test for the inequality of two vectors.
+///
+/// ## Parameters
+///
+/// `V1` First vector to compare.
+///
+/// `V2` Second vector to compare.
+///
+/// ## Return value
+///
+/// Returns a vector containing the results of each component test.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// Result.x = (V1.x != V2.x) ? 0xFFFFFFFF : 0;
+/// Result.y = (V1.y != V2.y) ? 0xFFFFFFFF : 0;
+/// Result.z = (V1.z != V2.z) ? 0xFFFFFFFF : 0;
+/// Result.w = (V1.w != V2.w) ? 0xFFFFFFFF : 0;
+///
+/// return Result;
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorNotEqual>
 #[inline]

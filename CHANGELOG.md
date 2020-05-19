@@ -5,14 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## Added
+- Documentation updates
 
 ## [0.1.0-alpha.5] - 2020-05-18
 ## Added
 - Documentation updates
 - Aligned load and store for vector3/4 and matrix
-- Unsealed Swizzle and Permute traits
+- Unsealed `Swizzle` and `Permute` traits
 ## Changed
-- PartialEq for XMVector now uses `XMVector4Equal` instead of `XMVector4NearEqual`
+- `PartialEq` for `XMVector` now uses `XMVector4Equal` instead of `XMVector4NearEqual`
 
 ## [0.1.0-alpha.4] - 2020-05-10
 ## Added
@@ -35,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation updates
 - Collision API
 ### Changed
-- XMMatrixInverse now accepts `None` for the determinant, to match the upstream API
+- `XMMatrixInverse` now accepts `None` for the determinant, to match the upstream API
 
 ## [0.1.0-alpha.1] - 2020-05-02
 ### Added
