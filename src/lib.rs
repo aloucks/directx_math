@@ -1627,24 +1627,6 @@ macro_rules! xm_struct {
                 unsafe { std::mem::transmute(self) }
             }
         }
-
-        // impl<'a> $Name {
-        //     pub fn from_raw_slice(a: &'a [[$type; $length]]) -> &'a [$Name] {
-        //         unsafe { std::mem::transmute(a) }
-        //     }
-
-        //     pub fn from_raw_slice_mut(a: &'a mut [[$type; $length]]) -> &'a mut [$Name] {
-        //         unsafe { std::mem::transmute(a) }
-        //     }
-
-        //     pub fn into_raw_slice(a: &'a [$Name]) -> &'a [[$type; $length]] {
-        //         unsafe { std::mem::transmute(a) }
-        //     }
-
-        //     pub fn into_raw_slice_mut(a: &'a mut [$Name]) -> &'a mut [[$type; $length]] {
-        //         unsafe { std::mem::transmute(a) }
-        //     }
-        // }
     };
 }
 
@@ -1660,78 +1642,6 @@ xm_struct!(XMUINT4, u32, 4, x, y, z, w);
 xm_struct!(XMFLOAT2, f32, 2, x, y);
 xm_struct!(XMFLOAT3, f32, 3, x, y, z);
 xm_struct!(XMFLOAT4, f32, 4, x, y, z, w);
-
-// #[derive(Copy, Clone, Debug, Default)]
-// #[repr(C, align(16))]
-// pub struct XMFLOAT2A {
-//     pub x: f32,
-//     pub y: f32,
-// }
-
-// impl From<[f32; 2]> for XMFLOAT2A {
-//     fn from(a: [f32; 2]) -> XMFLOAT2A {
-//         XMFLOAT2A {
-//             x: a[0],
-//             y: a[1],
-//         }
-//     }
-// }
-
-// impl Into<[f32; 2]> for XMFLOAT2A {
-//     fn into(self) -> [f32; 2] {
-//         [self.x, self.y]
-//     }
-// }
-
-// #[derive(Copy, Clone, Debug, Default)]
-// #[repr(C, align(16))]
-// pub struct XMFLOAT3A {
-//     pub x: f32,
-//     pub y: f32,
-//     pub z: f32,
-// }
-
-// impl From<[f32; 3]> for XMFLOAT3A {
-//     fn from(a: [f32; 3]) -> XMFLOAT3A {
-//         XMFLOAT3A {
-//             x: a[0],
-//             y: a[1],
-//             z: a[2],
-//         }
-//     }
-// }
-
-// impl Into<[f32; 3]> for XMFLOAT3A {
-//     fn into(self) -> [f32; 3] {
-//         [self.x, self.y, self.z]
-//     }
-// }
-
-// #[derive(Copy, Clone, Debug, Default)]
-// #[repr(C, align(16))]
-// pub struct XMFLOAT4A {
-//     pub x: f32,
-//     pub y: f32,
-//     pub z: f32,
-//     pub w: f32,
-// }
-
-// impl From<[f32; 4]> for XMFLOAT4A {
-//     fn from(a: [f32; 4]) -> XMFLOAT4A {
-//         XMFLOAT4A {
-//             x: a[0],
-//             y: a[1],
-//             z: a[2],
-//             w: a[3],
-//         }
-//     }
-// }
-
-// impl Into<[f32; 4]> for XMFLOAT4A {
-//     fn into(self) -> [f32; 4] {
-//         [self.x, self.y, self.z, self.w]
-//     }
-// }
 
 // TODO: XMFLOAT4X3
 // TODO: XMFLOAT4X3A
@@ -1823,12 +1733,6 @@ impl std::convert::AsMut<[[f32; 4]; 4]> for XMFLOAT4X4 {
         unsafe { std::mem::transmute(self) }
     }
 }
-
-// #[derive(Copy, Clone, Debug, Default)]
-// #[repr(C, align(16))]
-// pub struct XMFLOAT4X4A {
-//     pub m: [[f32; 4]; 4],
-// }
 
 // TODO: XMFLOAT4X4A From/Into
 
