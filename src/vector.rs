@@ -6858,6 +6858,27 @@ pub fn XMVectorHermiteV(
 ///
 /// Returns the results of the Catmull-Rom interpolation.
 ///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// XMVECTOR Result;
+///
+/// float t2 = t * t;
+/// float t3 = t2* t;
+///
+/// float P0 = -t3 + 2.0f * t2 - t;
+/// float P1 = 3.0f * t3 - 5.0f * t2 + 2.0f;
+/// float P2 = -3.0f * t3 + 4.0f * t2 + t;
+/// float P3 = t3 - t2;
+///
+/// Result.x = (P0 * Position0.x + P1 * Position1.x + P2 * Position2.x + P3 * Position3.x) * 0.5f;
+/// Result.y = (P0 * Position0.y + P1 * Position1.y + P2 * Position2.y + P3 * Position3.y) * 0.5f;
+/// Result.z = (P0 * Position0.z + P1 * Position1.z + P2 * Position2.z + P3 * Position3.z) * 0.5f;
+/// Result.w = (P0 * Position0.w + P1 * Position1.w + P2 * Position2.w + P3 * Position3.w) * 0.5f;
+///
+/// return Result;
+/// ```
+///
 /// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorCatmullRom>
@@ -7037,6 +7058,31 @@ pub fn XMVectorCatmullRomV(
 /// ## Return value
 ///
 /// Returns the Barycentric coordinates.
+///
+/// ## Remarks
+///
+/// This function provides a way to understand points in and around a triangle, independent of where the
+/// triangle is located. This function returns the resulting point by using the following equation:
+///
+/// ```text
+/// Position0 + f * (Position1 - Position0) + g * (Position2 - Position0)
+/// ```
+///
+/// Any point in the plane Position0>Position1>Position2> can be represented by the Barycentric coordinate
+/// `(f, g)`, where `f` controls how much `Position1` gets weighted into the result, and `g` controls how much
+/// `Position2` gets weighted into the result. Lastly, `1-f-g` controls how much `Position0` gets weighted
+/// into the result.
+///
+/// Note the following relations.
+///
+/// * If (f>=0 && g>=0 && 1-f-g>=0), the point is inside the triangle Position0>Position1>Position2>.
+/// * If (f==0 && g>=0 && 1-f-g>=0), the point is on the line Position0>Position2>.
+/// * If (f>=0 && g==0 && 1-f-g>=0), the point is on the line Position0>Position1>.
+/// * If (f>=0 && g>=0 && 1-f-g==0), the point is on the line Position1>Position2>.
+///
+/// Barycentric coordinates are a form of general coordinates. In this context, using Barycentric coordinates
+/// represents a change in coordinate systems. What holds `true` for Cartesian coordinates holds `true` for
+/// Barycentric coordinates.
 ///
 /// ## Reference
 ///
