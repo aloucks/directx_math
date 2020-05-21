@@ -174,6 +174,7 @@ pub(crate) const fn _MM_SHUFFLE(fp3: u32, fp2: u32, fp1: u32, fp0: u32) -> i32 {
 
 #[inline(always)]
 #[allow(dead_code)]
+#[must_use = "uninitialized"]
 pub(crate) unsafe fn uninitialized<T>() -> T {
     mem::MaybeUninit::uninit().assume_init()
 }
