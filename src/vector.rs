@@ -6766,6 +6766,24 @@ pub fn XMVectorHermite(
 ///
 /// Returns a vector containing the interpolation.
 ///
+/// ## Remarks
+///
+/// This function is identical to [`XMVectorHermite`] except that independent weighting factors may be supplied
+/// in `T`. As an example, you might want to calculate two sets of Hermite spline interpolation, using the
+/// x and `y`-components of the position vectors for one set of `2D` positions and the `z` and `w`-components of
+/// the position vectors for the other set of 2D positions. The `x` and `y`-components of `T` would determine
+/// the interpolation factors for the first Hermite spline interpolation. Similarly, the `z` and `w`-components
+/// of `T` would determine the interpolation factors for the second Hermite spline interpolation.
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// Result[i] = (2*(T.x)^3 - 3*(T.x)^2 + 1) * Position0.[i]
+///           + ((T.y)^3 - 2*(T.y)^2 + (T.y)) * Tangent0.[i]
+///           + (-2*(T.z)^3 + 3*(T.z)^2) * Position1.[i]
+///           + ((T.w)^3 - *(T.w)^2) * Tangent1.[i]
+/// ```
+///
 /// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorHermiteV>
@@ -6955,6 +6973,15 @@ pub fn XMVectorCatmullRom(
 /// ## Return value
 ///
 /// Returns the results of the Catmull-Rom interpolation.
+///
+/// ## Remarks
+///
+/// This function is identical to [`XMVectorCatmullRom`] except that independent weighting factors may supplied
+/// in `T`. As an example, you might want to calculate two sets of Catmull-Rom interpolation, using the `x`
+/// and `y`-components of the position vectors for one set of `2D` positions and the `z` and `w`-components of the
+/// position vectors for the other set of `2D` positions. The `x` and `y`-components of `T` would determine the
+/// interpolation factors for the first Catmull-Rom interpolation. Similarly, the `z` and `w`-components of
+/// `T` would determine the interpolation factors for the second Catmull-Rom interpolation.
 ///
 /// ## Reference
 ///
@@ -7146,9 +7173,18 @@ pub fn XMVectorBaryCentric(
 ///
 /// Returns the Barycentric coordinates.
 ///
+/// This function is identical to [`XMVectorBaryCentric`] except that independent weighting factors may supplied
+/// in `F` and `G`. As an example, you might want to calculate two sets of 2D Barycentric coordinates, using
+/// the `x` and `y`-components of the position vectors for one set of `2D` positions and the `z` and `w`-components
+/// of the position vectors for the other set of `2D` positions. The `x` and `y`-components of `F` and `G` would determine
+/// the weighting factors for the first set of Barycentric coordinates. Similarly, the `z` and `w`-components
+/// of `F` and `G` would determine the weighting factors for the second set of Barycentric coordinates.
+///
 /// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorBaryCentricV>
+///
+/// [`XMVectorBaryCentric`]: function@XMVectorBaryCentric
 #[inline]
 pub fn XMVectorBaryCentricV(
     Position0: FXMVECTOR,
@@ -11539,6 +11575,27 @@ pub fn XMVector4GreaterOrEqualR(
 }
 
 /// Tests whether one 4D vector is less than another 4D vector.
+///
+/// ## Parameters
+///
+/// `V1` 4D vector.
+///
+/// `V2` 4D vector.
+///
+/// ## Return value
+///
+/// Returns `true` if `V1` is less than `V2` and `false` otherwise. See the remarks section.
+///
+/// ## Remarks
+///
+/// The following pseudocode demonstrates the operation of the function:
+///
+/// ```text
+/// return ( V1.x < V2.x && V1.y < V2.y &&
+///          V1.z < V2.z && V1.w < V2.w );
+/// ```
+///
+/// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector4Less>
 #[inline]
