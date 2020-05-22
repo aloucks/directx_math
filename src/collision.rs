@@ -1276,7 +1276,7 @@ impl BoundingSphere {
     /// Creates a new BoundingSphere from a list of points.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingsphere-createfrompoints>
-    pub fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl IntoIterator<Item=&'a XMFLOAT3> + Clone) {
+    pub fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl Iterator<Item=&'a XMFLOAT3> + Clone) {
         // assert(Count > 0);
         // assert(pPoints);
 
@@ -1293,7 +1293,7 @@ impl BoundingSphere {
         let mut MaxZ = g_XMNegInfinity.v();
 
         // NOTE: We clone the iterator because it's reused down below.
-        for (i, pPoint) in pPoints.clone().into_iter().enumerate()
+        for (i, pPoint) in pPoints.clone().enumerate()
         {
             // XMVECTOR Point = XMLoadFloat3(reinterpret_cast<const XMFLOAT3*>(reinterpret_cast<const uint8_t*>(pPoints) + i * Stride));
             let Point = XMLoadFloat3(pPoint);
@@ -1381,7 +1381,7 @@ impl BoundingSphere {
         }
 
         // Add any points not inside the sphere.
-        for pPoint in pPoints.into_iter()
+        for pPoint in pPoints
         {
             let Point: XMVECTOR = XMLoadFloat3(pPoint);
 
@@ -1405,17 +1405,32 @@ impl BoundingSphere {
     pub fn CreateFromFrustum(Out: &mut Self, fr: &BoundingFrustum) {
         let mut Corners: [XMFLOAT3; BoundingFrustum::CORNER_COUNT] = unsafe { uninitialized() };
         fr.GetCorners(&mut Corners);
-        BoundingSphere::CreateFromPoints(Out, &Corners)
+        BoundingSphere::CreateFromPoints(Out, Corners.iter())
     }
 }
 
 #[test]
 fn test_BoundingSphere_CreateFromPoints() {
     let mut bounds: BoundingSphere = unsafe { uninitialized() };
-    BoundingSphere::CreateFromPoints(&mut bounds, &[
+    let points = &[
         XMFLOAT3 { x:  1.0, y: 0.0, z:  1.0 },
         XMFLOAT3 { x: -1.0, y: 0.0, z: -1.0 },
-    ]);
+    ];
+    BoundingSphere::CreateFromPoints(&mut bounds, points.iter());
+
+    assert_eq!(0.0, bounds.Center.x);
+    assert_eq!(0.0, bounds.Center.y);
+    assert_eq!(0.0, bounds.Center.z);
+    assert_eq!(2.0f32.sqrt(), bounds.Radius);
+
+    assert_eq!(ContainmentType::CONTAINS, bounds.ContainsPoint(XMVectorSet(0.5, 0.5, 0.5, 0.0)));
+    assert_eq!(ContainmentType::DISJOINT, bounds.ContainsPoint(XMVectorSet(3.0, 3.0, 3.0, 0.0)));
+
+    let points_f32x3: &[[f32; 3]] = &[
+        [ 1.0, 0.0,  1.0 ],
+        [-1.0, 0.0, -1.0 ],
+    ];
+    BoundingSphere::CreateFromPoints(&mut bounds, points_f32x3.iter().map(Into::into));
 
     assert_eq!(0.0, bounds.Center.x);
     assert_eq!(0.0, bounds.Center.y);
@@ -1426,7 +1441,8 @@ fn test_BoundingSphere_CreateFromPoints() {
     assert_eq!(ContainmentType::DISJOINT, bounds.ContainsPoint(XMVectorSet(3.0, 3.0, 3.0, 0.0)));
 
     let mut bounds: BoundingSphere = unsafe { uninitialized() };
-    BoundingSphere::CreateFromPoints(&mut bounds, &[]);
+    let points = &[];
+    BoundingSphere::CreateFromPoints(&mut bounds, points.iter());
 
     // NOTE: The DirectXMath source asserts points.len > 0
     assert!(bounds.Center.x.is_nan());
@@ -2215,7 +2231,7 @@ impl BoundingBox {
     /// Creates a new BoundingBox from a list of points.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingBox-createfrompoints>
-    pub fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl IntoIterator<Item=&'a XMFLOAT3>) {
+    pub fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl Iterator<Item=&'a XMFLOAT3>) {
         // assert(Count > 0);
         // assert(pPoints);
 
@@ -2224,7 +2240,7 @@ impl BoundingBox {
         let mut vMin: XMVECTOR = g_XMInfinity.v();
         let mut vMax: XMVECTOR = g_XMNegInfinity.v();
 
-        for (i, pPoint) in pPoints.into_iter().enumerate()
+        for (i, pPoint) in pPoints.enumerate()
         {
             let Point: XMVECTOR = XMLoadFloat3(pPoint);
             if i == 0 {
@@ -3065,7 +3081,7 @@ impl BoundingOrientedBox {
     /// Creates a new BoundingOrientedBox from a list of points.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingOrientedBox-createfrompoints>
-    pub fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl IntoIterator<Item=&'a XMFLOAT3> + Clone) {
+    pub fn CreateFromPoints<'a>(Out: &mut Self, pPoints: impl Iterator<Item=&'a XMFLOAT3> + Clone) {
         //-----------------------------------------------------------------------------
         // Find the approximate minimum oriented bounding box containing a set of
         // points.  Exact computation of minimum oriented bounding box is possible but
@@ -3078,7 +3094,7 @@ impl BoundingOrientedBox {
         // best know algorithm is O(N^3) and is significanly more complex to implement.
         //-----------------------------------------------------------------------------
 
-        let Count = pPoints.clone().into_iter().count();
+        let Count = pPoints.clone().count();
 
         if Count == 0 {
             Out.Extents = XMFLOAT3::set(std::f32::NAN, std::f32::NAN, std::f32::NAN);
@@ -3093,7 +3109,7 @@ impl BoundingOrientedBox {
 
         // Compute the center of mass and inertia tensor of the points.
         //for (let i: size_t = 0; i < Count; ++i)
-        for point in pPoints.clone().into_iter()
+        for point in pPoints.clone()
         {
             //let Point: XMVECTOR = XMLoadFloat3(reinterpret_cast<const XMFLOAT3*>(reinterpret_cast<const uint8_t*>(pPoints) + i * Stride));
             let Point: XMVECTOR = XMLoadFloat3(point);
@@ -3175,7 +3191,7 @@ impl BoundingOrientedBox {
         let mut vMax: XMVECTOR = XMVectorZero();
 
         //for (let i: size_t = 1; i < Count; ++i)
-        for (i, point) in pPoints.into_iter().enumerate()
+        for (i, point) in pPoints.enumerate()
         {
             let Point: XMVECTOR = XMLoadFloat3(point);
 
@@ -3221,16 +3237,18 @@ impl BoundingOrientedBox {
 #[test]
 fn test_BoundingOrientedBox_CreateFromPoints() {
     let mut bounds: BoundingOrientedBox = unsafe { uninitialized() };
-    BoundingOrientedBox::CreateFromPoints(&mut bounds, &[
+    let points = &[
         XMFLOAT3::set(-1.0, -1.0, -1.0),
         XMFLOAT3::set( 1.0,  1.0,  1.0),
-    ]);
+    ];
+    BoundingOrientedBox::CreateFromPoints(&mut bounds, points.iter());
     assert_eq!(ContainmentType::CONTAINS, bounds.ContainsPoint(XMVectorSet(0.0, 0.0, 0.0, 0.0)));
     assert_eq!(ContainmentType::CONTAINS, bounds.ContainsPoint(XMVectorSet(1.0, 1.0, 1.0, 0.0)));
     assert_eq!(ContainmentType::DISJOINT, bounds.ContainsPoint(XMVectorSet(2.0, 2.0, 2.0, 0.0)));
 
     let mut bounds: BoundingOrientedBox = unsafe { uninitialized() };
-    BoundingOrientedBox::CreateFromPoints(&mut bounds, &[]);
+    let points = &[];
+    BoundingOrientedBox::CreateFromPoints(&mut bounds, points.iter());
     assert_eq!(ContainmentType::DISJOINT, bounds.ContainsPoint(XMVectorSet(0.0, 0.0, 0.0, 0.0)));
 }
 

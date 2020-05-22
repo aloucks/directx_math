@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ## Added
 - Documentation updates
+## Changed
+- `CreateFromPoints` for `BoundingSphere`, `BoundingBox`, and `BoundingOrientedBox` now
+  take `pPoints` as an `Interator` instead of `IntoIterator`. This is due to the `Clone`
+  restriction. It's currently difficult or impossible to `map` the items and produce a
+  result that both implments `IntoIterator` and `Clone`.
 
 ## [0.1.0-alpha.5] - 2020-05-18
 ## Added
