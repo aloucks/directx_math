@@ -3197,6 +3197,25 @@ impl BoundingOrientedBox {
         XMStoreFloat3(&mut Out.Extents, XMVectorScale(XMVectorSubtract(vMax, vMin), 0.5));
         XMStoreFloat4(&mut Out.Orientation, vOrientation);
     }
+
+    ///  Retrieves the corners of the BoundingOrientedBox.
+    ///
+    /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingorientedbox-getcorners>
+    pub fn GetCorners(&self, Corners: &mut [XMFLOAT3; 8]) {
+        // Load the box
+        let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
+        let vExtents: XMVECTOR = XMLoadFloat3(&self.Extents);
+        let vOrientation: XMVECTOR = XMLoadFloat4(&self.Orientation);
+
+        debug_assert!(internal::XMQuaternionIsUnit(vOrientation));
+
+        //for (size_t i = 0; i < CORNER_COUNT; ++i)
+        for i in 0 .. Self::CORNER_COUNT
+        {
+            let C: XMVECTOR = XMVectorAdd(XMVector3Rotate(XMVectorMultiply(vExtents, g_BoxOffset[i].v()), vOrientation), vCenter);
+            XMStoreFloat3(&mut Corners[i], C);
+        }
+    }
 }
 
 #[test]
@@ -4575,6 +4594,26 @@ impl BoundingFrustum {
 
     /// Tests whether the BoundingFrustum is contained by the specified frustum.
     ///
+    /// ## Parameters
+    ///
+    /// `Plane0` A plane describing the frustum.
+    ///
+    /// `Plane1` A plane describing the frustum.
+    ///
+    /// `Plane2` A plane describing the frustum.
+    ///
+    /// `Plane3` A plane describing the frustum.
+    ///
+    /// `Plane4` A plane describing the frustum.
+    ///
+    /// `Plane5` A plane describing the frustum.
+    ///
+    /// ## Return value
+    ///
+    /// A ContainmentType value indicating whether the frustum contains the BoundingFrustum.
+    ///
+    /// ## Reference
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-BoundingFrustum-containedby>
     pub fn ContainedBy(
         &self,
@@ -4678,6 +4717,21 @@ impl BoundingFrustum {
         return INTERSECTS;
     }
 
+    /// Creates a BoundingFrustum from the specified projection matrix.
+    ///
+    /// ## Parameters
+    ///
+    /// `Out` The new BoundingFrustum.
+    ///
+    /// `Projection` The **left-handed** projection matrix to create the BoundingFrustum from.
+    ///
+    /// ## Return value
+    ///
+    /// This method does not return a value.
+    ///
+    /// ## Reference
+    ///
+    /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingfrustum-createfrommatrix>
     pub fn CreateFromMatrix(Out: &mut Self, Projection: FXMMATRIX) {
         // Corners of the projection frustum in homogenous space.
         const HomogenousPoints: [XMVECTORF32; 6] =
@@ -4726,6 +4780,29 @@ impl BoundingFrustum {
         Out.Far = XMVectorGetZ(Points[5]);
     }
 
+    /// Gets the planes making up the BoundingFrustum.
+    ///
+    /// ## Parameters
+    ///
+    /// `NearPlane` A vector that will hold the near plane.
+    ///
+    /// `FarPlane` A vector that will hold the far plane.
+    ///
+    /// `RightPlane` A vector that will hold the right plane.
+    ///
+    /// `LeftPlane` A vector that will hold the left plane.
+    ///
+    /// `TopPlane` A vector that will hold the top plane.
+    ///
+    /// `BottomPlane` A vector that will hold the bottom plane.
+    ///
+    /// ## Return value
+    ///
+    /// None
+    ///
+    /// ## Reference
+    ///
+    /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingfrustum-getplanes>
     pub fn GetPlanes(
         &self,
         NearPlane: Option<&mut XMVECTOR>,
@@ -4793,6 +4870,24 @@ impl BoundingFrustum {
         }
     }
 
+    /// Gets the corners making up the BoundingFrustum.
+    ///
+    /// ```text
+    ///  Near    Far
+    /// 0----1  4----5
+    /// |    |  |    |
+    /// |    |  |    |
+    /// 3----2  7----6
+    /// ```
+    ///
+    /// ## Returns
+    /// ```text
+    /// [
+    ///    LeftTopNear, RightTopNear, RightBottomNear, LeftBottomNear,
+    ///    LeftTopFar,  RightTopFar,  RightBottomFar,  LeftBottomFar
+    /// ]
+    /// ```
+    /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingfrustum-getcorners>
     pub fn GetCorners(&self, Corners: &mut [XMFLOAT3; BoundingFrustum::CORNER_COUNT]) {
         // assert(Corners != nullptr);
 
