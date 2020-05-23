@@ -1,6 +1,6 @@
 [package]
 name = "directx_math"
-version = "0.1.0-alpha.5"
+version = "0.1.0-alpha.6"
 authors = ["Aaron Loucks <aloucks@cofront.net>"]
 edition = "2018"
 description = "A pure rust translation of DirectXMath, a SIMD linear algebra library for use in games and graphics apps."
