@@ -629,13 +629,13 @@ mod internal {
 // BoundingSphere -------------------------------------------------------------
 
 impl BoundingSphere {
-    /// Transforms the BoundingBox by the specified transformation matrix.
+    /// Transforms the BoundingSphere by the specified transformation matrix.
     ///
     /// ## Parameters
     ///
-    /// `Out` The transformed BoundingBox.
+    /// `Out` The transformed BoundingSphere.
     ///
-    /// `M` The matrix to transform the BoundingBox by.
+    /// `M` The matrix to transform the BoundingSphere by.
     ///
     /// ## Return value
     ///
