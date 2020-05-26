@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ## Added
 - Documentation updates
+## Changed
+- Fixed `XMStoreFloat3A` to correctly accept `&mut Align16<XMFLOAT3>` instead of `&mut XMFLOAT3`.
 
 ## [0.1.0-alpha.6] - 2020-05-22
 ## Added

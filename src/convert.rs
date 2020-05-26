@@ -984,7 +984,7 @@ fn test_XMStoreFloat3() {
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMStoreFloat3A>
 #[inline]
 pub fn XMStoreFloat3A(
-    pDestination: &mut XMFLOAT3,
+    pDestination: &mut Align16<XMFLOAT3>,
     V: FXMVECTOR,
 )
 {
