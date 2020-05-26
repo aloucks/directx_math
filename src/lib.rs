@@ -67,66 +67,6 @@
 //! [`XMMatrixTranslation`]: crate::matrix::XMMatrixTranslation
 //! [OpenGL "column-major" matrix]: https://steve.hollasch.net/cgindex/math/matrix/column-vec.html
 
-// ## Conversion Functions
-//
-// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-conversion>
-//
-// ## Matrix Functions
-//
-// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-matrix>
-//
-// ## Plane Functions
-//
-// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-plane>
-//
-// ## Quaternion Functions
-//
-// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-quaternion>
-//
-// ## Scalar Functions
-//
-// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-scalar>
-//
-// ## Vector Functions
-//
-// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector>
-//
-// ## 2D Vector Functions
-//
-// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector2>
-//
-// ## 3D Vector Functions
-//
-// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector3>
-//
-// ## 4D Vector Functions
-//
-// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector4>
-//
-// ## Template Functions
-//
-// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-templates>
-//
-// ## Triangle Test Functions
-//
-// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-triangletests>
-//
-// ## Utility Functions
-//
-// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-utilities>
-//
-// ## Vector Accessor Functions
-//
-// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-accessors>
-//
-// ## Vector Load Functions
-//
-// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-load>
-//
-// ## Vector Store Functions
-//
-// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-store>
-
 #![allow(non_snake_case)]
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
@@ -735,6 +675,8 @@ mod doc {
 
         /// Vector comparison functions
         ///
+        /// Additional comparison functions are found in the [`utility`](crate::utility) module.
+        ///
         /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector-comparison>
         pub mod comparison {
             pub use crate::vector::XMVectorEqual;
@@ -848,7 +790,12 @@ mod doc {
     pub mod vector2d {
         /// 2D Vector comparison functions
         ///
+        /// Additional comparison functions are found in the [`utility`] and vector [`comparison`] modules.
+        ///
         /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector2-comparison>
+        ///
+        /// [`utility`]: crate::utility
+        /// [`comparison`]: ../../vector/comparison/index.html
         pub mod comparison {
             pub use crate::vector::XMVector2Equal;
             pub use crate::vector::XMVector2EqualInt;
@@ -913,7 +860,12 @@ mod doc {
     pub mod vector3d {
         /// 3D Vector comparison
         ///
+        /// Additional comparison functions are found in the [`utility`] and vector [`comparison`] modules.
+        ///
         /// https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector3-comparison
+        ///
+        /// [`utility`]: crate::utility
+        /// [`comparison`]: ../../vector/comparison/index.html
         pub mod comparison {
             pub use crate::vector::XMVector3Equal;
             pub use crate::vector::XMVector3EqualInt;
@@ -984,7 +936,12 @@ mod doc {
     pub mod vector4d {
         /// 4D vector comparison
         ///
+        /// Additional comparison functions are found in the [`utility`] and vector [`comparison`] modules.
+        ///
         /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector4-comparison>
+        ///
+        /// [`utility`]: crate::utility
+        /// [`comparison`]: ../../vector/comparison/index.html
         pub mod comparison {
             pub use crate::vector::XMVector4Equal;
             pub use crate::vector::XMVector4EqualInt;
@@ -1027,6 +984,7 @@ mod doc {
             pub use crate::vector::XMVector4Refract;
             pub use crate::vector::XMVector4RefractV;
         }
+        /// 4D vector transformation
         pub mod transformation {
             pub use crate::vector::XMVector4Transform;
             // TODO: pub use crate::vector::XMVector4TransformStream;
@@ -1095,6 +1053,8 @@ mod doc {
 
     /// Vector and Matrix load functions
     ///
+    /// The corresponding storage functions are found in the [`store`](crate::store) module.
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-load>
     pub mod load {
         // TODO: pub use crate::convert::XMLoadByte2;
@@ -1159,6 +1119,8 @@ mod doc {
 
     /// Vector and Matrix store functions
     ///
+    /// The corresponding Loading functions are found in the [`load`](crate::load) module.
+    ///
     /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-storage>
     pub mod store {
         // TODO: pub use crate::convert::XMStoreByte2;
@@ -1222,6 +1184,8 @@ mod doc {
     }
 
     /// Utility and comparison functions
+    ///
+    /// Additional comparison functions are found in the vector [`comparison`](../vector/comparison/index.html) module.
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-utilities>
     pub mod utility {

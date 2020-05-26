@@ -6,6 +6,8 @@
 use crate::*;
 
 /// Indicates whether an object contains another object.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/ne-directxcollision-containmenttype>
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum ContainmentType {
@@ -18,6 +20,8 @@ pub enum ContainmentType {
 }
 
 /// Indicates whether an object intersects a plane.
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/ne-directxcollision-planeintersectiontype>
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum PlaneIntersectionType {
