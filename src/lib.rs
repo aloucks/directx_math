@@ -1,7 +1,6 @@
 //! # DirectX Math for Rust
 //!
-//! A pure rust translation of [DirectXMath], a SIMD linear algebra library for use in
-//! games and graphics apps.
+//! A rust translation of [DirectXMath], a SIMD linear algebra library for use in games and graphics apps.
 //!
 //! Most functions and structs are exported at the crate root. Modules are organized according
 //! to the `C++` [reference documentation].

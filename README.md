@@ -5,8 +5,7 @@
 
 # DirectXMath for Rust
 
-A pure rust translation of [DirectXMath], a SIMD linear algebra library for use in
-games and graphics apps.
+A rust translation of [DirectXMath], a SIMD linear algebra library for use in games and graphics apps.
 
 ✔️ = Implemented, ❌ = Not yet implemented, 🚧 = In progress
 
