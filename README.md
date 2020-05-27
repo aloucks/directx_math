@@ -11,7 +11,7 @@ A rust translation of [DirectXMath], a SIMD linear algebra library for use in ga
 
 ## Implementation status
 
-| API | Implemented |
+| API Feature | Implemented |
 | --- | ------ |
 | Vector | ✔️ |
 | Vector 2D | ✔️ |
@@ -24,11 +24,11 @@ A rust translation of [DirectXMath], a SIMD linear algebra library for use in ga
 | Load/Store/Accessors | ✔️ &dagger; |
 | Plane | ✔️ |
 | Collision | ✔️ |
-| Documentation | ✔️ 🚧 &dagger;&dagger; |
+| Documentation | ✔️ &dagger;&dagger; |
 
 &dagger; Some alternate forms of the load/store operations are not yet implemented.
 
-&dagger;&dagger; All functions have links to the [DirectXMath documentation].
+&dagger;&dagger; Most documentation has been ported and all functions have links to the official [DirectXMath documentation].
 
 ## SIMD intrinsics
 
