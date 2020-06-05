@@ -801,9 +801,17 @@ pub fn XMQuaternionSlerpV(
 ///
 /// The use of this method requires some setup before its use. See [`XMQuaternionSquadSetup`] for details.
 ///
+/// This method uses the following sequence of spherical linear interpolation operations.
+///
+/// ```text
+/// Slerp(Slerp(q1, c, t), Slerp(a, b, t), 2t(1 - t))
+/// ```
+///
 /// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionSquad>
+///
+/// <https://docs.microsoft.com/en-us/previous-versions/windows/desktop/bb281656(v=vs.85)>
 ///
 /// [`XMQuaternionSquadSetup`]: crate::quaternion::XMQuaternionSquadSetup
 #[inline]
@@ -849,6 +857,8 @@ pub fn XMQuaternionSquad(
 /// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionSquadV>
+///
+/// <https://docs.microsoft.com/en-us/previous-versions/windows/desktop/bb281657(v=vs.85)>
 ///
 /// [`XMQuaternionSquad`]: crate::quaternion::XMQuaternionSquad
 #[inline]
@@ -904,11 +914,69 @@ pub fn XMQuaternionSquadV(
 /// The results returned in `pA`, `pB`, and `pC` are used as the inputs to the
 /// `Q1`, `Q2`, and `Q3` parameters of [`XMQuaternionSquad`].
 ///
+/// This method takes four control points, which are supplied to the inputs `Q0`, `Q1`, `Q2`, and
+/// `Q3`, and alters their values to find a curve that flows along the shortest path. The values of
+/// `Q0`, `Q2`, and `Q3` are calculated as shown below.
+///
+/// ```text
+/// q0 = |q0 + q1| < |q0 - q1| ? -q0 : q0
+/// q2 = |q1 + q2| < |q1 - q2| ? -q2 : q2
+/// q3 = |q2 + q3| < |q2 - q3| ? -q3 : q3
+/// ```
+///
+/// Having calculated the new `q` values, the values for `outA`, `outB`, and `outC` are calculated
+/// as shown below.
+///
+/// ```text
+/// outA = q1 * exp[-0.25 *( Ln[Exp(q1)*q2] + Ln[Exp(q1)*q0] ) ]
+/// outB = q2 * exp[-0.25 *( Ln[Exp(q2)*q3] + Ln[Exp(q2)*q1] ) ]
+/// outC = q2
+/// ```
+///
+/// Where `Ln` and `Exp` are [`XMQuaternionLn`] and [`XMQuaternionExp`].
+///
+/// ## Example
+///
+/// The following example shows how to use a set of quaternion keys (`Q0`, `Q1`, `Q2`, `Q3`) to
+/// compute the inner quadrangle points (`A`, `B`, `C`). This ensures that the tangents are
+/// continuous across adjacent segments.
+///
+/// ```text
+///         A     B
+///   Q0    Q1    Q2    Q3
+/// ```
+///
+/// The following example shows how you can interpolate between `Q1` and `Q2`.
+///
+/// ```rust
+/// # use directx_math::*;
+/// let q0 = XMVectorSet(0.0, 0.0, 0.707, -0.707);
+/// let q1 = XMVectorSet(0.0, 0.0, 0.0, 1.0);
+/// let q2 = XMVectorSet(0.0, 0.0, 0.707, 0.707);
+/// let q3 = XMVectorSet(0.0, 0.0, 1.0, 0.0);
+///
+/// let mut a = XMVectorZero();
+/// let mut b = XMVectorZero();
+/// let mut c = XMVectorZero();
+///
+/// let time = 0.5;
+///
+/// XMQuaternionSquadSetup(&mut a, &mut b, &mut c, q0, q1, q2, q3);
+/// let result = XMQuaternionSquad(q1, a, b, c, time);
+/// ```
+///
+/// Note that `c` is `+/-` `q2` depending on the result of the fuction. The result is a rotation of
+/// `45` degrees around the `z`-axis for `time = 0.5`.
+///
 /// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMQuaternionSquadSetup>
 ///
+/// <https://docs.microsoft.com/en-us/previous-versions/windows/desktop/bb281657(v=vs.85)>
+///
 /// [`XMQuaternionSquad`]: crate::quaternion::XMQuaternionSquad
+/// [`XMQuaternionLn`]: crate::quaternion::XMQuaternionLn
+/// [`XMQuaternionExp`]: crate::quaternion::XMQuaternionExp
 #[inline]
 pub fn XMQuaternionSquadSetup(
     pA: &mut XMVECTOR,

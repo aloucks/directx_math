@@ -6690,6 +6690,11 @@ pub fn XMVectorLerpV(
 /// return Result;
 /// ```
 ///
+/// Hermite splines are useful for controlling animation because the curve runs through all of the
+/// control points. Also, because the position and tangent are explicitly specified at the ends of
+/// each segment, it is easy to create a continuous curve, provided that the starting position
+/// and tangent match the ending values of the last segment.
+///
 /// ## Reference
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVectorHermite>
@@ -7095,17 +7100,17 @@ pub fn XMVectorCatmullRomV(
 /// Position0 + f * (Position1 - Position0) + g * (Position2 - Position0)
 /// ```
 ///
-/// Any point in the plane Position0>Position1>Position2> can be represented by the Barycentric coordinate
+/// Any point in the plane `Position0Position1Position2` can be represented by the Barycentric coordinate
 /// `(f, g)`, where `f` controls how much `Position1` gets weighted into the result, and `g` controls how much
 /// `Position2` gets weighted into the result. Lastly, `1-f-g` controls how much `Position0` gets weighted
 /// into the result.
 ///
 /// Note the following relations.
 ///
-/// * If (f>=0 && g>=0 && 1-f-g>=0), the point is inside the triangle Position0>Position1>Position2>.
-/// * If (f==0 && g>=0 && 1-f-g>=0), the point is on the line Position0>Position2>.
-/// * If (f>=0 && g==0 && 1-f-g>=0), the point is on the line Position0>Position1>.
-/// * If (f>=0 && g>=0 && 1-f-g==0), the point is on the line Position1>Position2>.
+/// * If `(f>=0 && g>=0 && 1-f-g>=0)`, the point is inside the triangle `Position0Position1Position2`.
+/// * If `(f==0 && g>=0 && 1-f-g>=0)`, the point is on the line `Position0Position2`.
+/// * If `(f>=0 && g==0 && 1-f-g>=0)`, the point is on the line `Position0Position1`.
+/// * If `(f>=0 && g>=0 && 1-f-g==0)`, the point is on the line `Position1Position2`.
 ///
 /// Barycentric coordinates are a form of general coordinates. In this context, using Barycentric coordinates
 /// represents a change in coordinate systems. What holds `true` for Cartesian coordinates holds `true` for

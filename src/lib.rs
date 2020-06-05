@@ -3,10 +3,12 @@
 //! A rust translation of [DirectXMath], a SIMD linear algebra library for use in games and graphics apps.
 //!
 //! Most functions and structs are exported at the crate root. Modules are organized according
-//! to the `C++` [reference documentation].
+//! to the DirectXMath [reference documentation]. Additional DirectXMath documentation may be found in the
+//! [previous version reference].
 //!
 //! [DirectXMath]: https://github.com/microsoft/DirectXMath
 //! [reference documentation]: https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions
+//! [previous version reference]: https://docs.microsoft.com/en-us/previous-versions/windows/desktop/bb318771(v=vs.85)
 //!
 //! ## Matrix multiplication order and memory layout
 //!
