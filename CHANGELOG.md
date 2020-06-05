@@ -5,22 +5,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-## Added
+### Added
 - Added clippy to CI
 - Documentation updates. Added additional info from the older DirectX 9 docs.
-## Fixed
+### Fixed
 - Corrected the value for `XM_CRMASK_CR6`
 
 ## [0.1.0] - 2020-05-26
-## Added
+### Added
 - Documentation updates
-## Changed
+### Changed
 - Fixed `XMStoreFloat3A` to correctly accept `&mut Align16<XMFLOAT3>` instead of `&mut XMFLOAT3`.
 
 ## [0.1.0-alpha.6] - 2020-05-22
-## Added
+### Added
 - Documentation updates
-## Changed
+### Changed
 - `CreateFromPoints` for `BoundingSphere`, `BoundingBox`, and `BoundingOrientedBox` now
   take `pPoints` as an `Interator` instead of `IntoIterator`. This is due to the `Clone`
   restriction. It's currently difficult or impossible to `map` the items and produce a
@@ -31,16 +31,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation updates
 - Aligned load and store for vector3/4 and matrix
 - Unsealed `Swizzle` and `Permute` traits
-## Changed
+### Changed
 - `PartialEq` for `XMVector` now uses `XMVector4Equal` instead of `XMVector4NearEqual`
 
 ## [0.1.0-alpha.4] - 2020-05-10
-## Added
+### Added
 - Fixed missing `pub` visibility on `IntersectsSphere` and `IntersectsOrientedBox` methods.
 - Documentation updates
 
 ## [0.1.0-alpha.3] - 2020-05-09
-## Added
+### Added
 - Documentation updates
 ### Changed
 - Removed all traits from collision API. Duplicate method names have been updated to
