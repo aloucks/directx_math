@@ -5105,6 +5105,7 @@ pub mod triangle_tests {
     /// ## Reference
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-intersects~r1>
+    #[allow(clippy::cognitive_complexity)]
     pub fn IntersectsTriangle(
         A0: FXMVECTOR,
         A1: FXMVECTOR,

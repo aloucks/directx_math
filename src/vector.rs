@@ -8341,7 +8341,7 @@ pub fn XMVector2ClampLengthV(
 /// ```text
 /// XMVECTOR Result;
 ///
-/// float s = 2.0f * (Incident.x * Normal.x + Incident.y * Normal.y);	// 2.0 * dot(Incident, Normal);
+/// float s = 2.0f * (Incident.x * Normal.x + Incident.y * Normal.y);    // 2.0 * dot(Incident, Normal);
 ///
 /// Result.x = Incident.x - s * Normal.x;
 /// Result.y = Incident.y - s * Normal.y;
@@ -8397,14 +8397,14 @@ pub fn XMVector2Reflect(
 ///
 /// if (r < 0.0f) // Total internal reflection
 /// {
-/// 	Result.x = 0.0f;
-/// 	Result.y = 0.0f;
+///     Result.x = 0.0f;
+///     Result.y = 0.0f;
 /// }
 /// else
 /// {
-/// 	float s = RefractionIndex * t + sqrt(r);
-/// 	Result.x = RefractionIndex * Incident.x - s * Normal.x;
-/// 	Result.y = RefractionIndex * Incident.y - s * Normal.y;
+///     float s = RefractionIndex * t + sqrt(r);
+///     Result.x = RefractionIndex * Incident.x - s * Normal.x;
+///     Result.y = RefractionIndex * Incident.y - s * Normal.y;
 /// }
 ///
 /// Result.z = undefined;
@@ -10396,16 +10396,16 @@ pub fn XMVector3Reflect(
 ///
 /// if (r < 0.0f) // Total internal reflection
 /// {
-/// 	Result.x = 0.0f;
-/// 	Result.y = 0.0f;
-/// 	Result.z = 0.0f;
+///     Result.x = 0.0f;
+///     Result.y = 0.0f;
+///     Result.z = 0.0f;
 /// }
 /// else
 /// {
-/// 	float s = RefractionIndex * t + sqrt(r);
-/// 	Result.x = RefractionIndex * Incident.x - s * Normal.x;
-/// 	Result.y = RefractionIndex * Incident.y - s * Normal.y;
-/// 	Result.z = RefractionIndex * Incident.z - s * Normal.z;
+///     float s = RefractionIndex * t + sqrt(r);
+///     Result.x = RefractionIndex * Incident.x - s * Normal.x;
+///     Result.y = RefractionIndex * Incident.y - s * Normal.y;
+///     Result.z = RefractionIndex * Incident.z - s * Normal.z;
 /// }
 ///
 /// Result.w = undefined;
@@ -12566,18 +12566,18 @@ pub fn XMVector4Reflect(
 ///
 /// if (r < 0.0f) // Total internal reflection
 /// {
-/// 	Result.x = 0.0f;
-/// 	Result.y = 0.0f;
-/// 	Result.z = 0.0f;
-/// 	Result.w = 0.0f;
+///     Result.x = 0.0f;
+///     Result.y = 0.0f;
+///     Result.z = 0.0f;
+///     Result.w = 0.0f;
 /// }
 /// else
 /// {
-/// 	float s = RefractionIndex * t + sqrt(r);
-/// 	Result.x = RefractionIndex * Incident.x - s * Normal.x;
-/// 	Result.y = RefractionIndex * Incident.y - s * Normal.y;
-/// 	Result.z = RefractionIndex * Incident.z - s * Normal.z;
-/// 	Result.w = RefractionIndex * Incident.w - s * Normal.w;
+///     float s = RefractionIndex * t + sqrt(r);
+///     Result.x = RefractionIndex * Incident.x - s * Normal.x;
+///     Result.y = RefractionIndex * Incident.y - s * Normal.y;
+///     Result.z = RefractionIndex * Incident.z - s * Normal.z;
+///     Result.w = RefractionIndex * Incident.w - s * Normal.w;
 /// }
 ///
 /// return Result;

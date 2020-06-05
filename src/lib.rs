@@ -66,6 +66,24 @@
 //! [`XMMatrixTranslation`]: crate::matrix::XMMatrixTranslation
 //! [OpenGL "column-major" matrix]: https://steve.hollasch.net/cgindex/math/matrix/column-vec.html
 
+#![allow(clippy::unreadable_literal)]
+#![allow(clippy::needless_return)]
+#![allow(clippy::too_many_arguments)]
+#![allow(clippy::bool_comparison)]
+#![allow(clippy::suspicious_else_formatting)]
+#![allow(clippy::collapsible_if)]
+#![allow(clippy::excessive_precision)]
+#![allow(clippy::approx_constant)]
+#![allow(clippy::float_cmp)]
+#![allow(clippy::needless_range_loop)]
+#![allow(clippy::useless_let_if_seq)]
+#![allow(clippy::needless_bool)]
+#![allow(clippy::assign_op_pattern)]
+#![allow(clippy::useless_transmute)]
+#![allow(clippy::transmute_ptr_to_ptr)]
+#![allow(clippy::trivially_copy_pass_by_ref)]
+#![allow(clippy::many_single_char_names)]
+
 #![allow(non_snake_case)]
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
@@ -1247,7 +1265,7 @@ pub const XM_SWIZZLE_Y: u32 = 1;
 pub const XM_SWIZZLE_Z: u32 = 2;
 pub const XM_SWIZZLE_W: u32 = 3;
 
-pub const XM_CRMASK_CR6: u32 = 0x0000000;
+pub const XM_CRMASK_CR6: u32 = 0x000000F0;
 pub const XM_CRMASK_CR6TRUE: u32 = 0x00000080;
 pub const XM_CRMASK_CR6FALSE: u32 = 0x00000020;
 pub const XM_CRMASK_CR6BOUNDS: u32 = XM_CRMASK_CR6FALSE;

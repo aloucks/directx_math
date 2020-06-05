@@ -60,6 +60,11 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           override: true
           profile: minimal
+          components: clippy
+      - name: Run clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
       - name: Build and test
         uses: actions-rs/cargo@v1
         with:

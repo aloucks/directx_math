@@ -1211,10 +1211,9 @@ pub fn XMMatrixInverse(
         // Get the determinant
         let mut vTemp: XMVECTOR = XMVector4Dot(C0, MT.r[0]);
 
-        match pDeterminant {
-            Some(determinant) => *determinant = vTemp,
-            None => ()
-        };
+        if let Some(determinant) = pDeterminant {
+            *determinant = vTemp;
+        }
 
         vTemp = _mm_div_ps(g_XMOne.v, vTemp);
         let mut mResult: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
