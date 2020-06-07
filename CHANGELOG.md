@@ -8,8 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added clippy to CI
 - Documentation updates. Added additional info from the older DirectX 9 docs.
+- `XMFLOAT3X3` From and Into `[f32; 9]`
 ### Fixed
-- Corrected the value for `XM_CRMASK_CR6`
+- Fixed the value for `XM_CRMASK_CR6`
+- Fixed `Into<[[f32; 3]; 3]>` for `XMFLOAT3X3`
 
 ## [0.1.0] - 2020-05-26
 ### Added

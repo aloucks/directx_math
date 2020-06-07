@@ -1744,8 +1744,8 @@ impl<'a> From<&'a [[f32; 3]; 3]> for &'a XMFLOAT3X3 {
     }
 }
 
-impl<'a> Into<&'a [[f32; 4]; 4]> for &'a XMFLOAT3X3 {
-    fn into(self) -> &'a [[f32; 4]; 4] {
+impl<'a> Into<&'a [[f32; 3]; 3]> for &'a XMFLOAT3X3 {
+    fn into(self) -> &'a [[f32; 3]; 3] {
         unsafe { std::mem::transmute(self) }
     }
 }
@@ -1760,6 +1760,44 @@ impl std::convert::AsRef<[[f32; 3]; 3]> for XMFLOAT3X3 {
 impl std::convert::AsMut<[[f32; 3]; 3]> for XMFLOAT3X3 {
     #[inline(always)]
     fn as_mut(&mut self) -> &mut [[f32; 3]; 3] {
+        unsafe { std::mem::transmute(self) }
+    }
+}
+
+impl From<[f32; 9]> for XMFLOAT3X3 {
+    fn from(a: [f32; 9]) -> XMFLOAT3X3 {
+        unsafe { std::mem::transmute(a) }
+    }
+}
+
+impl Into<[f32; 9]> for XMFLOAT3X3 {
+    fn into(self) -> [f32; 9] {
+        unsafe { std::mem::transmute(self) }
+    }
+}
+
+impl<'a> From<&'a [f32; 9]> for &'a XMFLOAT3X3 {
+    fn from(a: &'a [f32; 9]) -> &'a XMFLOAT3X3 {
+        unsafe { std::mem::transmute(a) }
+    }
+}
+
+impl<'a> Into<&'a [f32; 9]> for &'a XMFLOAT3X3 {
+    fn into(self) -> &'a [f32; 9] {
+        unsafe { std::mem::transmute(self) }
+    }
+}
+
+impl std::convert::AsRef<[f32; 9]> for XMFLOAT3X3 {
+    #[inline(always)]
+    fn as_ref(&self) -> &[f32; 9] {
+        unsafe { std::mem::transmute(self) }
+    }
+}
+
+impl std::convert::AsMut<[f32; 9]> for XMFLOAT3X3 {
+    #[inline(always)]
+    fn as_mut(&mut self) -> &mut [f32; 9] {
         unsafe { std::mem::transmute(self) }
     }
 }
