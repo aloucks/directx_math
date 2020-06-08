@@ -28,33 +28,5 @@ favor_intel = []
 # This is a nightly-only feature and is ignored on the stable channel.
 specialization = []
 
-# Cargo does not support optional dev-dependencies. We specify these
-# here as regular, but optional, dependencies; and they are only used
-# for benchmarks. This allows tests to run without compiling all of
-# the dependencies for criterion.
-#
-# cargo --bench --features benchmarks
-benchmarks = ["criterion", "pcg", "rand_core"]
-
-[dependencies]
-# NOTE: these are only used for benchmarks
-# https://github.com/rust-lang/cargo/issues/1596
-criterion = { version = "0.3", optional = true }
-pcg = { version = "3.0", optional = true }
-rand_core = { version = "0.5", optional = true }
-
-[[bench]]
-name = "quaternion"
-harness = false
-
-[[bench]]
-name = "matrix"
-harness = false
-
-[[bench]]
-name = "vector"
-harness = false
-
-[[bench]]
-name = "collision"
-harness = false
+[workspace]
+members = ["benchmarks"]

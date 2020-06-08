@@ -1,0 +1,32 @@
+[package]
+name = "benchmarks"
+version = "0.1.0"
+authors = ["Aaron Loucks <aloucks@cofront.net>"]
+edition = "2018"
+publish = false
+
+[features]
+benchmarks = []
+default = ["benchmarks"]
+
+[dev-dependencies]
+criterion = "0.3"
+pcg = "3.0"
+rand_core = "0.5"
+directx_math = { path = ".." }
+
+[[bench]]
+name = "quaternion"
+harness = false
+
+[[bench]]
+name = "matrix"
+harness = false
+
+[[bench]]
+name = "vector"
+harness = false
+
+[[bench]]
+name = "collision"
+harness = false
