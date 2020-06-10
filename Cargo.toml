@@ -17,9 +17,10 @@ no_sse4 = []
 no_avx = []
 no_fma = []
 no_avx2 = []
+no_neon = []
 
 # Disable all intrinsics
-no_intrinsics = ["no_sse3", "no_sse4", "no_avx", "no_fma", "no_avx2"]
+no_intrinsics = ["no_sse3", "no_sse4", "no_avx", "no_fma", "no_avx2", "no_neon"]
 
 # Prefer intrinsics that may perform better on intel CPUs
 favor_intel = []
@@ -27,6 +28,8 @@ favor_intel = []
 # Enable specialization for trait based vector swizzle and permute.
 # This is a nightly-only feature and is ignored on the stable channel.
 specialization = []
+
+default = ["no_neon"]
 
 [workspace]
 members = ["benchmarks"]

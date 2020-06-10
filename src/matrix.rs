@@ -1094,11 +1094,6 @@ pub fn XMMatrixInverse(
         return Result;
     }
 
-    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
-    {
-        unimplemented!()
-    }
-
     #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {
         // Transpose matrix
@@ -1584,12 +1579,7 @@ pub fn XMMatrixSet(
         M.m[3][0] = m30; M.m[3][1] = m31; M.m[3][2] = m32; M.m[3][3] = m33;
     }
 
-    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
-    {
-        unimplemented!()
-    }
-
-    #[cfg(_XM_SSE_INTRINSICS_)]
+    #[cfg(not(_XM_NO_INTRINSICS_))]
     unsafe {
         M.r[0] = XMVectorSet(m00, m01, m02, m03);
         M.r[1] = XMVectorSet(m10, m11, m12, m13);
@@ -2890,6 +2880,11 @@ pub fn XMMatrixPerspectiveLH(
         return M;
     }
 
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
     #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {
         let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
@@ -2990,6 +2985,11 @@ pub fn XMMatrixPerspectiveRH(
         M.m[3][2] = fRange * NearZ;
         M.m[3][3] = 0.0;
         return M;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
     }
 
     #[cfg(_XM_SSE_INTRINSICS_)]
@@ -3097,6 +3097,11 @@ pub fn XMMatrixPerspectiveFovLH(
         M.m[3][2] = -fRange * NearZ;
         M.m[3][3] = 0.0;
         return M;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
     }
 
     #[cfg(_XM_SSE_INTRINSICS_)]
@@ -3211,6 +3216,11 @@ pub fn XMMatrixPerspectiveFovRH(
         return M;
     }
 
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
     #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {
         let mut SinFov: f32 = 0.0;
@@ -3314,6 +3324,11 @@ pub fn XMMatrixOrthographicLH(
         return M;
     }
 
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
     #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {
         let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
@@ -3408,6 +3423,11 @@ pub fn XMMatrixOrthographicRH(
         M.m[3][2] = fRange * NearZ;
         M.m[3][3] = 1.0;
         return M;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
     }
 
     #[cfg(_XM_SSE_INTRINSICS_)]

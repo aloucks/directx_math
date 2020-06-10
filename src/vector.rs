@@ -1668,7 +1668,7 @@ pub fn XMVectorPermute(
         return _mm_or_ps(masked1, masked2);
     }
 
-    #[cfg(not(_XM_AVX_INTRINSICS_))]
+    #[cfg(all(not(_XM_ARM_NEON_INTRINSICS_), not(_XM_AVX_INTRINSICS_)))]
     unsafe {
         let aPtr: &[*const u32; 2] = &[
             mem::transmute(&V1),
@@ -5266,7 +5266,7 @@ pub fn XMVectorTan(
 
         #[cfg(_XM_ARM_NEON_INTRINSICS_)]
         {
-            unimplemented!()
+            // unimplemented!();
             // VB = vcvtq_u32_f32(VB);
         }
 
@@ -5371,6 +5371,11 @@ pub fn XMVectorSinH(
         return Result.v;
     }
 
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
     #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {
         const Scale: XMVECTORF32 = XMVECTORF32 { f :[ 1.442695040888963, 1.442695040888963, 1.442695040888963, 1.442695040888963 ] }; // 1.0f / ln(2.0f)
@@ -5415,6 +5420,11 @@ pub fn XMVectorCosH(
         return Result.v;
     }
 
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
     #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {
         const Scale: XMVECTORF32 = XMVECTORF32 { f :[ 1.442695040888963, 1.442695040888963, 1.442695040888963, 1.442695040888963 ] }; // 1.0f / ln(2.0f)
@@ -5457,6 +5467,11 @@ pub fn XMVectorTanH(
             ]
         };
         return Result.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
     }
 
     #[cfg(_XM_SSE_INTRINSICS_)]
@@ -5506,6 +5521,11 @@ pub fn XMVectorASin(
             ]
         };
         return Result.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
     }
 
     #[cfg(_XM_SSE_INTRINSICS_)]
@@ -5589,6 +5609,11 @@ pub fn XMVectorACos(
             ]
         };
         return Result.v;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
     }
 
     #[cfg(_XM_SSE_INTRINSICS_)]
@@ -5885,7 +5910,12 @@ pub fn XMVectorSinEst(
         return Result.v;
     }
 
-    #[cfg(not(_XM_NO_INTRINSICS_))]
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {
         // Force the value within the bounds of pi
         let mut x: XMVECTOR = XMVectorModAngles(V);

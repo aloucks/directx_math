@@ -94,15 +94,36 @@
 // TODO: Change allow unused_macros to deny
 #![allow(unused_macros)]
 
-#![deny(unreachable_code)]
-#![deny(unused_variables)]
-#![deny(unused_unsafe)]
-#![deny(dead_code)]
-#![deny(unused_mut)]
-#![deny(unused_assignments)]
+// ----
+
+// TODO: Reinstate these denys after the ARM/NEON implementations are complete
+
+// #![deny(unreachable_code)]
+// #![deny(unused_variables)]
+// #![deny(unused_unsafe)]
+// #![deny(dead_code)]
+// #![deny(unused_mut)]
+// #![deny(unused_assignments)]
+
+#![cfg_attr(not(_XM_ARM_NEON_INTRINSICS_), deny(unreachable_code))]
+#![cfg_attr(not(_XM_ARM_NEON_INTRINSICS_), deny(unused_variables))]
+#![cfg_attr(not(_XM_ARM_NEON_INTRINSICS_), deny(unused_unsafe))]
+#![cfg_attr(not(_XM_ARM_NEON_INTRINSICS_), deny(dead_code))]
+#![cfg_attr(not(_XM_ARM_NEON_INTRINSICS_), deny(unused_mut))]
+#![cfg_attr(not(_XM_ARM_NEON_INTRINSICS_), deny(unused_assignments))]
+
+#![cfg_attr(_XM_ARM_NEON_INTRINSICS_, allow(unreachable_code))]
+#![cfg_attr(_XM_ARM_NEON_INTRINSICS_, allow(unused_variables))]
+#![cfg_attr(_XM_ARM_NEON_INTRINSICS_, allow(unused_unsafe))]
+#![cfg_attr(_XM_ARM_NEON_INTRINSICS_, allow(dead_code))]
+#![cfg_attr(_XM_ARM_NEON_INTRINSICS_, allow(unused_mut))]
+#![cfg_attr(_XM_ARM_NEON_INTRINSICS_, allow(unused_assignments))]
+
+// ----
 
 #![cfg_attr(nightly_specialization, feature(min_specialization))]
 #![cfg_attr(nightly_specialization, feature(specialization))]
+#![cfg_attr(_XM_ARM_NEON_INTRINSICS_, feature(stdsimd))]
 
 #[allow(unused_imports)]
 use std::mem;
@@ -117,6 +138,9 @@ use std::arch::x86 as arch;
 
 #[cfg(all(target_arch="arm", not(_XM_NO_INTRINSICS_)))]
 use std::arch::arm as arch;
+
+#[cfg(all(target_arch="aarch64", not(_XM_NO_INTRINSICS_)))]
+use std::arch::aarch64 as arch;
 
 #[cfg(not(_XM_NO_INTRINSICS_))]
 use arch::*;
@@ -1425,6 +1449,15 @@ macro_rules! cast_m128 {
             #[allow(dead_code)]
             #[inline(always)]
             fn v(self) -> __vector4 {
+                unsafe {
+                    self.v
+                }
+            }
+
+            #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+            #[allow(dead_code)]
+            #[inline(always)]
+            fn v(self) -> float32x4_t {
                 unsafe {
                     self.v
                 }
