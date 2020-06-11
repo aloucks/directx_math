@@ -32,7 +32,7 @@ A rust translation of [DirectXMath], a SIMD linear algebra library for use in ga
 
 ## SIMD intrinsics
 
-| x86 / x86-64 | ARM | No intrinsics fallback |
+| x86 / x86_64 | ARM | No intrinsics fallback |
 | ------------ | --- | ---------------------- |
 | ✔️ | ❌ (will fallback to no-intrinsics) | ✔️ |
 
@@ -42,7 +42,7 @@ if SIMD intrinsics are not available on the target architecture.
 Note that only `sse` and `sse2` are enabled by default for `x86` and `x86-64` targets.
 The `sse3`, `sse4.1`, `avx`, `fma`, and `avx2` intrinsics may be enabled via [CPU target features].
 
-### Example: enable all `x86/64` intrinsics
+### Example: enable all `x86` / `x86_64` intrinsics
 
     RUSTFLAGS="-C target-feature=+sse3,+sse4.1,+avx,+fma,+avx2" cargo build
 
