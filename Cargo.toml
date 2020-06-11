@@ -9,6 +9,7 @@ categories = ["mathematics", "game-development", "graphics"]
 repository = "https://github.com/aloucks/directx_math"
 license = "MIT"
 readme = "README.md"
+exclude = ["etc", "benchmarks", ".github"]
 
 [features]
 # Disable specific intrinsics for testing
