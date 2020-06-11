@@ -46,39 +46,39 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: build
-    - name: Build (--features=no_intrinsics)
+    - name: Build (no intrinsics)
       uses: actions-rs/cargo@v1
       with:
         command: build
         args: --features=no_intrinsics
       
-  no-intrinsics:
-    name: x86-64 (No Intrinsics)
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        toolchain:
-          - stable
-          - nightly
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install rust
-        uses: actions-rs/toolchain@v1
-        id: rust
-        with:
-          toolchain: ${{ matrix.toolchain }}
-          override: true
-          profile: minimal
-      - name: Build and test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --features=no_intrinsics
-      - name: Build and test (with specialization)
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --features=no_intrinsics,specialization
+  # no-intrinsics:
+  #   name: x86-64 (No Intrinsics)
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       toolchain:
+  #         - stable
+  #         - nightly
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Install rust
+  #       uses: actions-rs/toolchain@v1
+  #       id: rust
+  #       with:
+  #         toolchain: ${{ matrix.toolchain }}
+  #         override: true
+  #         profile: minimal
+  #     - name: Build and test
+  #       uses: actions-rs/cargo@v1
+  #       with:
+  #         command: test
+  #         args: --features=no_intrinsics
+  #     - name: Build and test (with specialization)
+  #       uses: actions-rs/cargo@v1
+  #       with:
+  #         command: test
+  #         args: --features=no_intrinsics,specialization
 
   intrinsics:
     name: x86-64
@@ -88,15 +88,16 @@ jobs:
         toolchain:
           - stable
           - nightly
-        target_feature:
-          - ""
-          - "+sse3"
-          - "+sse3,+sse4.1"
-          - "+sse3,+sse4.1,+avx"
-          - "+sse3,+sse4.1,+avx,+fma"
-          - "+sse3,+sse4.1,+avx,+fma,+avx2"
-    env:
-      RUSTFLAGS: "-C target-feature=${{ matrix.target_feature }}"
+    #     target_feature:
+    #       - ""
+    #       - "+sse3"
+    #       - "+sse3,+sse4.1"
+    #       - "+sse3,+sse4.1,+avx"
+    #       - "+sse3,+sse4.1,+avx,+fma"
+    #       - "+sse3,+sse4.1,+avx,+fma,+avx2"
+    # env:
+    #   RUSTFLAGS: "-C target-feature=${{ matrix.target_feature }}"
+
     steps:
       - uses: actions/checkout@v2
       - name: Install rust
@@ -110,8 +111,49 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-      - name: Build and test (with specialization)
+      - name: Build and test (specialization)
         uses: actions-rs/cargo@v1
         with:
           command: test
           args: --features=specialization
+
+      - name: Build and test (no intrinsics)
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --features=no_intrinsics
+
+      - name: Build and test (+sse3)
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+        env:
+          RUSTFLAGS: "-C target-feature=+sse3"
+
+      - name: Build and test (+sse3,+sse4.1)
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+        env:
+          RUSTFLAGS: "-C target-feature=+sse3,+sse4.1"
+
+      - name: Build and test (+sse3,+sse4.1,+avx)
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+        env:
+          RUSTFLAGS: "-C target-feature=+sse3,+sse4.1,+avx"
+
+      - name: Build and test (+sse3,+sse4.1,+avx,+fma)
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+        env:
+          RUSTFLAGS: "-C target-feature=+sse3,+sse4.1,+avx,+fma"
+
+      - name: Build and test (+sse3,+sse4.1,+avx,+fma,+avx2)
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+        env:
+          RUSTFLAGS: "-C target-feature=+sse3,+sse4.1,+av,+fma,+avx2"
