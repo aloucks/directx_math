@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Fixed
 - Fixed compilation for ARM targets
+### Added
+- `LoadFloat3x4`, `StoreFloat3x4`, `LoadFloat4x3`, `StoreFloat4x3`
 
 ## [0.1.2] - 2020-06-08
 ### Changed

@@ -676,9 +676,231 @@ pub fn XMLoadFloat3x3(
     }
 }
 
-// TODO: XMLoadFloat4x3
+/// Loads an XMFLOAT4X3 into an XMMATRIX.
+///
+/// ## Parameters
+///
+/// `pSource` Address of the XMFLOAT4X3 structure to load. This parameter must point to cached memory.
+///
+/// ## Return value
+///
+/// Returns an XMMATRIX loaded with the data from the pSource parameter.
+/// This function performs a partial load of the returned XMMATRIX. See Getting Started for more information.
+///
+/// ## Remarks
+///
+/// XMFLOAT4X3 is a row-major form of the matrix. This function cannot be used to read column-major data
+/// since it assumes the last column is `0 0 0 1`.
+///
+/// The members of the XMFLOAT4X3 structure (_11, _12, _13, and so on) are loaded into the corresponding
+/// members of the XMMATRIX. The remaining members of the returned XMMATRIX are `0.0`, except for _44, which
+/// is `1.0`.
+///
+/// ## Example
+///
+/// ```rust
+/// # use directx_math::*;
+/// let data = XMFLOAT4X3::from([
+///     [10.0, 11.0, 12.0],
+///     [13.0, 14.0, 15.0],
+///     [16.0, 17.0, 18.0],
+///     [19.0, 20.0, 21.0],
+/// ]);
+///
+/// let m = XMLoadFloat4x3(&data);
+/// let m: [[f32; 4]; 4] = XMMatrix(m).into();
+/// assert_eq!(m, [
+///     [10.0, 11.0, 12.0, 0.0],
+///     [13.0, 14.0, 15.0, 0.0],
+///     [16.0, 17.0, 18.0, 0.0],
+///     [19.0, 20.0, 21.0, 1.0],
+/// ]);
+///
+/// ```
+///
+/// ## Reference
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMLoadFloat4x3>
+#[inline]
+pub fn XMLoadFloat4x3(
+    pSource: &XMFLOAT4X3,
+) -> XMMATRIX
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        M.r[0].vector4_f32[0] = pSource.m[0][0];
+        M.r[0].vector4_f32[1] = pSource.m[0][1];
+        M.r[0].vector4_f32[2] = pSource.m[0][2];
+        M.r[0].vector4_f32[3] = 0.0;
+
+        M.r[1].vector4_f32[0] = pSource.m[1][0];
+        M.r[1].vector4_f32[1] = pSource.m[1][1];
+        M.r[1].vector4_f32[2] = pSource.m[1][2];
+        M.r[1].vector4_f32[3] = 0.0;
+
+        M.r[2].vector4_f32[0] = pSource.m[2][0];
+        M.r[2].vector4_f32[1] = pSource.m[2][1];
+        M.r[2].vector4_f32[2] = pSource.m[2][2];
+        M.r[2].vector4_f32[3] = 0.0;
+
+        M.r[3].vector4_f32[0] = pSource.m[3][0];
+        M.r[3].vector4_f32[1] = pSource.m[3][1];
+        M.r[3].vector4_f32[2] = pSource.m[3][2];
+        M.r[3].vector4_f32[3] = 1.0;
+        return M;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        // Use unaligned load instructions to
+        // load the 12 floats
+        // vTemp1 = x1,y1,z1,x2
+        let mut vTemp1: XMVECTOR = _mm_loadu_ps(&pSource.m[0][0]);
+        // vTemp2 = y2,z2,x3,y3
+        let mut vTemp2: XMVECTOR = _mm_loadu_ps(&pSource.m[1][1]);
+        // vTemp4 = z3,x4,y4,z4
+        let vTemp4: XMVECTOR = _mm_loadu_ps(&pSource.m[2][2]);
+        // vTemp3 = x3,y3,z3,z3
+        let mut vTemp3: XMVECTOR = _mm_shuffle_ps(vTemp2, vTemp4, _MM_SHUFFLE(0, 0, 3, 2));
+        // vTemp2 = y2,z2,x2,x2
+        vTemp2 = _mm_shuffle_ps(vTemp2, vTemp1, _MM_SHUFFLE(3, 3, 1, 0));
+        // vTemp2 = x2,y2,z2,z2
+        vTemp2 = XM_PERMUTE_PS!(vTemp2, _MM_SHUFFLE(1, 1, 0, 2));
+        // vTemp1 = x1,y1,z1,0
+        vTemp1 = _mm_and_ps(vTemp1, g_XMMask3.v);
+        // vTemp2 = x2,y2,z2,0
+        vTemp2 = _mm_and_ps(vTemp2, g_XMMask3.v);
+        // vTemp3 = x3,y3,z3,0
+        vTemp3 = _mm_and_ps(vTemp3, g_XMMask3.v);
+        // vTemp4i = x4,y4,z4,0
+        let mut vTemp4i: __m128i = _mm_srli_si128(_mm_castps_si128(vTemp4), 32 / 8);
+        // vTemp4i = x4,y4,z4,1.0f
+        vTemp4i = _mm_or_si128(vTemp4i, g_XMIdentityR3.m128i());
+        let M = XMMATRIX { r: [
+            vTemp1,
+            vTemp2,
+            vTemp3,
+            _mm_castsi128_ps(vTemp4i)
+        ]};
+        return M;
+    }
+}
 // TODO: XMLoadFloat4x3A
-// TODO: XMLoadFloat3x4
+
+/// Loads an XMFLOAT3X4 into an XMMATRIX.
+///
+/// ## Parameters
+///
+/// `pSource` Type: const XMFLOAT3X4 *Pointer to the constant XMFLOAT3X4 structure to load. This argument must point
+/// to cached memory.
+///
+/// ## Return value
+///
+/// Type: XMMATRIX
+/// An XMMATRIX loaded with the data from the pSource argument.
+/// This function performs a partial load of the returned XMMATRIX. For more info, see Getting started (DirectXMath).
+///
+/// ## Remarks
+///
+/// XMFLOAT3X4 is a row-major form of the matrix. XMLoadFloat3x4 could be used to read column-major data,
+/// but that would then need to be transposed with XMMatrixTranspose before use in other XMMATRIX functions.
+///
+/// ## Example
+///
+/// ```rust
+/// # use directx_math::*;
+/// let data = XMFLOAT3X4::from([
+///     [10.0, 13.0, 16.0, 19.0],
+///     [11.0, 14.0, 17.0, 20.0],
+///     [12.0, 15.0, 18.0, 21.0],
+/// ]);
+///
+/// let m = XMLoadFloat3x4(&data);
+/// let m: [[f32; 4]; 4] = XMMatrix(m).into();
+/// assert_eq!(m, [
+///     [10.0, 11.0, 12.0, 0.0],
+///     [13.0, 14.0, 15.0, 0.0],
+///     [16.0, 17.0, 18.0, 0.0],
+///     [19.0, 20.0, 21.0, 1.0],
+/// ]);
+///
+/// ```
+///
+/// ## Reference
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMLoadFloat3x4>
+#[inline]
+pub fn XMLoadFloat3x4(
+    pSource: &XMFLOAT3X4,
+) -> XMMATRIX
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        M.r[0].vector4_f32[0] = pSource.m[0][0];
+        M.r[0].vector4_f32[1] = pSource.m[1][0];
+        M.r[0].vector4_f32[2] = pSource.m[2][0];
+        M.r[0].vector4_f32[3] = 0.0;
+
+        M.r[1].vector4_f32[0] = pSource.m[0][1];
+        M.r[1].vector4_f32[1] = pSource.m[1][1];
+        M.r[1].vector4_f32[2] = pSource.m[2][1];
+        M.r[1].vector4_f32[3] = 0.0;
+
+        M.r[2].vector4_f32[0] = pSource.m[0][2];
+        M.r[2].vector4_f32[1] = pSource.m[1][2];
+        M.r[2].vector4_f32[2] = pSource.m[2][2];
+        M.r[2].vector4_f32[3] = 0.0;
+
+        M.r[3].vector4_f32[0] = pSource.m[0][3];
+        M.r[3].vector4_f32[1] = pSource.m[1][3];
+        M.r[3].vector4_f32[2] = pSource.m[2][3];
+        M.r[3].vector4_f32[3] = 1.0;
+        return M;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        M.r[0] = _mm_loadu_ps(&pSource.m[0][0]);
+        M.r[1] = _mm_loadu_ps(&pSource.m[1][0]);
+        M.r[2] = _mm_loadu_ps(&pSource.m[2][0]);
+        M.r[3] = g_XMIdentityR3.v;
+
+        // x.x,x.y,y.x,y.y
+        let vTemp1: XMVECTOR = _mm_shuffle_ps(M.r[0], M.r[1], _MM_SHUFFLE(1, 0, 1, 0));
+        // x.z,x.w,y.z,y.w
+        let vTemp3: XMVECTOR = _mm_shuffle_ps(M.r[0], M.r[1], _MM_SHUFFLE(3, 2, 3, 2));
+        // z.x,z.y,w.x,w.y
+        let vTemp2: XMVECTOR = _mm_shuffle_ps(M.r[2], M.r[3], _MM_SHUFFLE(1, 0, 1, 0));
+        // z.z,z.w,w.z,w.w
+        let vTemp4: XMVECTOR = _mm_shuffle_ps(M.r[2], M.r[3], _MM_SHUFFLE(3, 2, 3, 2));
+
+        let mut mResult: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+
+        // x.x,y.x,z.x,w.x
+        mResult.r[0] = _mm_shuffle_ps(vTemp1, vTemp2, _MM_SHUFFLE(2, 0, 2, 0));
+        // x.y,y.y,z.y,w.y
+        mResult.r[1] = _mm_shuffle_ps(vTemp1, vTemp2, _MM_SHUFFLE(3, 1, 3, 1));
+        // x.z,y.z,z.z,w.z
+        mResult.r[2] = _mm_shuffle_ps(vTemp3, vTemp4, _MM_SHUFFLE(2, 0, 2, 0));
+        // x.w,y.w,z.w,w.w
+        mResult.r[3] = _mm_shuffle_ps(vTemp3, vTemp4, _MM_SHUFFLE(3, 1, 3, 1));
+        return mResult;
+    }
+}
+
 // TODO: XMLoadFloat3x4A
 
 /// Loads an XMFLOAT4X4 into an XMMATRIX.
@@ -1197,9 +1419,222 @@ pub fn XMStoreFloat3x3(
     }
 }
 
-// TODO: XMStoreFloat4x3
+/// Stores an XMMATRIX in an XMFLOAT4X3.
+///
+/// ## Parameters
+///
+/// `pDestination` Address at which to store the data.
+///
+/// `M` Matrix containing the data to store.
+///
+/// ## Return value
+///
+/// None.
+///
+/// ## Remarks
+///
+/// XMFLOAT4X3 is a row-major matrix form. This function cannot be used to write out column-major data since
+/// it assumes the last column is `0` 0 `0` 1.
+///
+/// This function takes a matrix and writes the components out to twelve single-precision floating-point
+/// values at the given address. The most significant component of the first row vector is written to the
+/// first four bytes of the address, followed by the second most significant component of the first row,
+/// followed by the third most significant component of the first row. The most significant three components
+/// of the second row are then written out in a like manner to memory beginning at byte 12, followed by
+/// the third row to memory beginning at byte 24, and finally the fourth row to memory beginning at byte
+/// 36.
+///
+/// The following pseudocode demonstrates the operation of the function.
+///
+/// ```text
+/// pDestination->_11 = M[0].x; // 4 bytes to address (uint8_t*)pDestination
+/// pDestination->_12 = M[0].y; // 4 bytes to address (uint8_t*)pDestination + 4
+/// pDestination->_13 = M[0].z; // 4 bytes to address (uint8_t*)pDestination + 8
+///
+/// pDestination->_21 = M[1].x; // 4 bytes to address (uint8_t*)pDestination + 12
+/// pDestination->_22 = M[1].y; // 4 bytes to address (uint8_t*)pDestination + 16
+/// pDestination->_23 = M[1].z; // 4 bytes to address (uint8_t*)pDestination + 20
+///
+/// pDestination->_31 = M[2].x; // 4 bytes to address (uint8_t*)pDestination + 24
+/// pDestination->_32 = M[2].y; // 4 bytes to address (uint8_t*)pDestination + 28
+/// pDestination->_33 = M[2].z; // 4 bytes to address (uint8_t*)pDestination + 32
+///
+/// pDestination->_41 = M[3].x; // 4 bytes to address (uint8_t*)pDestination + 36
+/// pDestination->_42 = M[3].y; // 4 bytes to address (uint8_t*)pDestination + 40
+/// pDestination->_43 = M[3].z; // 4 bytes to address (uint8_t*)pDestination + 44
+/// ```
+///
+/// ## Example
+///
+/// ```
+/// # use directx_math::*;
+/// let m = XMMatrix::from(&[
+///     [10.0, 11.0, 12.0, 0.0],
+///     [13.0, 14.0, 15.0, 0.0],
+///     [16.0, 17.0, 18.0, 0.0],
+///     [19.0, 20.0, 21.0, 1.0],
+/// ]);
+///
+/// let mut data = XMFLOAT4X3::default();
+/// XMStoreFloat4x3(&mut data, *m);
+///
+/// let data: &[[f32; 3]; 4] = data.as_ref();
+/// assert_eq!(data, &[
+///     [10.0, 11.0, 12.0],
+///     [13.0, 14.0, 15.0],
+///     [16.0, 17.0, 18.0],
+///     [19.0, 20.0, 21.0],
+/// ]);
+/// ```
+///
+/// ## Reference
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMStoreFloat4x3>
+#[inline]
+pub fn XMStoreFloat4x3(
+    pDestination: &mut XMFLOAT4X3,
+    M: FXMMATRIX,
+)
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        pDestination.m[0][0] = M.r[0].vector4_f32[0];
+        pDestination.m[0][1] = M.r[0].vector4_f32[1];
+        pDestination.m[0][2] = M.r[0].vector4_f32[2];
+
+        pDestination.m[1][0] = M.r[1].vector4_f32[0];
+        pDestination.m[1][1] = M.r[1].vector4_f32[1];
+        pDestination.m[1][2] = M.r[1].vector4_f32[2];
+
+        pDestination.m[2][0] = M.r[2].vector4_f32[0];
+        pDestination.m[2][1] = M.r[2].vector4_f32[1];
+        pDestination.m[2][2] = M.r[2].vector4_f32[2];
+
+        pDestination.m[3][0] = M.r[3].vector4_f32[0];
+        pDestination.m[3][1] = M.r[3].vector4_f32[1];
+        pDestination.m[3][2] = M.r[3].vector4_f32[2];
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut vTemp1: XMVECTOR = M.r[0];
+        let mut vTemp2: XMVECTOR = M.r[1];
+        let mut vTemp3: XMVECTOR = M.r[2];
+        let vTemp4: XMVECTOR = M.r[3];
+        let vTemp2x: XMVECTOR = _mm_shuffle_ps(vTemp2, vTemp3, _MM_SHUFFLE(1, 0, 2, 1));
+        vTemp2 = _mm_shuffle_ps(vTemp2, vTemp1, _MM_SHUFFLE(2, 2, 0, 0));
+        vTemp1 = _mm_shuffle_ps(vTemp1, vTemp2, _MM_SHUFFLE(0, 2, 1, 0));
+        vTemp3 = _mm_shuffle_ps(vTemp3, vTemp4, _MM_SHUFFLE(0, 0, 2, 2));
+        vTemp3 = _mm_shuffle_ps(vTemp3, vTemp4, _MM_SHUFFLE(2, 1, 2, 0));
+        _mm_storeu_ps(&mut pDestination.m[0][0], vTemp1);
+        _mm_storeu_ps(&mut pDestination.m[1][1], vTemp2x);
+        _mm_storeu_ps(&mut pDestination.m[2][2], vTemp3);
+    }
+}
+
 // TODO: XMStoreFloat4x3A
-// TODO: XMStoreFloat3x4
+
+/// Stores an XMMATRIX in an XMFLOAT3X4.
+///
+/// ## Parameters
+///
+/// `pDestination` Type: XMFLOAT3X4 *Pointer to the XMFLOAT3X4 structure in which to store the data.
+///
+/// `M` Type: XMMATRIXMatrix containing the data to store.
+///
+/// ## Return value
+///
+/// None
+///
+/// ## Remarks
+///
+/// XMFLOAT3X4 is a row-major form of the matrix.
+///
+/// To write out column-major data requires that the XMMATRIX be transposed via XMMatrixTranspose before
+/// calling the store function.
+///
+/// ## Example
+///
+/// ```rust
+/// # use directx_math::*;
+/// let m = XMMatrix::from(&[
+///     [10.0, 11.0, 12.0, 0.0],
+///     [13.0, 14.0, 15.0, 0.0],
+///     [16.0, 17.0, 18.0, 0.0],
+///     [19.0, 20.0, 21.0, 1.0],
+/// ]);
+///
+/// let mut data = XMFLOAT3X4::default();
+/// XMStoreFloat3x4(&mut data, *m);
+///
+/// let data: &[[f32; 4]; 3] = data.as_ref();
+/// assert_eq!(data, &[
+///     [10.0, 13.0, 16.0, 19.0],
+///     [11.0, 14.0, 17.0, 20.0],
+///     [12.0, 15.0, 18.0, 21.0],
+/// ]);
+///
+/// ```
+/// ## Reference
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMStoreFloat3x4>
+#[inline]
+pub fn XMStoreFloat3x4(
+    pDestination: &mut XMFLOAT3X4,
+    M: FXMMATRIX,
+)
+{
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        pDestination.m[0][0] = M.r[0].vector4_f32[0];
+        pDestination.m[0][1] = M.r[1].vector4_f32[0];
+        pDestination.m[0][2] = M.r[2].vector4_f32[0];
+        pDestination.m[0][3] = M.r[3].vector4_f32[0];
+
+        pDestination.m[1][0] = M.r[0].vector4_f32[1];
+        pDestination.m[1][1] = M.r[1].vector4_f32[1];
+        pDestination.m[1][2] = M.r[2].vector4_f32[1];
+        pDestination.m[1][3] = M.r[3].vector4_f32[1];
+
+        pDestination.m[2][0] = M.r[0].vector4_f32[2];
+        pDestination.m[2][1] = M.r[1].vector4_f32[2];
+        pDestination.m[2][2] = M.r[2].vector4_f32[2];
+        pDestination.m[2][3] = M.r[3].vector4_f32[2];
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        // x.x,x.y,y.x,y.y
+        let vTemp1: XMVECTOR = _mm_shuffle_ps(M.r[0], M.r[1], _MM_SHUFFLE(1, 0, 1, 0));
+        // x.z,x.w,y.z,y.w
+        let vTemp3: XMVECTOR = _mm_shuffle_ps(M.r[0], M.r[1], _MM_SHUFFLE(3, 2, 3, 2));
+        // z.x,z.y,w.x,w.y
+        let vTemp2: XMVECTOR = _mm_shuffle_ps(M.r[2], M.r[3], _MM_SHUFFLE(1, 0, 1, 0));
+        // z.z,z.w,w.z,w.w
+        let vTemp4: XMVECTOR = _mm_shuffle_ps(M.r[2], M.r[3], _MM_SHUFFLE(3, 2, 3, 2));
+
+        // x.x,y.x,z.x,w.x
+        let r0: XMVECTOR = _mm_shuffle_ps(vTemp1, vTemp2, _MM_SHUFFLE(2, 0, 2, 0));
+        // x.y,y.y,z.y,w.y
+        let r1: XMVECTOR = _mm_shuffle_ps(vTemp1, vTemp2, _MM_SHUFFLE(3, 1, 3, 1));
+        // x.z,y.z,z.z,w.z
+        let r2: XMVECTOR = _mm_shuffle_ps(vTemp3, vTemp4, _MM_SHUFFLE(2, 0, 2, 0));
+
+        _mm_storeu_ps(&mut pDestination.m[0][0], r0);
+        _mm_storeu_ps(&mut pDestination.m[1][0], r1);
+        _mm_storeu_ps(&mut pDestination.m[2][0], r2);
+    }
+}
 // TODO: XMStoreFloat3x4A
 
 /// Stores an XMMATRIX in an XMFLOAT4X4.
