@@ -478,12 +478,14 @@ mod globals;
 mod misc;
 mod matrix;
 pub mod collision;
+mod packed_vector;
 
 pub use vector::*;
 pub use convert::*;
 use globals::*;
 pub use misc::*;
 pub use matrix::*;
+pub use packed_vector::*;
 
 mod doc {
     // /// Color functions
@@ -1298,6 +1300,9 @@ pub const XM_CRMASK_CR6FALSE: u32 = 0x00000020;
 pub const XM_CRMASK_CR6BOUNDS: u32 = XM_CRMASK_CR6FALSE;
 
 pub const XM_CACHE_LINE_SIZE: u32 = 64;
+
+/// A 16-bit floating point number consisting of a sign bit, a 5-bit biased exponent, and a 10-bit mantissa.
+pub type HALF = u16;
 
 // Type defs to allow the XMVectorSwizzle and XMVectorPermute translation
 // to look more like the source

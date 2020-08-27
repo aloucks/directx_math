@@ -96,8 +96,9 @@ jobs:
           - "+sse3"
           - "+sse3,+sse4.1"
           - "+sse3,+sse4.1,+avx"
-          - "+sse3,+sse4.1,+avx,+fma"
-          - "+sse3,+sse4.1,+avx,+fma,+avx2"
+          - "+sse3,+sse4.1,+avx,+f16c"
+          - "+sse3,+sse4.1,+avx,+f16c,+fma"
+          - "+sse3,+sse4.1,+avx,+f16c,+fma,+avx2"
     env:
       RUSTFLAGS: "-C target-feature=${{ matrix.target_feature }}"
     steps:
