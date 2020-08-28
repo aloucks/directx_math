@@ -525,9 +525,9 @@ mod doc {
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-conversion>
     pub mod conversion {
-        // TODO: pub use crate::convert::XMConvertFloatToHalf;
+        pub use crate::packed_vector::XMConvertFloatToHalf;
         // TODO: pub use crate::convert::XMConvertFloatToHalfStream;
-        // TODO: pub use crate::convert::XMConvertHalfToFloat;
+        pub use crate::packed_vector::XMConvertHalfToFloat;
         // TODO: pub use crate::convert::XMConvertHalfToFloatStream;
         pub use crate::XMConvertToDegrees;
         pub use crate::XMConvertToRadians;
