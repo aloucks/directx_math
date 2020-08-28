@@ -125,6 +125,7 @@
 #![cfg_attr(nightly_specialization, feature(min_specialization))]
 #![cfg_attr(nightly_specialization, feature(specialization))]
 #![cfg_attr(_XM_ARM_NEON_INTRINSICS_, feature(stdsimd))]
+#![cfg_attr(_XM_F16C_INTRINSICS_, feature(stdsimd))]
 
 #[allow(unused_imports)]
 use std::mem;

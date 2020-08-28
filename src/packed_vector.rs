@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use std::mem;
 
 use crate::*;

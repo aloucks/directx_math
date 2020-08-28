@@ -26,7 +26,7 @@ fn main() {
         if target_features.contains(&"f16c") && !cfg!(feature="no_f16c") {
             println!("cargo:rustc-cfg=_XM_F16C_INTRINSICS_");
         }
-        
+
         if target_features.contains(&"fma") && !cfg!(feature="no_fma") {
             println!("cargo:rustc-cfg=_XM_FMA3_INTRINSICS_");
         }

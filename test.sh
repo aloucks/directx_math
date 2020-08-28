@@ -20,7 +20,7 @@ RUSTFLAGS="-C target-cpu=x86-64" cargo test --features="no_intrinsics"
 RUSTFLAGS="-C target-cpu=x86-64 -C target-feature=+sse3" cargo test
 RUSTFLAGS="-C target-cpu=x86-64 -C target-feature=+sse3,+sse4.1" cargo test
 RUSTFLAGS="-C target-cpu=x86-64 -C target-feature=+sse3,+sse4.1,+avx" cargo test
-RUSTFLAGS="-C target-cpu=x86-64 -C target-feature=+sse3,+sse4.1,+avx,+fma" cargo test
+RUSTFLAGS="-C target-cpu=x86-64 -C target-feature=+sse3,+sse4.1,+avx,+f16c" cargo test
 RUSTFLAGS="-C target-cpu=x86-64 -C target-feature=+sse3,+sse4.1,+avx,+f16c,+fma" cargo test
 RUSTFLAGS="-C target-cpu=x86-64 -C target-feature=+sse3,+sse4.1,+avx,+f16c,+fma,+avx2" cargo test
 RUSTFLAGS="-C target-cpu=x86-64" cargo +nightly test --features="specialization"
