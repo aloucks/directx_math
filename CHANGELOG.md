@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `LoadFloat3x4`, `StoreFloat3x4`, `LoadFloat4x3`, `StoreFloat4x3`
 - `XMConvertFloatToHalf`, `XMConvertHalfToFloat`
+### Changed
+- `BoundingFrustum::CreateFromMatrix` now has a flag to allow right-handed projection matrices.
 
 ## [0.1.2] - 2020-06-08
 ### Changed

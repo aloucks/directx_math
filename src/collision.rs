@@ -4745,7 +4745,10 @@ impl BoundingFrustum {
     ///
     /// `Out` The new BoundingFrustum.
     ///
-    /// `Projection` The **left-handed** projection matrix to create the BoundingFrustum from.
+    /// `Projection` The projection matrix to create the BoundingFrustum from.
+    ///
+    /// `rhcoords` A value of `false` indicates that `Projection` is in a **left-handeded**
+    ///  coordinate system.
     ///
     /// ## Return value
     ///
@@ -4754,7 +4757,7 @@ impl BoundingFrustum {
     /// ## Reference
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/nf-directxcollision-boundingfrustum-createfrommatrix>
-    pub fn CreateFromMatrix(Out: &mut Self, Projection: FXMMATRIX) {
+    pub fn CreateFromMatrix(Out: &mut Self, Projection: FXMMATRIX, rhcoords: bool) {
         // Corners of the projection frustum in homogenous space.
         const HomogenousPoints: [XMVECTORF32; 6] =
         [
@@ -4798,8 +4801,16 @@ impl BoundingFrustum {
         Points[4] = XMVectorMultiply(Points[4], XMVectorReciprocal(XMVectorSplatW(Points[4])));
         Points[5] = XMVectorMultiply(Points[5], XMVectorReciprocal(XMVectorSplatW(Points[5])));
 
-        Out.Near = XMVectorGetZ(Points[4]);
-        Out.Far = XMVectorGetZ(Points[5]);
+        if (rhcoords)
+        {
+            Out.Near = XMVectorGetZ(Points[5]);
+            Out.Far = XMVectorGetZ(Points[4]);
+        }
+        else
+        {
+            Out.Near = XMVectorGetZ(Points[4]);
+            Out.Far = XMVectorGetZ(Points[5]);
+        }
     }
 
     /// Gets the planes making up the BoundingFrustum.
