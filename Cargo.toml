@@ -34,4 +34,4 @@ specialization = []
 default = ["no_neon"]
 
 [workspace]
-members = ["benchmarks"]
+members = ["benchmarks", "tools/docs"]
