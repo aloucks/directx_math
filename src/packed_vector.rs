@@ -9,7 +9,7 @@ use crate::*;
 #[inline]
 pub fn XMConvertHalfToFloat(Value: HALF) -> f32 {
     #[cfg(any(_XM_NO_INTRINSICS_, not(_XM_F16C_INTRINSICS_)))]
-    unsafe {
+    {
         let mut Mantissa = (Value as u32 & 0x03FF);
 
         let mut Exponent: u32 = (Value as u32 & 0x7C00);
@@ -47,7 +47,7 @@ pub fn XMConvertHalfToFloat(Value: HALF) -> f32 {
             | ((Exponent.wrapping_add(112)) << 23)                      // Exponent
             | (Mantissa << 13);                             // Mantissa
 
-        return mem::transmute::<u32, f32>(Result);
+        return f32::from_bits(Result);
     }
 
     #[cfg(_XM_ARM_NEON_INTRINSICS_)]

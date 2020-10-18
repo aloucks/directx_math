@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Fixed
 - Enable `!XMPlaneIsInfinite` debug assertions in `XMMatrixReflect` and `XMMatrixShadow`.
+- Fixed clippy warning with `u32` to `f32` conversion.
 
 ## [0.2.0] - 2020-09-05
 ### Fixed
