@@ -2599,8 +2599,7 @@ pub fn XMMatrixReflect(
 {
     unsafe {
         debug_assert!(!XMVector3Equal(ReflectionPlane, XMVectorZero()));
-        // FIXME: XMPlaneIsInfinite
-        // debug_assert!(!XMPlaneIsInfinite(ReflectionPlane));
+        debug_assert!(!XMPlaneIsInfinite(ReflectionPlane));
 
         const NegativeTwo: XMVECTORF32 = XMVECTORF32 { f: [ -2.0, -2.0, -2.0, 0.0 ] };
 
@@ -2651,8 +2650,7 @@ pub fn XMMatrixShadow(
         const Select0001: XMVECTORU32 = XMVECTORU32 { u: [ XM_SELECT_0, XM_SELECT_0, XM_SELECT_0, XM_SELECT_1 ] };
 
         debug_assert!(!XMVector3Equal(ShadowPlane, XMVectorZero()));
-        // FIXME: XMPlaneIsInfinite
-        // debug_assert!(!XMPlaneIsInfinite(ShadowPlane));
+        debug_assert!(!XMPlaneIsInfinite(ShadowPlane));
 
         let mut P: XMVECTOR = XMPlaneNormalize(ShadowPlane);
         let mut Dot: XMVECTOR = XMPlaneDot(P, LightPosition);
