@@ -40,11 +40,11 @@ Intrinsics may be disabled with the `no_intrinsics` feature. This is the implici
 if SIMD intrinsics are not available on the target architecture.
 
 Note that only `sse` and `sse2` are enabled by default for `x86` and `x86-64` targets.
-The `sse3`, `sse4.1`, `avx`, `fma`, and `avx2` intrinsics may be enabled via [CPU target features].
+The `sse3`, `sse4.1`, `avx`, `f16c`, `fma`, and `avx2` intrinsics may be enabled via [CPU target features].
 
-### Example: enable all `x86` / `x86_64` intrinsics
+### Example: enable all `x86_64` intrinsics
 
-    RUSTFLAGS="-C target-feature=+sse3,+sse4.1,+avx,+fma,+avx2" cargo build
+    RUSTFLAGS="-C target-feature=+sse3,+sse4.1,+avx,+f16c,+fma,+avx2" cargo build
 
 ## License
 
