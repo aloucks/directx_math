@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Fixed
+- Add some missing `XM{Load|Store}Float{3x4|4x3}` doc re-exports.
 - Enable `!XMPlaneIsInfinite` debug assertions in `XMMatrixReflect` and `XMMatrixShadow`.
 - Fixed clippy warning with `u32` to `f32` conversion.
 - All collision functions are now marked with `#[inline]`

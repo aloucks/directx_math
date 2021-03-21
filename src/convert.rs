@@ -91,7 +91,6 @@ pub fn XMConvertVectorFloatToInt(VFloat: FXMVECTOR, MulExponent: u32) -> XMVECTO
     }
 }
 
-// TODO: XMConvertVectorUIntToFloat
 
 /// Converts an XMVECTOR with uint32_t components to an XMVECTOR with float components and applies a uniform bias.
 ///
@@ -145,7 +144,7 @@ pub fn XMConvertVectorUIntToFloat(
 
 /// Converts an XMVECTOR with uint32_t components to an XMVECTOR with float components and applies a uniform bias.
 ///
-/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMConvertVectorUIntToFloat>
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMConvertVectorFloatToUInt>
 #[inline]
 pub fn XMConvertVectorFloatToUInt(
     VFloat: FXMVECTOR,

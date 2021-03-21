@@ -1119,7 +1119,7 @@ mod doc {
         // TODO: pub use crate::convert::XMLoadFloat3PK;
         // TODO: pub use crate::convert::XMLoadFloat3SE;
         pub use crate::convert::XMLoadFloat3x3;
-        // TODO: pub use crate::convert::XMLoadFloat3x4;
+        pub use crate::convert::XMLoadFloat3x4;
         // TODO: pub use crate::convert::XMLoadFloat3x4A;
         pub use crate::convert::XMLoadFloat4;
         pub use crate::convert::XMLoadFloat4A;
@@ -1185,11 +1185,11 @@ mod doc {
         // TODO: pub use crate::convert::XMStoreFloat3PK;
         // TODO: pub use crate::convert::XMStoreFloat3SE;
         pub use crate::convert::XMStoreFloat3x3;
-        // TODO: pub use crate::convert::XMStoreFloat3x4;
+        pub use crate::convert::XMStoreFloat3x4;
         // TODO: pub use crate::convert::XMStoreFloat3x4A;
         pub use crate::convert::XMStoreFloat4;
         pub use crate::convert::XMStoreFloat4A;
-        // TODO: pub use crate::convert::XMStoreFloat4x3;
+        pub use crate::convert::XMStoreFloat4x3;
         // TODO: pub use crate::convert::XMStoreFloat4x3A;
         pub use crate::convert::XMStoreFloat4x4;
         pub use crate::convert::XMStoreFloat4x4A;
