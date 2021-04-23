@@ -115,8 +115,9 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-      - name: Build and test (with specialization)
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --features=specialization
+      # https://github.com/rust-lang/rust/pull/83278
+      # - name: Build and test (with specialization)
+      #   uses: actions-rs/cargo@v1
+      #   with:
+      #     command: test
+      #     args: --features=specialization

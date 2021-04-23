@@ -2189,26 +2189,31 @@ impl<X: Permute, Y: Permute, Z: Permute, W: Permute> XMVectorPermute for (X, Y, 
 
     #[inline]
     fn XMVectorPermute(V1: XMVECTOR, V2: XMVECTOR) -> XMVECTOR {
-        #[cfg(any(_XM_SSE_INTRINSICS_, _XM_AVX_INTRINSICS_))]
-        unsafe {
-            let shuffled1: XMVECTOR = XM_PERMUTE_PS!(V1, Self::Shuffle);
-            let shuffled2: XMVECTOR = XM_PERMUTE_PS!(V2, Self::Shuffle);
+        // #[cfg(any(_XM_SSE_INTRINSICS_, _XM_AVX_INTRINSICS_))]
+        // unsafe {
+        //     let shuffled1: XMVECTOR = XM_PERMUTE_PS!(V1, Self::Shuffle);
+        //     let shuffled2: XMVECTOR = XM_PERMUTE_PS!(V2, Self::Shuffle);
 
-            let masked1: XMVECTOR = _mm_andnot_ps(Self::SelectMask.v, shuffled1);
-            let masked2: XMVECTOR = _mm_and_ps(Self::SelectMask.v, shuffled2);
+        //     let masked1: XMVECTOR = _mm_andnot_ps(Self::SelectMask.v, shuffled1);
+        //     let masked2: XMVECTOR = _mm_and_ps(Self::SelectMask.v, shuffled2);
 
-            return _mm_or_ps(masked1, masked2);
-        }
+        //     return _mm_or_ps(masked1, masked2);
+        // }
 
-        #[cfg(_XM_ARM_NEON_INTRINSICS_)]
-        {
-            unimplemented!()
-        }
+        // #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+        // {
+        //     unimplemented!()
+        // }
 
-        #[cfg(_XM_NO_INTRINSICS_)]
-        {
-            XMVectorPermute(V1, V2, X::PERMUTE, Y::PERMUTE, Z::PERMUTE, W::PERMUTE)
-        }
+        // #[cfg(_XM_NO_INTRINSICS_)]
+        // {
+        //     XMVectorPermute(V1, V2, X::PERMUTE, Y::PERMUTE, Z::PERMUTE, W::PERMUTE)
+        // }
+
+        // TODO: Re-visit this later when `const_evaluatable_checked` and `const_generics` are stabilized
+        // Breaking change with const-generics:
+        // https://github.com/rust-lang/rust/pull/83278
+        XMVectorPermute(V1, V2, X::PERMUTE, Y::PERMUTE, Z::PERMUTE, W::PERMUTE)
     }
 }
 
@@ -2488,20 +2493,25 @@ impl<X: Swizzle, Y: Swizzle, Z: Swizzle, W: Swizzle> XMVectorSwizzle for (X, Y, 
     #[inline(always)]
     #[cfg(not(nightly_specialization))]
     fn XMVectorSwizzle(V: XMVECTOR) -> XMVECTOR {
-        #[cfg(any(_XM_SSE_INTRINSICS_, _XM_AVX_INTRINSICS_))]
-        unsafe {
-            XM_PERMUTE_PS!(V, _MM_SHUFFLE(W::SWIZZLE, Z::SWIZZLE, Y::SWIZZLE, X::SWIZZLE))
-        }
+        // #[cfg(any(_XM_SSE_INTRINSICS_, _XM_AVX_INTRINSICS_))]
+        // unsafe {
+        //     XM_PERMUTE_PS!(V, _MM_SHUFFLE(W::SWIZZLE, Z::SWIZZLE, Y::SWIZZLE, X::SWIZZLE))
+        // }
 
-        #[cfg(_XM_ARM_NEON_INTRINSICS_)]
-        {
-            unimplemented!()
-        }
+        // #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+        // {
+        //     unimplemented!()
+        // }
 
-        #[cfg(_XM_NO_INTRINSICS_)]
-        {
-            XMVectorSwizzle(V, X::SWIZZLE, Y::SWIZZLE, Z::SWIZZLE, W::SWIZZLE)
-        }
+        // #[cfg(_XM_NO_INTRINSICS_)]
+        // {
+        //     XMVectorSwizzle(V, X::SWIZZLE, Y::SWIZZLE, Z::SWIZZLE, W::SWIZZLE)
+        // }
+
+        // TODO: Re-visit this later when `const_evaluatable_checked` and `const_generics` are stabilized
+        // Breaking change with const-generics:
+        // https://github.com/rust-lang/rust/pull/83278
+        XMVectorSwizzle(V, X::SWIZZLE, Y::SWIZZLE, Z::SWIZZLE, W::SWIZZLE)
     }
 
     #[inline(always)]
