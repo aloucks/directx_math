@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.3] - 2021-04-24
+## [0.2.2] - 2021-04-24
 ### Fixed
 - Disable optimized code paths for `XMVectorSwizzle` and `XMVectorPermute` traits. This is required
   due to a breaking change in [stdarch](https://github.com/rust-lang/rust/pull/83278). The optimized
@@ -98,7 +98,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Load/Store/Accessors
 - Plane
 
-[Unreleased]: https://github.com/aloucks/directx_math/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/aloucks/directx_math/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/aloucks/directx_math/releases/tag/v0.2.2
 [0.2.1]: https://github.com/aloucks/directx_math/releases/tag/v0.2.1
 [0.2.0]: https://github.com/aloucks/directx_math/releases/tag/v0.2.0
 [0.1.2]: https://github.com/aloucks/directx_math/releases/tag/v0.1.2
