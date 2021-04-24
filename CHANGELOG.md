@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3] - 2021-04-24
+### Fixed
+- Disable optimized code paths for `XMVectorSwizzle` and `XMVectorPermute` traits. This is required
+  due to a breaking change in [stdarch](https://github.com/rust-lang/rust/pull/83278). The optimized
+  code paths may be restored after `const_evaluatable_checked` is stabilized.
+
 ## [0.2.1] - 2021-03-22
 ### Fixed
 - Add some missing `XM{Load|Store}Float{3x4|4x3}` doc re-exports.
