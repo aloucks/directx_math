@@ -14,7 +14,7 @@ pub fn XMConvertVectorIntToFloat(VInt: FXMVECTOR, DivExponent: u32) -> XMVECTOR 
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
         let fScale = 1.0 / (1 >> DivExponent) as f32;
-        let mut Result: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut Result: XMVECTOR = crate::undefined();
         for ElementIndex in 0..4 {
             let iTemp = VInt.vector4_u32[ElementIndex];
             Result.vector4_f32[ElementIndex] = iTemp as f32 * fScale;
@@ -50,7 +50,7 @@ pub fn XMConvertVectorFloatToInt(VFloat: FXMVECTOR, MulExponent: u32) -> XMVECTO
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
         let fScale = (1u32 << MulExponent) as f32;
-        let mut Result: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut Result: XMVECTOR = crate::undefined();
         for ElementIndex in 0..4 {
             let iResult: i32;
             let fTemp: f32 = VFloat.vector4_f32[ElementIndex] * fScale;
@@ -106,7 +106,7 @@ pub fn XMConvertVectorUIntToFloat(
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
         let fScale = 1.0 / (1u32 << DivExponent) as f32;
-        let mut Result: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut Result: XMVECTOR = crate::undefined();
         for ElementIndex in 0..4 {
             Result.vector4_f32[ElementIndex] = (VUInt.vector4_u32[ElementIndex] as f32) * fScale;
         }
@@ -156,7 +156,7 @@ pub fn XMConvertVectorFloatToUInt(
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
         let fScale = (1u32 << MulExponent) as f32;
-        let mut Result: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut Result: XMVECTOR = crate::undefined();
         for ElementIndex in 0..4 {
             let uResult: u32;
             let fTemp: f32 = VFloat.vector4_f32[ElementIndex] * fScale;
@@ -219,7 +219,7 @@ pub fn XMLoadInt2(
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut V: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut V: XMVECTOR = crate::undefined();
         V.vector4_u32[0] = pSource[0];
         V.vector4_u32[1] = pSource[1];
         V.vector4_u32[2] = 0;
@@ -265,7 +265,7 @@ pub fn XMLoadFloat2(
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut V: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut V: XMVECTOR = crate::undefined();
         V.vector4_f32[0] = pSource.x;
         V.vector4_f32[1] = pSource.y;
         V.vector4_f32[2] = 0.0;
@@ -298,7 +298,7 @@ pub fn XMLoadInt3(
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut V: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut V: XMVECTOR = crate::undefined();
         V.vector4_u32[0] = pSource[0];
         V.vector4_u32[1] = pSource[1];
         V.vector4_u32[2] = pSource[2];
@@ -355,7 +355,7 @@ pub fn XMLoadFloat3(
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut V: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut V: XMVECTOR = crate::undefined();
         V.vector4_f32[0] = pSource.x;
         V.vector4_f32[1] = pSource.y;
         V.vector4_f32[2] = pSource.z;
@@ -402,7 +402,7 @@ pub fn XMLoadFloat3A(
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut V: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut V: XMVECTOR = crate::undefined();
         V.vector4_f32[0] = pSource.x;
         V.vector4_f32[1] = pSource.y;
         V.vector4_f32[2] = pSource.z;
@@ -444,7 +444,7 @@ fn test_XMLoadFloat3A() {
 // {
 //     #[cfg(_XM_NO_INTRINSICS_)]
 //     unsafe {
-//         let mut V: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+//         let mut V: XMVECTOR = crate::undefined();
 //         V.vector4_f32[0] = (pSource.x as f32);
 //         V.vector4_f32[1] = (pSource.y as f32);
 //         V.vector4_f32[2] = (pSource.z as f32);
@@ -494,7 +494,7 @@ pub fn XMLoadInt4(
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut V: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut V: XMVECTOR = crate::undefined();
         V.vector4_u32[0] = pSource[0];
         V.vector4_u32[1] = pSource[1];
         V.vector4_u32[2] = pSource[2];
@@ -545,7 +545,7 @@ pub fn XMLoadFloat4(
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut V: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut V: XMVECTOR = crate::undefined();
         V.vector4_f32[0] = pSource.x;
         V.vector4_f32[1] = pSource.y;
         V.vector4_f32[2] = pSource.z;
@@ -583,7 +583,7 @@ pub fn XMLoadFloat4A(
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut V: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut V: XMVECTOR = crate::undefined();
         V.vector4_f32[0] = pSource.x;
         V.vector4_f32[1] = pSource.y;
         V.vector4_f32[2] = pSource.z;
@@ -624,7 +624,7 @@ pub fn XMLoadFloat3x3(
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut M: XMMATRIX  = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX  = crate::undefined();
         M.r[0].vector4_f32[0] = pSource.m[0][0];
         M.r[0].vector4_f32[1] = pSource.m[0][1];
         M.r[0].vector4_f32[2] = pSource.m[0][2];
@@ -666,7 +666,7 @@ pub fn XMLoadFloat3x3(
         let T4: __m128 = _mm_movehl_ps(T2, T3);
         let T5: __m128 = _mm_movehl_ps(Z, T1);
 
-        let mut M: XMMATRIX  = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX  = crate::undefined();
         M.r[0] = _mm_movelh_ps(V1, T1);
         M.r[1] = _mm_add_ps(T4, T5);
         M.r[2] = _mm_shuffle_ps(V2, V3, _MM_SHUFFLE(1, 0, 3, 2));
@@ -727,7 +727,7 @@ pub fn XMLoadFloat4x3(
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         M.r[0].vector4_f32[0] = pSource.m[0][0];
         M.r[0].vector4_f32[1] = pSource.m[0][1];
         M.r[0].vector4_f32[2] = pSource.m[0][2];
@@ -841,7 +841,7 @@ pub fn XMLoadFloat3x4(
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         M.r[0].vector4_f32[0] = pSource.m[0][0];
         M.r[0].vector4_f32[1] = pSource.m[1][0];
         M.r[0].vector4_f32[2] = pSource.m[2][0];
@@ -871,7 +871,7 @@ pub fn XMLoadFloat3x4(
 
     #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         M.r[0] = _mm_loadu_ps(&pSource.m[0][0]);
         M.r[1] = _mm_loadu_ps(&pSource.m[1][0]);
         M.r[2] = _mm_loadu_ps(&pSource.m[2][0]);
@@ -886,7 +886,7 @@ pub fn XMLoadFloat3x4(
         // z.z,z.w,w.z,w.w
         let vTemp4: XMVECTOR = _mm_shuffle_ps(M.r[2], M.r[3], _MM_SHUFFLE(3, 2, 3, 2));
 
-        let mut mResult: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut mResult: XMMATRIX = crate::undefined();
 
         // x.x,y.x,z.x,w.x
         mResult.r[0] = _mm_shuffle_ps(vTemp1, vTemp2, _MM_SHUFFLE(2, 0, 2, 0));
@@ -912,7 +912,7 @@ pub fn XMLoadFloat4x4(
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut M: XMMATRIX  = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX  = crate::undefined();
         M.r[0].vector4_f32[0] = pSource.m[0][0];
         M.r[0].vector4_f32[1] = pSource.m[0][1];
         M.r[0].vector4_f32[2] = pSource.m[0][2];
@@ -942,7 +942,7 @@ pub fn XMLoadFloat4x4(
 
     #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {
-        let mut M: XMMATRIX  = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX  = crate::undefined();
         M.r[0] = _mm_loadu_ps(&pSource.m[0][0]); // _11
         M.r[1] = _mm_loadu_ps(&pSource.m[1][0]); // _21
         M.r[2] = _mm_loadu_ps(&pSource.m[2][0]); // _31
@@ -961,7 +961,7 @@ pub fn XMLoadFloat4x4A(
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut M: XMMATRIX  = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX  = crate::undefined();
         M.r[0].vector4_f32[0] = pSource.m[0][0];
         M.r[0].vector4_f32[1] = pSource.m[0][1];
         M.r[0].vector4_f32[2] = pSource.m[0][2];
@@ -991,7 +991,7 @@ pub fn XMLoadFloat4x4A(
 
     #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {
-        let mut M: XMMATRIX  = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX  = crate::undefined();
         M.r[0] = _mm_load_ps(&pSource.m[0][0]); // _11
         M.r[1] = _mm_load_ps(&pSource.m[1][0]); // _21
         M.r[2] = _mm_load_ps(&pSource.m[2][0]); // _31

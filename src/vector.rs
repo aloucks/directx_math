@@ -134,7 +134,7 @@ pub fn XMVectorSetInt(
 pub fn XMVectorReplicate(Value: f32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut vResult: XMVECTORF32 = mem::MaybeUninit::uninit().assume_init();
+        let mut vResult: XMVECTORF32 = crate::undefined();
         vResult.f[0] = Value;
         vResult.f[1] = Value;
         vResult.f[2] = Value;
@@ -160,7 +160,7 @@ pub fn XMVectorReplicate(Value: f32) -> XMVECTOR {
 pub fn XMVectorReplicatePtr(pValue: &f32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut vResult: XMVECTORF32 = mem::MaybeUninit::uninit().assume_init();
+        let mut vResult: XMVECTORF32 = crate::undefined();
         let Value = *pValue;
         vResult.f[0] = Value;
         vResult.f[1] = Value;
@@ -192,7 +192,7 @@ pub fn XMVectorReplicatePtr(pValue: &f32) -> XMVECTOR {
 pub fn XMVectorReplicateInt(Value: u32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut vResult: XMVECTORU32 = mem::MaybeUninit::uninit().assume_init();
+        let mut vResult: XMVECTORU32 = crate::undefined();
         vResult.u[0] = Value;
         vResult.u[1] = Value;
         vResult.u[2] = Value;
@@ -276,7 +276,7 @@ pub fn XMVectorFalseInt() -> XMVECTOR {
 pub fn XMVectorSplatX(V: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut vResult: XMVECTORF32 = mem::MaybeUninit::uninit().assume_init();
+        let mut vResult: XMVECTORF32 = crate::undefined();
         vResult.f[0] = V.vector4_f32[0];
         vResult.f[1] = V.vector4_f32[0];
         vResult.f[2] = V.vector4_f32[0];
@@ -317,7 +317,7 @@ pub fn XMVectorSplatX(V: FXMVECTOR) -> XMVECTOR {
 pub fn XMVectorSplatY(V: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut vResult: XMVECTORF32 = mem::MaybeUninit::uninit().assume_init();
+        let mut vResult: XMVECTORF32 = crate::undefined();
         vResult.f[0] = V.vector4_f32[1];
         vResult.f[1] = V.vector4_f32[1];
         vResult.f[2] = V.vector4_f32[1];
@@ -353,7 +353,7 @@ pub fn XMVectorSplatY(V: FXMVECTOR) -> XMVECTOR {
 pub fn XMVectorSplatZ(V: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut vResult: XMVECTORF32 = mem::MaybeUninit::uninit().assume_init();
+        let mut vResult: XMVECTORF32 = crate::undefined();
         vResult.f[0] = V.vector4_f32[2];
         vResult.f[1] = V.vector4_f32[2];
         vResult.f[2] = V.vector4_f32[2];
@@ -389,7 +389,7 @@ pub fn XMVectorSplatZ(V: FXMVECTOR) -> XMVECTOR {
 pub fn XMVectorSplatW(V: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut vResult: XMVECTORF32 = mem::MaybeUninit::uninit().assume_init();
+        let mut vResult: XMVECTORF32 = crate::undefined();
         vResult.f[0] = V.vector4_f32[3];
         vResult.f[1] = V.vector4_f32[3];
         vResult.f[2] = V.vector4_f32[3];
@@ -421,7 +421,7 @@ pub fn XMVectorSplatW(V: FXMVECTOR) -> XMVECTOR {
 pub fn XMVectorSplatOne() -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut vResult: XMVECTORF32 = mem::MaybeUninit::uninit().assume_init();
+        let mut vResult: XMVECTORF32 = crate::undefined();
         vResult.f[0] = 1.0;
         vResult.f[1] = 1.0;
         vResult.f[2] = 1.0;
@@ -453,7 +453,7 @@ pub fn XMVectorSplatOne() -> XMVECTOR {
 pub fn XMVectorSplatInfinity() -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut vResult: XMVECTORU32 = mem::MaybeUninit::uninit().assume_init();
+        let mut vResult: XMVECTORU32 = crate::undefined();
         vResult.u[0] = 0x7F800000;
         vResult.u[1] = 0x7F800000;
         vResult.u[2] = 0x7F800000;
@@ -485,7 +485,7 @@ pub fn XMVectorSplatInfinity() -> XMVECTOR {
 pub fn XMVectorSplatQNaN() -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut vResult: XMVECTORU32 = mem::MaybeUninit::uninit().assume_init();
+        let mut vResult: XMVECTORU32 = crate::undefined();
         vResult.u[0] = 0x7FC00000;
         vResult.u[1] = 0x7FC00000;
         vResult.u[2] = 0x7FC00000;
@@ -517,7 +517,7 @@ pub fn XMVectorSplatQNaN() -> XMVECTOR {
 pub fn XMVectorSplatEpsilon() -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut vResult: XMVECTORU32 = mem::MaybeUninit::uninit().assume_init();
+        let mut vResult: XMVECTORU32 = crate::undefined();
         vResult.u[0] = 0x34000000;
         vResult.u[1] = 0x34000000;
         vResult.u[2] = 0x34000000;
@@ -543,7 +543,7 @@ pub fn XMVectorSplatEpsilon() -> XMVECTOR {
 pub fn XMVectorSplatSignMask() -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut vResult: XMVECTORU32 = mem::MaybeUninit::uninit().assume_init();
+        let mut vResult: XMVECTORU32 = crate::undefined();
         vResult.u[0] = 0x80000000u32;
         vResult.u[1] = 0x80000000u32;
         vResult.u[2] = 0x80000000u32;
@@ -582,7 +582,7 @@ pub fn XMVectorGetByIndex(V: XMVECTOR, i: usize) -> f32 {
 
     #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {
-        let mut U: XMVECTORF32 = mem::MaybeUninit::uninit().assume_init();
+        let mut U: XMVECTORF32 = crate::undefined();
         U.v = V;
         return U.f[i];
     }
@@ -858,7 +858,7 @@ pub fn XMVectorGetIntByIndex(V: XMVECTOR, i: usize) -> u32 {
 
     #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {
-        let mut U: XMVECTORU32 = mem::MaybeUninit::uninit().assume_init();
+        let mut U: XMVECTORU32 = crate::undefined();
         U.v = V;
         return U.u[i];
     }
@@ -1023,7 +1023,7 @@ pub fn XMVectorSetByIndex(V: XMVECTOR, f: f32, i: usize) -> XMVECTOR {
     debug_assert!(i < 4);
 
     unsafe {
-        let mut U: XMVECTORF32 = mem::MaybeUninit::uninit().assume_init();
+        let mut U: XMVECTORF32 = crate::undefined();
         U.v = V;
         U.f[i] = f;
         return U.v;
@@ -1263,7 +1263,7 @@ pub fn XMVectorSetIntByIndex(V: XMVECTOR, x: u32, i: usize) -> XMVECTOR {
     // debug_assert!(i < 4);
 
     unsafe {
-        let mut U: XMVECTORU32 = mem::MaybeUninit::uninit().assume_init();
+        let mut U: XMVECTORU32 = crate::undefined();
         U.v = V;
         U.u[i] = x;
         return U.v;
@@ -1575,7 +1575,7 @@ pub fn XMVectorSwizzle(
     unsafe {
         let aPtr = mem::transmute::<_, *const u32>(&V);
 
-        let mut Result: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut Result: XMVECTOR = crate::undefined();
 
         let pWork = mem::transmute::<_, *mut u32>(&mut Result);
 
@@ -1675,7 +1675,7 @@ pub fn XMVectorPermute(
             mem::transmute(&V2),
         ];
 
-        let mut Result: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut Result: XMVECTOR = crate::undefined();
 
         let pWork = mem::transmute::<_, *mut u32>(&mut Result);
 
@@ -1793,7 +1793,7 @@ pub fn XMVectorSelectControl(
 
     #[cfg(not(any(_XM_SSE_INTRINSICS_, _XM_ARM_NEON_INTRINSICS_)))]
     unsafe {
-        let mut ControlVector: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut ControlVector: XMVECTOR = crate::undefined();
         let ControlElement: [u32; 2] = [
             XM_SELECT_0,
             XM_SELECT_1,
@@ -3212,7 +3212,7 @@ pub fn XMVectorRound(V: FXMVECTOR) -> XMVECTOR {
 pub fn XMVectorTruncate(V: FXMVECTOR) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut Result: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut Result: XMVECTOR = crate::undefined();
 
         for i in 0..4 {
             if (XMISNAN!(V.vector4_f32[i]))
@@ -4727,8 +4727,8 @@ pub fn XMVectorPow(
 
     #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {
-        let mut a: Align16<[f32; 4]> = mem::MaybeUninit::uninit().assume_init();
-        let mut b: Align16<[f32; 4]> = mem::MaybeUninit::uninit().assume_init();
+        let mut a: Align16<[f32; 4]> = crate::undefined();
+        let mut b: Align16<[f32; 4]> = crate::undefined();
         _mm_store_ps(a.as_mut_ptr(), V1);
         _mm_store_ps(b.as_mut_ptr(), V2);
         let vResult: XMVECTOR = _mm_setr_ps(
@@ -7801,7 +7801,7 @@ pub fn XMVector2Dot(
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
         let fDot: f32 = V1.vector4_f32[0] * V2.vector4_f32[0] + V1.vector4_f32[1] * V2.vector4_f32[1];
-        let mut Result: XMVECTORF32 = mem::MaybeUninit::uninit().assume_init();
+        let mut Result: XMVECTORF32 = crate::undefined();
         Result.f[0] = fDot;
         Result.f[1] = fDot;
         Result.f[2] = fDot;
@@ -7870,7 +7870,7 @@ pub fn XMVector2Cross(
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
         let fCross: f32 = (V1.vector4_f32[0] * V2.vector4_f32[1]) - (V1.vector4_f32[1] * V2.vector4_f32[0]);
-        let mut Result: XMVECTORF32 = mem::MaybeUninit::uninit().assume_init();
+        let mut Result: XMVECTORF32 = crate::undefined();
         Result.f[0] = fCross;
         Result.f[1] = fCross;
         Result.f[2] = fCross;
@@ -8524,7 +8524,7 @@ pub fn XMVector2RefractV(
             RY = 0.0;
         }
 
-        let mut vResult: XMVECTOR = uninitialized();
+        let mut vResult: XMVECTOR = crate::undefined();
         vResult.vector4_f32[0] = RX;
         vResult.vector4_f32[1] = RY;
         vResult.vector4_f32[2] = 0.0;
@@ -9663,7 +9663,7 @@ pub fn XMVector3Dot(
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
         let fValue: f32 = V1.vector4_f32[0] * V2.vector4_f32[0] + V1.vector4_f32[1] * V2.vector4_f32[1] + V1.vector4_f32[2] * V2.vector4_f32[2];
-        let mut vResult: XMVECTORF32 = mem::MaybeUninit::uninit().assume_init();
+        let mut vResult: XMVECTORF32 = crate::undefined();
         vResult.f[0] = fValue;
         vResult.f[1] = fValue;
         vResult.f[2] = fValue;
@@ -11173,7 +11173,7 @@ pub fn XMVector3Unproject(
 
     let mut Transform: XMMATRIX = XMMatrixMultiply(*World, View);
     Transform = XMMatrixMultiply(Transform, &Projection);
-    let mut det = unsafe { mem::MaybeUninit::uninit().assume_init() };
+    let mut det = unsafe { crate::undefined() };
     Transform = XMMatrixInverse(Some(&mut det), Transform);
 
     let Result: XMVECTOR = XMVectorMultiplyAdd(V, Scale, Offset);
@@ -11829,7 +11829,7 @@ pub fn XMVector4Dot(
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
         let Value = V1.vector4_f32[0] * V2.vector4_f32[0] + V1.vector4_f32[1] * V2.vector4_f32[1] + V1.vector4_f32[2] * V2.vector4_f32[2] + V1.vector4_f32[3] * V2.vector4_f32[3];
-        let mut vResult: XMVECTORF32 = mem::MaybeUninit::uninit().assume_init();
+        let mut vResult: XMVECTORF32 = crate::undefined();
         vResult.f[0] = Value;
         vResult.f[1] = Value;
         vResult.f[2] = Value;

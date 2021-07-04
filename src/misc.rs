@@ -589,8 +589,8 @@ pub fn XMQuaternionExp(
     unsafe {
         let Theta: XMVECTOR = XMVector3Length(Q);
 
-        let mut SinTheta: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
-        let mut CosTheta: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut SinTheta: XMVECTOR = crate::undefined();
+        let mut CosTheta: XMVECTOR = crate::undefined();
         XMVectorSinCos(&mut SinTheta, &mut CosTheta, Theta);
 
         let S: XMVECTOR = XMVectorDivide(SinTheta, Theta);
@@ -1296,8 +1296,8 @@ pub fn XMQuaternionRotationRollPitchYawFromVector(
 
         let HalfAngles: XMVECTOR = XMVectorMultiply(Angles, g_XMOneHalf.v);
 
-        let mut SinAngles: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
-        let mut CosAngles: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut SinAngles: XMVECTOR = crate::undefined();
+        let mut CosAngles: XMVECTOR = crate::undefined();
         XMVectorSinCos(&mut SinAngles, &mut CosAngles, HalfAngles);
 
         // TODO: PERFORMANCE XMVectorPermute
@@ -1370,8 +1370,8 @@ pub fn XMQuaternionRotationNormal(
         let mut N: XMVECTOR = _mm_and_ps(NormalAxis, g_XMMask3.v);
         N = _mm_or_ps(N, g_XMIdentityR3.v);
         let mut Scale: XMVECTOR = _mm_set_ps1(0.5 * Angle);
-        let mut vSine: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
-        let mut vCosine: XMVECTOR = mem::MaybeUninit::uninit().assume_init();
+        let mut vSine: XMVECTOR = crate::undefined();
+        let mut vCosine: XMVECTOR = crate::undefined();
         XMVectorSinCos(&mut vSine, &mut vCosine, Scale);
         Scale = _mm_and_ps(vSine, g_XMMask3.v);
         vCosine = _mm_and_ps(vCosine, g_XMMaskW.v);
@@ -1450,7 +1450,7 @@ pub fn XMQuaternionRotationMatrix(
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut q: XMVECTORF32 = mem::MaybeUninit::uninit().assume_init();
+        let mut q: XMVECTORF32 = crate::undefined();
         let r22: f32 = M.m[2][2];
         if (r22 <= 0.0)  // x^2 + y^2 >= z^2 + w^2
         {

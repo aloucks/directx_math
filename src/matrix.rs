@@ -255,7 +255,7 @@ pub fn XMMatrixMultiply(
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut mResult: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut mResult: XMMATRIX = crate::undefined();
         // Cache the invariants in registers
         let mut x: f32 = M1.m[0][0];
         let mut y: f32 = M1.m[0][1];
@@ -338,7 +338,7 @@ pub fn XMMatrixMultiply(
         t0 = _mm256_add_ps(c2, c6);
         t1 = _mm256_add_ps(c3, c7);
 
-        let mut mResult: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut mResult: XMMATRIX = crate::undefined();
         mResult.r[0] = _mm256_castps256_ps128(t0);
         mResult.r[1] = _mm256_extractf128_ps(t0, 1);
         mResult.r[2] = _mm256_castps256_ps128(t1);
@@ -348,7 +348,7 @@ pub fn XMMatrixMultiply(
 
     #[cfg(all(_XM_AVX_INTRINSICS_, not(_XM_AVX2_INTRINSICS_)))]
     unsafe {
-        let mut mResult: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut mResult: XMMATRIX = crate::undefined();
 
         // Splat the component X,Y,Z then W
         let mut vX: XMVECTOR = _mm_broadcast_ss(&*mem::transmute::<_, *const f32>(&idx!(f32x4(M1.r[0])[0])));
@@ -417,7 +417,7 @@ pub fn XMMatrixMultiply(
 
     #[cfg(all(_XM_SSE_INTRINSICS_, not(_XM_AVX_INTRINSICS_), not(_XM_AVX2_INTRINSICS_)))]
     unsafe {
-        let mut mResult: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut mResult: XMMATRIX = crate::undefined();
 
         // Use vW to hold the original row
         let mut vW: XMVECTOR = M1.r[0];
@@ -555,7 +555,7 @@ pub fn XMMatrixMultiplyTranspose(
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut mResult: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut mResult: XMMATRIX = crate::undefined();
         // Cache the invariants in registers
         let mut x: f32 = M2.m[0][0];
         let mut y: f32 = M2.m[1][0];
@@ -648,7 +648,7 @@ pub fn XMMatrixMultiplyTranspose(
         t0 = _mm256_permute2f128_ps(vTemp, vTemp2, 0x20);
         t1 = _mm256_permute2f128_ps(vTemp, vTemp2, 0x31);
 
-        let mut mResult: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut mResult: XMMATRIX = crate::undefined();
         mResult.r[0] = _mm256_castps256_ps128(t0);
         mResult.r[1] = _mm256_extractf128_ps(t0, 1);
         mResult.r[2] = _mm256_castps256_ps128(t1);
@@ -731,7 +731,7 @@ pub fn XMMatrixMultiplyTranspose(
         // z.z,z.w,w.z,w.w
         let vTemp4: XMVECTOR = _mm_shuffle_ps(r2, r3, _MM_SHUFFLE(3, 2, 3, 2));
 
-        let mut mResult: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut mResult: XMMATRIX = crate::undefined();
         // x.x,y.x,z.x,w.x
         mResult.r[0] = _mm_shuffle_ps(vTemp1, vTemp2, _MM_SHUFFLE(2, 0, 2, 0));
         // x.y,y.y,z.y,w.y
@@ -819,7 +819,7 @@ pub fn XMMatrixMultiplyTranspose(
         // z.z,z.w,w.z,w.w
         let vTemp4: XMVECTOR = _mm_shuffle_ps(r2, r3, _MM_SHUFFLE(3, 2, 3, 2));
 
-        let mut mResult: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut mResult: XMMATRIX = crate::undefined();
         // x.x,y.x,z.x,w.x
         mResult.r[0] = _mm_shuffle_ps(vTemp1, vTemp2, _MM_SHUFFLE(2, 0, 2, 0));
         // x.y,y.y,z.y,w.y
@@ -907,13 +907,13 @@ pub fn XMMatrixTranspose(
         //     m20m21m22m23
         //     m30m31m32m33
 
-        let mut P: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut P: XMMATRIX = crate::undefined();
         P.r[0] = XMVectorMergeXY(M.r[0], M.r[2]); // m00m20m01m21
         P.r[1] = XMVectorMergeXY(M.r[1], M.r[3]); // m10m30m11m31
         P.r[2] = XMVectorMergeZW(M.r[0], M.r[2]); // m02m22m03m23
         P.r[3] = XMVectorMergeZW(M.r[1], M.r[3]); // m12m32m13m33
 
-        let mut MT: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut MT: XMMATRIX = crate::undefined();
         MT.r[0] = XMVectorMergeXY(P.r[0], P.r[1]); // m00m10m20m30
         MT.r[1] = XMVectorMergeZW(P.r[0], P.r[1]); // m01m11m21m31
         MT.r[2] = XMVectorMergeXY(P.r[2], P.r[3]); // m02m12m22m32
@@ -942,7 +942,7 @@ pub fn XMMatrixTranspose(
         t0 = _mm256_permute2f128_ps(vTemp, vTemp2, 0x20);
         t1 = _mm256_permute2f128_ps(vTemp, vTemp2, 0x31);
 
-        let mut mResult: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut mResult: XMMATRIX = crate::undefined();
         mResult.r[0] = _mm256_castps256_ps128(t0);
         mResult.r[1] = _mm256_extractf128_ps(t0, 1);
         mResult.r[2] = _mm256_castps256_ps128(t1);
@@ -961,7 +961,7 @@ pub fn XMMatrixTranspose(
         // z.z,z.w,w.z,w.w
         let vTemp4: XMVECTOR = _mm_shuffle_ps(M.r[2], M.r[3], _MM_SHUFFLE(3, 2, 3, 2));
 
-        let mut mResult: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut mResult: XMMATRIX = crate::undefined();
         // x.x,y.x,z.x,w.x
         mResult.r[0] = _mm_shuffle_ps(vTemp1, vTemp2, _MM_SHUFFLE(2, 0, 2, 0));
         // x.y,y.y,z.y,w.y
@@ -1001,8 +1001,8 @@ pub fn XMMatrixInverse(
     unsafe {
         let MT: XMMATRIX = XMMatrixTranspose(M);
 
-        let mut V0: [XMVECTOR; 4] = mem::MaybeUninit::uninit().assume_init();
-        let mut V1: [XMVECTOR; 4] = mem::MaybeUninit::uninit().assume_init();
+        let mut V0: [XMVECTOR; 4] = crate::undefined();
+        let mut V1: [XMVECTOR; 4] = crate::undefined();
         V0[0] = <(XM_SWIZZLE_X, XM_SWIZZLE_X, XM_SWIZZLE_Y, XM_SWIZZLE_Y)>::XMVectorSwizzle(MT.r[2]);
         V1[0] = <(XM_SWIZZLE_Z, XM_SWIZZLE_W, XM_SWIZZLE_Z, XM_SWIZZLE_W)>::XMVectorSwizzle(MT.r[3]);
         V0[1] = <(XM_SWIZZLE_X, XM_SWIZZLE_X, XM_SWIZZLE_Y, XM_SWIZZLE_Y)>::XMVectorSwizzle(MT.r[0]);
@@ -1071,7 +1071,7 @@ pub fn XMMatrixInverse(
         let C7: XMVECTOR = XMVectorMultiplyAdd(V0[3], V1[3], C6);
         C6 = XMVectorNegativeMultiplySubtract(V0[3], V1[3], C6);
 
-        let mut R: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut R: XMMATRIX = crate::undefined();
         R.r[0] = XMVectorSelect(C0, C1, g_XMSelect0101.v);
         R.r[1] = XMVectorSelect(C2, C3, g_XMSelect0101.v);
         R.r[2] = XMVectorSelect(C4, C5, g_XMSelect0101.v);
@@ -1086,7 +1086,7 @@ pub fn XMMatrixInverse(
 
         let Reciprocal: XMVECTOR = XMVectorReciprocal(Determinant);
 
-        let mut Result: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut Result: XMMATRIX = crate::undefined();
         Result.r[0] = XMVectorMultiply(R.r[0], Reciprocal);
         Result.r[1] = XMVectorMultiply(R.r[1], Reciprocal);
         Result.r[2] = XMVectorMultiply(R.r[2], Reciprocal);
@@ -1102,7 +1102,7 @@ pub fn XMMatrixInverse(
         let vTemp2: XMVECTOR = _mm_shuffle_ps(M.r[2], M.r[3], _MM_SHUFFLE(1, 0, 1, 0));
         let vTemp4: XMVECTOR = _mm_shuffle_ps(M.r[2], M.r[3], _MM_SHUFFLE(3, 2, 3, 2));
 
-        let mut MT: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut MT: XMMATRIX = crate::undefined();
         MT.r[0] = _mm_shuffle_ps(vTemp1, vTemp2, _MM_SHUFFLE(2, 0, 2, 0));
         MT.r[1] = _mm_shuffle_ps(vTemp1, vTemp2, _MM_SHUFFLE(3, 1, 3, 1));
         MT.r[2] = _mm_shuffle_ps(vTemp3, vTemp4, _MM_SHUFFLE(2, 0, 2, 0));
@@ -1211,7 +1211,7 @@ pub fn XMMatrixInverse(
         }
 
         vTemp = _mm_div_ps(g_XMOne.v, vTemp);
-        let mut mResult: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut mResult: XMMATRIX = crate::undefined();
         mResult.r[0] = _mm_mul_ps(C0, vTemp);
         mResult.r[1] = _mm_mul_ps(C2, vTemp);
         mResult.r[2] = _mm_mul_ps(C4, vTemp);
@@ -1230,7 +1230,7 @@ pub fn XMMatrixVectorTensorProduct(
 ) -> XMMATRIX
 {
     unsafe {
-        let mut mResult: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut mResult: XMMATRIX = crate::undefined();
         type _0 = XM_SWIZZLE_X;
         type _1 = XM_SWIZZLE_Y;
         type _2 = XM_SWIZZLE_Z;
@@ -1377,8 +1377,8 @@ pub fn XMMatrixDecompose(
         // Get the translation
         *outTrans = M.r[3];
 
-        let mut ppvBasis: [*mut XMVECTOR; 3] = mem::MaybeUninit::uninit().assume_init();
-        let mut matTemp: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut ppvBasis: [*mut XMVECTOR; 3] = [std::ptr::null_mut(); 3];
+        let mut matTemp: XMMATRIX = crate::undefined();
         ppvBasis[0] = &mut matTemp.r[0];
         ppvBasis[1] = &mut matTemp.r[1];
         ppvBasis[2] = &mut matTemp.r[2];
@@ -1509,7 +1509,7 @@ fn test_XMMatrixDecompose() {
 pub fn XMMatrixIdentity() -> XMMATRIX
 {
     unsafe {
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         M.r[0] = g_XMIdentityR0.v;
         M.r[1] = g_XMIdentityR1.v;
         M.r[2] = g_XMIdentityR2.v;
@@ -1569,7 +1569,7 @@ pub fn XMMatrixSet(
     m30: f32, m31: f32, m32: f32, m33: f32
 ) -> XMMATRIX
 {
-    let mut M: XMMATRIX = unsafe { mem::MaybeUninit::uninit().assume_init() };
+    let mut M: XMMATRIX = unsafe { crate::undefined() };
 
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -1614,7 +1614,7 @@ pub fn XMMatrixTranslation(
     OffsetZ: f32,
 ) -> XMMATRIX
 {
-    let mut M: XMMATRIX = unsafe { mem::MaybeUninit::uninit().assume_init() };
+    let mut M: XMMATRIX = unsafe { crate::undefined() };
 
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
@@ -1670,7 +1670,7 @@ pub fn XMMatrixTranslationFromVector(
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         M.m[0][0] = 1.0;
         M.m[0][1] = 0.0;
         M.m[0][2] = 0.0;
@@ -1695,7 +1695,7 @@ pub fn XMMatrixTranslationFromVector(
 
     #[cfg(any(_XM_SSE_INTRINSICS_, _XM_ARM_NEON_INTRINSICS_))]
     unsafe {
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         M.r[0] = g_XMIdentityR0.v;
         M.r[1] = g_XMIdentityR1.v;
         M.r[2] = g_XMIdentityR2.v;
@@ -1730,7 +1730,7 @@ pub fn XMMatrixScaling(
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         M.m[0][0] = ScaleX;
         M.m[0][1] = 0.0;
         M.m[0][2] = 0.0;
@@ -1760,7 +1760,7 @@ pub fn XMMatrixScaling(
 
     #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         M.r[0] = _mm_set_ps(0.0, 0.0, 0.0, ScaleX);
         M.r[1] = _mm_set_ps(0.0, 0.0, ScaleY, 0.0);
         M.r[2] = _mm_set_ps(0.0, ScaleZ, 0.0, 0.0);
@@ -1789,7 +1789,7 @@ pub fn XMMatrixScalingFromVector(
 {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         M.m[0][0] = Scale.vector4_f32[0];
         M.m[0][1] = 0.0;
         M.m[0][2] = 0.0;
@@ -1819,7 +1819,7 @@ pub fn XMMatrixScalingFromVector(
 
     #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         M.r[0] = _mm_and_ps(Scale, *g_XMMaskX);
         M.r[1] = _mm_and_ps(Scale, *g_XMMaskY);
         M.r[2] = _mm_and_ps(Scale, *g_XMMaskZ);
@@ -1853,7 +1853,7 @@ pub fn XMMatrixRotationX(
         let mut fCosAngle: f32 = 0.0;
         XMScalarSinCos(&mut fSinAngle, &mut fCosAngle, Angle);
 
-        let mut M: XMMATRIX = uninitialized();
+        let mut M: XMMATRIX = crate::undefined();
         M.m[0][0] = 1.0;
         M.m[0][1] = 0.0;
         M.m[0][2] = 0.0;
@@ -1891,7 +1891,7 @@ pub fn XMMatrixRotationX(
         let mut vCos: XMVECTOR = _mm_set_ss(CosAngle);
         // x = 0,y = cos,z = sin, w = 0
         vCos = _mm_shuffle_ps(vCos, vSin, _MM_SHUFFLE(3, 0, 0, 3));
-        let mut M: XMMATRIX = uninitialized();
+        let mut M: XMMATRIX = undefined();
         M.r[0] = g_XMIdentityR0.v;
         M.r[1] = vCos;
         // x = 0,y = sin,z = cos, w = 0
@@ -1929,7 +1929,7 @@ pub fn XMMatrixRotationY(
         let mut fCosAngle: f32 = 0.0;
         XMScalarSinCos(&mut fSinAngle, &mut fCosAngle, Angle);
 
-        let mut M: XMMATRIX = uninitialized();
+        let mut M: XMMATRIX = crate::undefined();
         M.m[0][0] = fCosAngle;
         M.m[0][1] = 0.0;
         M.m[0][2] = -fSinAngle;
@@ -1967,7 +1967,7 @@ pub fn XMMatrixRotationY(
         let vCos: XMVECTOR = _mm_set_ss(CosAngle);
         // x = sin,y = 0,z = cos, w = 0
         vSin = _mm_shuffle_ps(vSin, vCos, _MM_SHUFFLE(3, 0, 3, 0));
-        let mut M: XMMATRIX = uninitialized();
+        let mut M: XMMATRIX = undefined();
         M.r[2] = vSin;
         M.r[1] = g_XMIdentityR1.v;
         // x = cos,y = 0,z = sin, w = 0
@@ -2005,7 +2005,7 @@ pub fn XMMatrixRotationZ(
         let mut fCosAngle: f32 = 0.0;
         XMScalarSinCos(&mut fSinAngle, &mut fCosAngle, Angle);
 
-        let mut M: XMMATRIX = uninitialized();
+        let mut M: XMMATRIX = crate::undefined();
         M.m[0][0] = fCosAngle;
         M.m[0][1] = fSinAngle;
         M.m[0][2] = 0.0;
@@ -2043,7 +2043,7 @@ pub fn XMMatrixRotationZ(
         let mut vCos: XMVECTOR = _mm_set_ss(CosAngle);
         // x = cos,y = sin,z = 0, w = 0
         vCos = _mm_unpacklo_ps(vCos, vSin);
-        let mut M: XMMATRIX = uninitialized();
+        let mut M: XMMATRIX = undefined();
         M.r[0] = vCos;
         // x = sin,y = cos,z = 0, w = 0
         vCos = XM_PERMUTE_PS!(vCos, _MM_SHUFFLE(3, 2, 0, 1));
@@ -2172,7 +2172,7 @@ pub fn XMMatrixRotationNormal(
         let V1: XMVECTOR = <(XM_PERMUTE_0Z, XM_PERMUTE_1Y, XM_PERMUTE_1Z, XM_PERMUTE_0X)>::XMVectorPermute(R1, R2);
         let V2: XMVECTOR = <(XM_PERMUTE_0Y, XM_PERMUTE_1X, XM_PERMUTE_0Y, XM_PERMUTE_1X)>::XMVectorPermute(R1, R2);
 
-        let mut M: XMMATRIX = uninitialized();
+        let mut M: XMMATRIX = crate::undefined();
         M.r[0] = <(XM_PERMUTE_0X, XM_PERMUTE_1X, XM_PERMUTE_1Y, XM_PERMUTE_0W)>::XMVectorPermute(V0, V1);
         M.r[1] = <(XM_PERMUTE_1Z, XM_PERMUTE_0Y, XM_PERMUTE_1W, XM_PERMUTE_0W)>::XMVectorPermute(V0, V1);
         M.r[2] = <(XM_PERMUTE_1X, XM_PERMUTE_1Y, XM_PERMUTE_0Z, XM_PERMUTE_0W)>::XMVectorPermute(V0, V2);
@@ -2214,7 +2214,7 @@ pub fn XMMatrixRotationNormal(
         R2 = _mm_shuffle_ps(V0, V1, _MM_SHUFFLE(1, 0, 3, 0));
         R2 = XM_PERMUTE_PS!(R2, _MM_SHUFFLE(1, 3, 2, 0));
 
-        let mut M: XMMATRIX = uninitialized();
+        let mut M: XMMATRIX = undefined();
         M.r[0] = R2;
 
         R2 = _mm_shuffle_ps(V0, V1, _MM_SHUFFLE(3, 2, 3, 1));
@@ -2309,7 +2309,7 @@ pub fn XMMatrixRotationQuaternion(
         V0 = <(XM_PERMUTE_0Y, XM_PERMUTE_1X, XM_PERMUTE_1Y, XM_PERMUTE_0Z)>::XMVectorPermute(R1, R2);
         V1 = <(XM_PERMUTE_0X, XM_PERMUTE_1Z, XM_PERMUTE_0X, XM_PERMUTE_1Z)>::XMVectorPermute(R1, R2);
 
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         M.r[0] = <(XM_PERMUTE_0X, XM_PERMUTE_1X, XM_PERMUTE_1Y, XM_PERMUTE_0W)>::XMVectorPermute(R0, V0);
         M.r[1] = <(XM_PERMUTE_1Z, XM_PERMUTE_0Y, XM_PERMUTE_1W, XM_PERMUTE_0W)>::XMVectorPermute(R0, V0);
         M.r[2] = <(XM_PERMUTE_1X, XM_PERMUTE_1Y, XM_PERMUTE_0Z, XM_PERMUTE_0W)>::XMVectorPermute(R0, V1);
@@ -2351,7 +2351,7 @@ pub fn XMMatrixRotationQuaternion(
         Q1 = _mm_shuffle_ps(R0, V0, _MM_SHUFFLE(1, 0, 3, 0));
         Q1 = XM_PERMUTE_PS!(Q1, _MM_SHUFFLE(1, 3, 2, 0));
 
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         M.r[0] = Q1;
 
         Q1 = _mm_shuffle_ps(R0, V0, _MM_SHUFFLE(3, 2, 3, 1));
@@ -2611,7 +2611,7 @@ pub fn XMMatrixReflect(
         let C: XMVECTOR = XMVectorSplatZ(P);
         let D: XMVECTOR = XMVectorSplatW(P);
 
-        let mut M: XMMATRIX = uninitialized();
+        let mut M: XMMATRIX = undefined();
         M.r[0] = XMVectorMultiplyAdd(A, S, g_XMIdentityR0.v);
         M.r[1] = XMVectorMultiplyAdd(B, S, g_XMIdentityR1.v);
         M.r[2] = XMVectorMultiplyAdd(C, S, g_XMIdentityR2.v);
@@ -2661,7 +2661,7 @@ pub fn XMMatrixShadow(
         let A: XMVECTOR = XMVectorSplatX(P);
         Dot = XMVectorSelect(Select0001.v, Dot, Select0001.v);
 
-        let mut M: XMMATRIX = uninitialized();
+        let mut M: XMMATRIX = undefined();
         M.r[3] = XMVectorMultiplyAdd(D, LightPosition, Dot);
         Dot = XMVectorRotateLeft(Dot, 1);
         M.r[2] = XMVectorMultiplyAdd(C, LightPosition, Dot);
@@ -2772,7 +2772,7 @@ pub fn XMMatrixLookToLH(
         let D1: XMVECTOR = XMVector3Dot(R1, NegEyePosition);
         let D2: XMVECTOR = XMVector3Dot(R2, NegEyePosition);
 
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         M.r[0] = XMVectorSelect(D0, R0, g_XMSelect1110.v);
         M.r[1] = XMVectorSelect(D1, R1, g_XMSelect1110.v);
         M.r[2] = XMVectorSelect(D2, R2, g_XMSelect1110.v);
@@ -2855,7 +2855,7 @@ pub fn XMMatrixPerspectiveLH(
         let TwoNearZ: f32 = NearZ + NearZ;
         let fRange: f32 = FarZ / (FarZ - NearZ);
 
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         M.m[0][0] = TwoNearZ / ViewWidth;
         M.m[0][1] = 0.0;
         M.m[0][2] = 0.0;
@@ -2885,7 +2885,7 @@ pub fn XMMatrixPerspectiveLH(
 
     #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         let TwoNearZ: f32 = NearZ + NearZ;
         let fRange: f32 = FarZ / (FarZ - NearZ);
         // Note: This is recorded on the stack
@@ -2962,7 +2962,7 @@ pub fn XMMatrixPerspectiveRH(
         let TwoNearZ: f32 = NearZ + NearZ;
         let fRange: f32 = FarZ / (NearZ - FarZ);
 
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         M.m[0][0] = TwoNearZ / ViewWidth;
         M.m[0][1] = 0.0;
         M.m[0][2] = 0.0;
@@ -2992,7 +2992,7 @@ pub fn XMMatrixPerspectiveRH(
 
     #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         let TwoNearZ: f32 = NearZ + NearZ;
         let fRange: f32 = FarZ / (NearZ - FarZ);
         // Note: This is recorded on the stack
@@ -3074,7 +3074,7 @@ pub fn XMMatrixPerspectiveFovLH(
         let Width: f32 = Height / AspectRatio;
         let fRange: f32 = FarZ / (FarZ - NearZ);
 
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         M.m[0][0] = Width;
         M.m[0][1] = 0.0;
         M.m[0][2] = 0.0;
@@ -3123,7 +3123,7 @@ pub fn XMMatrixPerspectiveFovLH(
         // Copy x only
         vTemp = _mm_move_ss(vTemp, vValues);
         // CosFov / SinFov,0,0,0
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         M.r[0] = vTemp;
         // 0,Height / AspectRatio,0,0
         vTemp = vValues;
@@ -3191,7 +3191,7 @@ pub fn XMMatrixPerspectiveFovRH(
         let Width: f32 = Height / AspectRatio;
         let fRange: f32 = FarZ / (NearZ - FarZ);
 
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         M.m[0][0] = Width;
         M.m[0][1] = 0.0;
         M.m[0][2] = 0.0;
@@ -3239,7 +3239,7 @@ pub fn XMMatrixPerspectiveFovRH(
         // Copy x only
         vTemp = _mm_move_ss(vTemp, vValues);
         // CosFov / SinFov,0,0,0
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         M.r[0] = vTemp;
         // 0,Height / AspectRatio,0,0
         vTemp = vValues;
@@ -3299,7 +3299,7 @@ pub fn XMMatrixOrthographicLH(
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
         let fRange: f32 = 1.0 / (FarZ - NearZ);
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         M.m[0][0] = 2.0 / ViewWidth;
         M.m[0][1] = 0.0;
         M.m[0][2] = 0.0;
@@ -3329,7 +3329,7 @@ pub fn XMMatrixOrthographicLH(
 
     #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         let fRange: f32 = 1.0 / (FarZ - NearZ);
         // Note: This is recorded on the stack
         let rMem: XMVECTORF32 = XMVECTORF32 { f: [
@@ -3400,7 +3400,7 @@ pub fn XMMatrixOrthographicRH(
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
         let fRange: f32 = 1.0 / (NearZ - FarZ);
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         M.m[0][0] = 2.0 / ViewWidth;
         M.m[0][1] = 0.0;
         M.m[0][2] = 0.0;
@@ -3430,7 +3430,7 @@ pub fn XMMatrixOrthographicRH(
 
     #[cfg(_XM_SSE_INTRINSICS_)]
     unsafe {
-        let mut M: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+        let mut M: XMMATRIX = crate::undefined();
         let fRange: f32 = 1.0 / (NearZ - FarZ);
         // Note: This is recorded on the stack
         let rMem: XMVECTORF32 = XMVECTORF32 { f: [
@@ -3517,7 +3517,7 @@ impl Into<[f32; 16]> for XMMatrix {
     #[inline]
     fn into(self) -> [f32; 16] {
         unsafe {
-            let mut R: XMFLOAT4X4 = mem::MaybeUninit::uninit().assume_init();
+            let mut R: XMFLOAT4X4 = crate::undefined();
             XMStoreFloat4x4(&mut R, self.0);
             mem::transmute(R)
         }
@@ -3528,7 +3528,7 @@ impl Into<[[f32; 4]; 4]> for XMMatrix {
     #[inline]
     fn into(self) -> [[f32; 4]; 4] {
         unsafe {
-            let mut R: XMFLOAT4X4 = mem::MaybeUninit::uninit().assume_init();
+            let mut R: XMFLOAT4X4 = crate::undefined();
             XMStoreFloat4x4(&mut R, self.0);
             mem::transmute(R)
         }
@@ -3610,7 +3610,7 @@ impl std::ops::Mul<XMMatrix> for f32 {
     fn mul(self, M: XMMatrix) -> XMMatrix {
         unsafe {
             let S = self;
-            let mut R: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+            let mut R: XMMATRIX = crate::undefined();
             R.r[0] = XMVectorScale(M.r[0], S);
             R.r[1] = XMVectorScale(M.r[1], S);
             R.r[2] = XMVectorScale(M.r[2], S);
@@ -3625,7 +3625,7 @@ impl std::ops::Mul<f32> for XMMatrix {
     #[inline]
     fn mul(self, S: f32) -> XMMatrix {
         unsafe {
-            let mut R: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+            let mut R: XMMATRIX = crate::undefined();
             R.r[0] = XMVectorScale(self.r[0], S);
             R.r[1] = XMVectorScale(self.r[1], S);
             R.r[2] = XMVectorScale(self.r[2], S);
@@ -3654,7 +3654,7 @@ impl std::ops::Div<f32> for XMMatrix {
         #[cfg(_XM_NO_INTRINSICS_)]
         unsafe {
             let vS: XMVECTOR = XMVectorReplicate(S);
-            let mut R: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+            let mut R: XMMATRIX = crate::undefined();
             R.r[0] = XMVectorDivide(self.r[0], vS);
             R.r[1] = XMVectorDivide(self.r[1], vS);
             R.r[2] = XMVectorDivide(self.r[2], vS);
@@ -3670,7 +3670,7 @@ impl std::ops::Div<f32> for XMMatrix {
         #[cfg(_XM_SSE_INTRINSICS_)]
         unsafe {
             let vS: __m128 = _mm_set_ps1(S);
-            let mut R: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+            let mut R: XMMATRIX = crate::undefined();
             R.r[0] = _mm_div_ps(self.r[0], vS);
             R.r[1] = _mm_div_ps(self.r[1], vS);
             R.r[2] = _mm_div_ps(self.r[2], vS);
@@ -3713,7 +3713,7 @@ impl std::ops::Neg for XMMatrix {
     #[inline]
     fn neg(self) -> Self::Output {
         unsafe {
-            let mut R: XMMATRIX = mem::MaybeUninit::uninit().assume_init();
+            let mut R: XMMATRIX = crate::undefined();
             R.r[0] = XMVectorNegate(self.r[0]);
             R.r[1] = XMVectorNegate(self.r[1]);
             R.r[2] = XMVectorNegate(self.r[2]);

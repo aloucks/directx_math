@@ -38,7 +38,7 @@ use PlaneIntersectionType::{FRONT, INTERSECTING, BACK};
 
 /// A bounding sphere object.
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct BoundingSphere {
     // Center of the sphere.
     pub Center: XMFLOAT3,
@@ -51,7 +51,7 @@ pub struct BoundingSphere {
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/ns-directxcollision-boundingbox>
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct BoundingBox {
     // Center of the box.
     pub Center: XMFLOAT3,
@@ -64,7 +64,7 @@ pub struct BoundingBox {
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/ns-directxcollision-boundingorientedbox>
 #[repr(C)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct BoundingOrientedBox {
     // Center of the box.
     pub Center: XMFLOAT3,
@@ -80,6 +80,7 @@ pub struct BoundingOrientedBox {
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxcollision/ns-directxcollision-boundingfrustum>
 #[repr(C)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct BoundingFrustum {
     // Origin of the frustum (and projection).
     pub Origin: XMFLOAT3,
@@ -280,7 +281,7 @@ mod internal {
         m22: f32, m23: f32, m33: f32,
         e: f32,
     ) -> XMVECTOR {
-        let mut fTmp: [f32; 3] = unsafe { uninitialized() };
+        let mut fTmp: [f32; 3] = unsafe { undefined() };
         fTmp[0] = m12 * m23 - m13 * (m22 - e);
         fTmp[1] = m13 * m12 - m23 * (m11 - e);
         fTmp[2] = (m11 - e) * (m22 - e) - m12 * m12;
@@ -935,7 +936,7 @@ impl BoundingSphere {
         let vNear: XMVECTOR = XMVectorReplicatePtr(&fr.Near);
         let vFar: XMVECTOR = XMVectorReplicatePtr(&fr.Far);
 
-        let mut Corners: [XMVECTOR; BoundingFrustum::CORNER_COUNT] = unsafe { uninitialized() };
+        let mut Corners: [XMVECTOR; BoundingFrustum::CORNER_COUNT] = unsafe { undefined() };
         Corners[0] = XMVectorMultiply(vRightTop, vNear);
         Corners[1] = XMVectorMultiply(vRightBottom, vNear);
         Corners[2] = XMVectorMultiply(vLeftTop, vNear);
@@ -1095,8 +1096,8 @@ impl BoundingSphere {
         // TODO: template
         vCenter = XMVectorInsert(vCenter, XMVectorSplatOne(), 0, 0, 0, 0, 1);
 
-        let mut Outside: XMVECTOR = unsafe { uninitialized() };
-        let mut Inside: XMVECTOR = unsafe { uninitialized() };
+        let mut Outside: XMVECTOR = unsafe { undefined() };
+        let mut Inside: XMVECTOR = unsafe { undefined() };
         internal::FastIntersectSpherePlane(vCenter, vRadius, Plane, &mut Outside, &mut Inside);
 
         // If the sphere is outside any plane it is outside.
@@ -1206,8 +1207,8 @@ impl BoundingSphere {
         // TODO: template
         vCenter = XMVectorInsert(vCenter, XMVectorSplatOne(), 0, 0, 0, 0, 1);
 
-        let mut Outside: XMVECTOR = unsafe { uninitialized() };
-        let mut Inside: XMVECTOR = unsafe { uninitialized() };
+        let mut Outside: XMVECTOR = unsafe { undefined() };
+        let mut Inside: XMVECTOR = unsafe { undefined() };
 
         // Test against each plane.
         internal::FastIntersectSpherePlane(vCenter, vRadius, Plane0, &mut Outside, &mut Inside);
@@ -1445,7 +1446,7 @@ impl BoundingSphere {
     /// Creates a BoundingSphere containing the specified BoundingFrustum.
     #[inline]
     pub fn CreateFromFrustum(Out: &mut Self, fr: &BoundingFrustum) {
-        let mut Corners: [XMFLOAT3; BoundingFrustum::CORNER_COUNT] = unsafe { uninitialized() };
+        let mut Corners: [XMFLOAT3; BoundingFrustum::CORNER_COUNT] = unsafe { undefined() };
         fr.GetCorners(&mut Corners);
         BoundingSphere::CreateFromPoints(Out, Corners.iter())
     }
@@ -1453,7 +1454,7 @@ impl BoundingSphere {
 
 #[test]
 fn test_BoundingSphere_CreateFromPoints() {
-    let mut bounds: BoundingSphere = unsafe { uninitialized() };
+    let mut bounds: BoundingSphere = BoundingSphere::default();
     let points = &[
         XMFLOAT3 { x:  1.0, y: 0.0, z:  1.0 },
         XMFLOAT3 { x: -1.0, y: 0.0, z: -1.0 },
@@ -1482,7 +1483,7 @@ fn test_BoundingSphere_CreateFromPoints() {
     assert_eq!(ContainmentType::CONTAINS, bounds.ContainsPoint(XMVectorSet(0.5, 0.5, 0.5, 0.0)));
     assert_eq!(ContainmentType::DISJOINT, bounds.ContainsPoint(XMVectorSet(3.0, 3.0, 3.0, 0.0)));
 
-    let mut bounds: BoundingSphere = unsafe { uninitialized() };
+    let mut bounds: BoundingSphere = BoundingSphere::default();
     let points = &[];
     BoundingSphere::CreateFromPoints(&mut bounds, points.iter());
 
@@ -1782,7 +1783,7 @@ impl BoundingBox {
             return DISJOINT;
         }
 
-        let mut Corners: [XMFLOAT3; BoundingFrustum::CORNER_COUNT] = unsafe { uninitialized() };
+        let mut Corners: [XMFLOAT3; BoundingFrustum::CORNER_COUNT] = unsafe { undefined() };
         fr.GetCorners(&mut Corners);
 
         let vCenter: XMVECTOR = XMLoadFloat3(&self.Center);
@@ -2087,8 +2088,8 @@ impl BoundingBox {
         // TODO: template
         vCenter = XMVectorInsert(vCenter, XMVectorSplatOne(), 0, 0, 0, 0, 1);
 
-        let mut Outside: XMVECTOR = unsafe { uninitialized() };
-        let mut Inside: XMVECTOR = unsafe { uninitialized() };
+        let mut Outside: XMVECTOR = unsafe { undefined() };
+        let mut Inside: XMVECTOR = unsafe { undefined() };
         internal::FastIntersectAxisAlignedBoxPlane(vCenter, vExtents, Plane, &mut Outside, &mut Inside);
 
         // If the box is outside any plane it is outside.
@@ -2206,8 +2207,8 @@ impl BoundingBox {
         // TODO: template
         vCenter = XMVectorInsert(vCenter, XMVectorSplatOne(), 0, 0, 0, 0, 1);
 
-        let mut Outside: XMVECTOR = unsafe { uninitialized() };
-        let mut Inside: XMVECTOR = unsafe { uninitialized() };
+        let mut Outside: XMVECTOR = unsafe { undefined() };
+        let mut Inside: XMVECTOR = unsafe { undefined() };
 
         // Test against each plane.
         internal::FastIntersectAxisAlignedBoxPlane(vCenter, vExtents, Plane0, &mut Outside, &mut Inside);
@@ -2351,7 +2352,7 @@ impl BoundingOrientedBox {
 
         unsafe {
             // Composite the box rotation and the transform rotation.
-            let mut nM: XMMATRIX = uninitialized();
+            let mut nM: XMMATRIX = undefined();
             nM.r[0] = XMVector3Normalize(M.r[0]);
             nM.r[1] = XMVector3Normalize(M.r[1]);
             nM.r[2] = XMVector3Normalize(M.r[2]);
@@ -2476,7 +2477,7 @@ impl BoundingOrientedBox {
         let TV1: XMVECTOR = XMVector3InverseRotate(XMVectorSubtract(V1, vCenter), vOrientation);
         let TV2: XMVECTOR = XMVector3InverseRotate(XMVectorSubtract(V2, vCenter), vOrientation);
 
-        let mut box_: BoundingBox = unsafe { uninitialized() };
+        let mut box_: BoundingBox = BoundingBox::default();
         box_.Center = XMFLOAT3::set(0.0, 0.0, 0.0);
         box_.Extents = self.Extents;
 
@@ -2599,7 +2600,7 @@ impl BoundingOrientedBox {
             return DISJOINT;
         }
 
-        let mut Corners: [XMFLOAT3; BoundingFrustum::CORNER_COUNT] = unsafe { uninitialized() };
+        let mut Corners: [XMFLOAT3; BoundingFrustum::CORNER_COUNT] = unsafe { undefined() };
         fr.GetCorners(&mut Corners);
 
         // Load the box
@@ -2920,7 +2921,7 @@ impl BoundingOrientedBox {
         let TV1: XMVECTOR = XMVector3InverseRotate(XMVectorSubtract(V1, vCenter), vOrientation);
         let TV2: XMVECTOR = XMVector3InverseRotate(XMVectorSubtract(V2, vCenter), vOrientation);
 
-        let mut box_: BoundingBox = unsafe { uninitialized() };
+        let mut box_: BoundingBox = BoundingBox::default();
         box_.Center = XMFLOAT3::set(0.0, 0.0, 0.0);
         box_.Extents = self.Extents;
 
@@ -2960,8 +2961,8 @@ impl BoundingOrientedBox {
         let R: XMMATRIX = XMMatrixRotationQuaternion(BoxOrientation);
 
         unsafe {
-            let mut Outside: XMVECTOR = uninitialized();
-            let mut Inside: XMVECTOR = uninitialized();
+            let mut Outside: XMVECTOR = undefined();
+            let mut Inside: XMVECTOR = undefined();
             internal::FastIntersectOrientedBoxPlane(vCenter, vExtents, R.r[0], R.r[1], R.r[2], Plane, &mut Outside, &mut Inside);
 
             // If the box is outside any plane it is outside.
@@ -3102,8 +3103,8 @@ impl BoundingOrientedBox {
         let R: XMMATRIX = XMMatrixRotationQuaternion(BoxOrientation);
 
         unsafe {
-            let mut Outside: XMVECTOR = uninitialized();
-            let mut Inside: XMVECTOR = uninitialized();
+            let mut Outside: XMVECTOR = undefined();
+            let mut Inside: XMVECTOR = undefined();
 
             // Test against each plane.
             internal::FastIntersectOrientedBoxPlane(vCenter, vExtents, R.r[0], R.r[1], R.r[2], Plane0, &mut Outside, &mut Inside);
@@ -3217,9 +3218,9 @@ impl BoundingOrientedBox {
             XY_XZ_YZ = XMVectorAdd(XY_XZ_YZ, XMVectorMultiply(XXY, YZZ));
         }
 
-        let mut v1: XMVECTOR = unsafe { uninitialized() };
-        let mut v2: XMVECTOR = unsafe { uninitialized() };
-        let mut v3: XMVECTOR = unsafe { uninitialized() };
+        let mut v1: XMVECTOR = unsafe { undefined() };
+        let mut v2: XMVECTOR = unsafe { undefined() };
+        let mut v3: XMVECTOR = unsafe { undefined() };
 
         // Compute the eigenvectors of the inertia tensor.
         internal::CalculateEigenVectorsFromCovarianceMatrix(XMVectorGetX(XX_YY_ZZ), XMVectorGetY(XX_YY_ZZ),
@@ -3229,7 +3230,7 @@ impl BoundingOrientedBox {
             &mut v1, &mut v2, &mut v3);
 
         // Put them in a matrix.
-        let mut R: XMMATRIX = unsafe { uninitialized() };
+        let mut R: XMMATRIX = unsafe { undefined() };
 
         unsafe {
             R.r[0] = XMVectorSetW(v1, 0.0);
@@ -3316,7 +3317,7 @@ impl BoundingOrientedBox {
 
 #[test]
 fn test_BoundingOrientedBox_CreateFromPoints() {
-    let mut bounds: BoundingOrientedBox = unsafe { uninitialized() };
+    let mut bounds: BoundingOrientedBox = BoundingOrientedBox::default();
     let points = &[
         XMFLOAT3::set(-1.0, -1.0, -1.0),
         XMFLOAT3::set( 1.0,  1.0,  1.0),
@@ -3326,7 +3327,7 @@ fn test_BoundingOrientedBox_CreateFromPoints() {
     assert_eq!(ContainmentType::CONTAINS, bounds.ContainsPoint(XMVectorSet(1.0, 1.0, 1.0, 0.0)));
     assert_eq!(ContainmentType::DISJOINT, bounds.ContainsPoint(XMVectorSet(2.0, 2.0, 2.0, 0.0)));
 
-    let mut bounds: BoundingOrientedBox = unsafe { uninitialized() };
+    let mut bounds: BoundingOrientedBox = BoundingOrientedBox::default();
     let points = &[];
     BoundingOrientedBox::CreateFromPoints(&mut bounds, points.iter());
     assert_eq!(ContainmentType::DISJOINT, bounds.ContainsPoint(XMVectorSet(0.0, 0.0, 0.0, 0.0)));
@@ -3365,7 +3366,7 @@ impl BoundingFrustum {
 
         unsafe {
             // Composite the frustum rotation and the transform rotation
-            let mut nM: XMMATRIX = uninitialized();
+            let mut nM: XMMATRIX = undefined();
             nM.r[0] = XMVector3Normalize(M.r[0]);
             nM.r[1] = XMVector3Normalize(M.r[1]);
             nM.r[2] = XMVector3Normalize(M.r[2]);
@@ -3465,7 +3466,7 @@ impl BoundingFrustum {
     #[inline]
     pub fn ContainsPoint(&self, Point: FXMVECTOR) -> ContainmentType {
         // Build frustum planes.
-        let mut Planes: [XMVECTOR; 6] = unsafe { uninitialized() };
+        let mut Planes: [XMVECTOR; 6] = unsafe { undefined() };
         Planes[0] = XMVectorSet(0.0, 0.0, -1.0, self.Near);
         Planes[1] = XMVectorSet(0.0, 0.0, 1.0, -self.Far);
         Planes[2] = XMVectorSet(1.0, 0.0, -self.RightSlope, 0.0);
@@ -3715,7 +3716,7 @@ impl BoundingFrustum {
         let Zero: XMVECTOR = XMVectorZero();
 
         // Build the frustum planes.
-        let mut Planes: [XMVECTOR; 6] = unsafe { uninitialized() };
+        let mut Planes: [XMVECTOR; 6] = unsafe { undefined() };
         Planes[0] = XMVectorSet(0.0, 0.0, -1.0, self.Near);
         Planes[1] = XMVectorSet(0.0, 0.0, 1.0, -self.Far);
         Planes[2] = XMVectorSet(1.0, 0.0, -self.RightSlope, 0.0);
@@ -3750,7 +3751,7 @@ impl BoundingFrustum {
         let mut InsideAll: XMVECTOR = XMVectorTrueInt();
         let mut CenterInsideAll: XMVECTOR = XMVectorTrueInt();
 
-        let mut Dist: [XMVECTOR; 6] = unsafe { uninitialized() };
+        let mut Dist: [XMVECTOR; 6] = unsafe { undefined() };
 
         //for (let i: size_t = 0; i < 6; ++i)
         for i in 0 .. 6
@@ -3841,7 +3842,7 @@ impl BoundingFrustum {
         let vNear: XMVECTOR = XMVectorReplicatePtr(&self.Near);
         let vFar: XMVECTOR = XMVectorReplicatePtr(&self.Far);
 
-        let mut Corners: [XMVECTOR; BoundingFrustum::CORNER_COUNT] = unsafe { uninitialized() };
+        let mut Corners: [XMVECTOR; BoundingFrustum::CORNER_COUNT] = unsafe { undefined() };
         Corners[0] = XMVectorMultiply(vRightTop, vNear);
         Corners[1] = XMVectorMultiply(vRightBottom, vNear);
         Corners[2] = XMVectorMultiply(vLeftTop, vNear);
@@ -3915,7 +3916,7 @@ impl BoundingFrustum {
         let Zero: XMVECTOR = XMVectorZero();
 
         // Build the frustum planes.
-        let mut Planes: [XMVECTOR; 6] = unsafe { uninitialized() };
+        let mut Planes: [XMVECTOR; 6] = unsafe { undefined() };
         Planes[0] = XMVectorSet(0.0, 0.0, -1.0, self.Near);
         Planes[1] = XMVectorSet(0.0, 0.0, 1.0, -self.Far);
         Planes[2] = XMVectorSet(1.0, 0.0, -self.RightSlope, 0.0);
@@ -4004,7 +4005,7 @@ impl BoundingFrustum {
         let vNear: XMVECTOR = XMVectorReplicatePtr(&self.Near);
         let vFar: XMVECTOR = XMVectorReplicatePtr(&self.Far);
 
-        let mut Corners: [XMVECTOR; Self::CORNER_COUNT] = unsafe { uninitialized() };
+        let mut Corners: [XMVECTOR; Self::CORNER_COUNT] = unsafe { undefined() };
         Corners[0] = XMVectorMultiply(vRightTop, vNear);
         Corners[1] = XMVectorMultiply(vRightBottom, vNear);
         Corners[2] = XMVectorMultiply(vLeftTop, vNear);
@@ -4053,7 +4054,7 @@ impl BoundingFrustum {
             }
 
             // Test against edge/edge axes (3*6).
-            let mut FrustumEdgeAxis: [XMVECTOR; 6] = uninitialized();
+            let mut FrustumEdgeAxis: [XMVECTOR; 6] = undefined();
 
             FrustumEdgeAxis[0] = vRightTop;
             FrustumEdgeAxis[1] = vRightBottom;
@@ -4122,7 +4123,7 @@ impl BoundingFrustum {
         debug_assert!(internal::XMQuaternionIsUnit(OrientationB));
 
         // Build the planes of frustum B.
-        let mut AxisB: [XMVECTOR; 6] = unsafe { uninitialized() };
+        let mut AxisB: [XMVECTOR; 6] = unsafe { undefined() };
         AxisB[0] = XMVectorSet(0.0, 0.0, -1.0, 0.0);
         AxisB[1] = XMVectorSet(0.0, 0.0, 1.0, 0.0);
         AxisB[2] = XMVectorSet(1.0, 0.0, -self.RightSlope, 0.0);
@@ -4130,7 +4131,7 @@ impl BoundingFrustum {
         AxisB[4] = XMVectorSet(0.0, 1.0, -self.TopSlope, 0.0);
         AxisB[5] = XMVectorSet(0.0, -1.0, self.BottomSlope, 0.0);
 
-        let mut PlaneDistB: [XMVECTOR; 6] = unsafe { uninitialized() };
+        let mut PlaneDistB: [XMVECTOR; 6] = unsafe { undefined() };
         PlaneDistB[0] = XMVectorNegate(XMVectorReplicatePtr(&self.Near));
         PlaneDistB[1] = XMVectorReplicatePtr(&self.Far);
         PlaneDistB[2] = XMVectorZero();
@@ -4162,7 +4163,7 @@ impl BoundingFrustum {
         LeftTopA = XMVector3Rotate(LeftTopA, OrientationA);
         LeftBottomA = XMVector3Rotate(LeftBottomA, OrientationA);
 
-        let mut CornersA: [XMVECTOR; Self::CORNER_COUNT] = unsafe { uninitialized() };
+        let mut CornersA: [XMVECTOR; Self::CORNER_COUNT] = unsafe { undefined() };
         CornersA[0] = XMVectorMultiplyAdd(RightTopA, NearA, OriginA);
         CornersA[1] = XMVectorMultiplyAdd(RightBottomA, NearA, OriginA);
         CornersA[2] = XMVectorMultiplyAdd(LeftTopA, NearA, OriginA);
@@ -4219,7 +4220,7 @@ impl BoundingFrustum {
         let NearB: XMVECTOR = XMVectorReplicatePtr(&self.Near);
         let FarB: XMVECTOR = XMVectorReplicatePtr(&self.Far);
 
-        let mut CornersB: [XMVECTOR; BoundingFrustum::CORNER_COUNT] = unsafe { uninitialized() };
+        let mut CornersB: [XMVECTOR; BoundingFrustum::CORNER_COUNT] = unsafe { undefined() };
         CornersB[0] = XMVectorMultiply(RightTopB, NearB);
         CornersB[1] = XMVectorMultiply(RightBottomB, NearB);
         CornersB[2] = XMVectorMultiply(LeftTopB, NearB);
@@ -4230,8 +4231,8 @@ impl BoundingFrustum {
         CornersB[7] = XMVectorMultiply(LeftBottomB, FarB);
 
         // Build the planes of frustum A (in the local space of B).
-        let mut AxisA: [XMVECTOR; 6] = unsafe { uninitialized() };
-        let mut PlaneDistA: [XMVECTOR; 6] = unsafe { uninitialized() };
+        let mut AxisA: [XMVECTOR; 6] = unsafe { undefined() };
+        let mut PlaneDistA: [XMVECTOR; 6] = unsafe { undefined() };
 
         AxisA[0] = XMVectorSet(0.0, 0.0, -1.0, 0.0);
         AxisA[1] = XMVectorSet(0.0, 0.0, 1.0, 0.0);
@@ -4280,7 +4281,7 @@ impl BoundingFrustum {
         }
 
         // Check edge/edge axes (6 * 6).
-        let mut FrustumEdgeAxisA: [XMVECTOR; 6] = unsafe { uninitialized() };
+        let mut FrustumEdgeAxisA: [XMVECTOR; 6] = unsafe { undefined() };
         FrustumEdgeAxisA[0] = RightTopA;
         FrustumEdgeAxisA[1] = RightBottomA;
         FrustumEdgeAxisA[2] = LeftTopA;
@@ -4288,7 +4289,7 @@ impl BoundingFrustum {
         FrustumEdgeAxisA[4] = XMVectorSubtract(RightTopA, LeftTopA);
         FrustumEdgeAxisA[5] = XMVectorSubtract(LeftBottomA, LeftTopA);
 
-        let mut FrustumEdgeAxisB: [XMVECTOR; 6] = unsafe { uninitialized() };
+        let mut FrustumEdgeAxisB: [XMVECTOR; 6] = unsafe { undefined() };
         FrustumEdgeAxisB[0] = RightTopB;
         FrustumEdgeAxisB[1] = RightBottomB;
         FrustumEdgeAxisB[2] = LeftTopB;
@@ -4361,7 +4362,7 @@ impl BoundingFrustum {
     #[inline]
     pub fn IntersectsTriangle(&self, V0: FXMVECTOR, V1: FXMVECTOR, V2: FXMVECTOR) -> bool {
        // Build the frustum planes (NOTE: D is negated from the usual).
-       let mut Planes: [XMVECTOR; 6] = unsafe { uninitialized() };
+       let mut Planes: [XMVECTOR; 6] = unsafe { undefined() };
        Planes[0] = XMVectorSet(0.0, 0.0, -1.0, -self.Near);
        Planes[1] = XMVectorSet(0.0, 0.0, 1.0, self.Far);
        Planes[2] = XMVectorSet(1.0, 0.0, -self.RightSlope, 0.0);
@@ -4422,7 +4423,7 @@ impl BoundingFrustum {
        let vNear: XMVECTOR = XMVectorReplicatePtr(&self.Near);
        let vFar: XMVECTOR = XMVectorReplicatePtr(&self.Far);
 
-       let mut Corners: [XMVECTOR; Self::CORNER_COUNT] = unsafe { uninitialized() };
+       let mut Corners: [XMVECTOR; Self::CORNER_COUNT] = unsafe { undefined() };
        Corners[0] = XMVectorMultiply(vRightTop, vNear);
        Corners[1] = XMVectorMultiply(vRightBottom, vNear);
        Corners[2] = XMVectorMultiply(vLeftTop, vNear);
@@ -4455,12 +4456,12 @@ impl BoundingFrustum {
        }
 
        // Check the edge/edge axes (3*6).
-       let mut TriangleEdgeAxis: [XMVECTOR; 3] = unsafe { uninitialized() };
+       let mut TriangleEdgeAxis: [XMVECTOR; 3] = unsafe { undefined() };
        TriangleEdgeAxis[0] = XMVectorSubtract(V1, V0);
        TriangleEdgeAxis[1] = XMVectorSubtract(V2, V1);
        TriangleEdgeAxis[2] = XMVectorSubtract(V0, V2);
 
-       let mut FrustumEdgeAxis: [XMVECTOR; 6] = unsafe { uninitialized() };
+       let mut FrustumEdgeAxis: [XMVECTOR; 6] = unsafe { undefined() };
        FrustumEdgeAxis[0] = vRightTop;
        FrustumEdgeAxis[1] = vRightBottom;
        FrustumEdgeAxis[2] = vLeftTop;
@@ -4566,8 +4567,8 @@ impl BoundingFrustum {
         let Corners6: XMVECTOR = XMVectorMultiplyAdd(LeftTop, vFar, vOrigin);
         let Corners7: XMVECTOR = XMVectorMultiplyAdd(LeftBottom, vFar, vOrigin);
 
-        let mut Inside: XMVECTOR = unsafe { uninitialized() };
-        let mut Outside: XMVECTOR = unsafe { uninitialized() };
+        let mut Inside: XMVECTOR = unsafe { undefined() };
+        let mut Outside: XMVECTOR = unsafe { undefined() };
 
         internal::FastIntersectFrustumPlane(Corners0, Corners1, Corners2, Corners3,
             Corners4, Corners5, &Corners6, &Corners7,
@@ -4619,7 +4620,7 @@ impl BoundingFrustum {
         }
 
         // Build the frustum planes.
-        let mut Planes: [XMVECTOR; 6] = unsafe { uninitialized() };
+        let mut Planes: [XMVECTOR; 6] = unsafe { undefined() };
         Planes[0] = XMVectorSet(0.0, 0.0, -1.0, self.Near);
         Planes[1] = XMVectorSet(0.0, 0.0, 1.0, -self.Far);
         Planes[2] = XMVectorSet(1.0, 0.0, -self.RightSlope, 0.0);
@@ -4771,8 +4772,8 @@ impl BoundingFrustum {
         let Corners6: XMVECTOR = XMVectorMultiplyAdd(LeftTop, vFar, vOrigin);
         let Corners7: XMVECTOR = XMVectorMultiplyAdd(LeftBottom, vFar, vOrigin);
 
-        let mut Inside: XMVECTOR = unsafe { uninitialized() };
-        let mut Outside: XMVECTOR = unsafe { uninitialized() };
+        let mut Inside: XMVECTOR = unsafe { undefined() };
+        let mut Outside: XMVECTOR = unsafe { undefined() };
 
         // Test against each plane.
         internal::FastIntersectFrustumPlane(Corners0, Corners1, Corners2, Corners3,
@@ -4863,11 +4864,11 @@ impl BoundingFrustum {
             XMVECTORF32 { f: [  0.0,  0.0, 1.0, 1.0 ] }    // far
         ];
 
-        let mut Determinant: XMVECTOR = unsafe { uninitialized() };
+        let mut Determinant: XMVECTOR = unsafe { undefined() };
         let matInverse: XMMATRIX = XMMatrixInverse(Some(&mut Determinant), Projection);
 
         // Compute the frustum corners in world space.
-        let mut Points: [XMVECTOR; 6] = unsafe { uninitialized() };
+        let mut Points: [XMVECTOR; 6] = unsafe { undefined() };
 
         //for (size_t i = 0; i < 6; ++i)
         for i in 0 .. 6
@@ -5040,7 +5041,7 @@ impl BoundingFrustum {
         //    |    |  |    |
         //    3----2  7----6
 
-        let mut vCorners: [XMVECTOR; Self::CORNER_COUNT] = unsafe { uninitialized() };
+        let mut vCorners: [XMVECTOR; Self::CORNER_COUNT] = unsafe { undefined() };
         vCorners[0] = XMVectorMultiply(vLeftTop, vNear);
         vCorners[1] = XMVectorMultiply(vRightTop, vNear);
         vCorners[2] = XMVectorMultiply(vRightBottom, vNear);
@@ -5242,14 +5243,14 @@ pub mod triangle_tests {
         BDist = XMVectorSelect(BDist, XMVector3Dot(N1, XMVectorSubtract(B2, A0)), SelectZ.v());
 
         // Ensure robustness with co-planar triangles by zeroing small distances.
-        let mut BDistIsZeroCR: u32 = unsafe { uninitialized() };
+        let mut BDistIsZeroCR: u32 = unsafe { undefined() };
         let BDistIsZero: XMVECTOR = XMVectorGreaterR(&mut BDistIsZeroCR, g_RayEpsilon.v(), XMVectorAbs(BDist));
         BDist = XMVectorSelect(BDist, Zero, BDistIsZero);
 
-        let mut BDistIsLessCR: u32 = unsafe { uninitialized() };
+        let mut BDistIsLessCR: u32 = unsafe { undefined() };
         let BDistIsLess: XMVECTOR = XMVectorGreaterR(&mut BDistIsLessCR, Zero, BDist);
 
-        let mut BDistIsGreaterCR: u32 = unsafe { uninitialized() };
+        let mut BDistIsGreaterCR: u32 = unsafe { undefined() };
         let BDistIsGreater: XMVECTOR = XMVectorGreaterR(&mut BDistIsGreaterCR, BDist, Zero);
 
         // If all the points are on the same side we don't intersect.
@@ -5269,14 +5270,14 @@ pub mod triangle_tests {
         ADist = XMVectorSelect(ADist, XMVector3Dot(N2, XMVectorSubtract(A2, B0)), SelectZ.v());
 
         // Ensure robustness with co-planar triangles by zeroing small distances.
-        let mut ADistIsZeroCR: u32 = unsafe { uninitialized() };
+        let mut ADistIsZeroCR: u32 = unsafe { undefined() };
         let ADistIsZero: XMVECTOR = XMVectorGreaterR(&mut ADistIsZeroCR, g_RayEpsilon.v(), XMVectorAbs(BDist));
         ADist = XMVectorSelect(ADist, Zero, ADistIsZero);
 
-        let mut ADistIsLessCR: u32 = unsafe { uninitialized() };
+        let mut ADistIsLessCR: u32 = unsafe { undefined() };
         let ADistIsLess: XMVECTOR = XMVectorGreaterR(&mut ADistIsLessCR, Zero, ADist);
 
-        let mut ADistIsGreaterCR: u32 = unsafe { uninitialized() };
+        let mut ADistIsGreaterCR: u32 = unsafe { undefined() };
         let ADistIsGreater: XMVECTOR = XMVectorGreaterR(&mut ADistIsGreaterCR, ADist, Zero);
 
         // If all the points are on the same side we don't intersect.
@@ -5554,8 +5555,8 @@ pub mod triangle_tests {
         let TV1: XMVECTOR = XMVectorInsert(V1, One, 0, 0, 0, 0, 1);
         let TV2: XMVECTOR = XMVectorInsert(V2, One, 0, 0, 0, 0, 1);
 
-        let mut Outside: XMVECTOR = unsafe { uninitialized() };
-        let mut Inside: XMVECTOR = unsafe { uninitialized() };
+        let mut Outside: XMVECTOR = unsafe { undefined() };
+        let mut Inside: XMVECTOR = unsafe { undefined() };
 
         internal::FastIntersectTrianglePlane(TV0, TV1, TV2, Plane, &mut Outside, &mut Inside);
 
@@ -5626,8 +5627,8 @@ pub mod triangle_tests {
         let TV1: XMVECTOR = XMVectorInsert(V1, One, 0, 0, 0, 0, 1);
         let TV2: XMVECTOR = XMVectorInsert(V2, One, 0, 0, 0, 0, 1);
 
-        let mut Outside: XMVECTOR = unsafe { uninitialized() };
-        let mut Inside: XMVECTOR = unsafe { uninitialized() };
+        let mut Outside: XMVECTOR = unsafe { undefined() };
+        let mut Inside: XMVECTOR = unsafe { undefined() };
 
         // Test against each plane.
         internal::FastIntersectTrianglePlane(TV0, TV1, TV2, Plane0, &mut Outside, &mut Inside);

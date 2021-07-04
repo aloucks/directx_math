@@ -160,8 +160,94 @@ pub(crate) const fn _MM_SHUFFLE(fp3: u32, fp2: u32, fp1: u32, fp0: u32) -> i32 {
 #[inline(always)]
 #[allow(dead_code)]
 #[must_use = "uninitialized"]
-pub(crate) unsafe fn uninitialized<T>() -> T {
-    mem::MaybeUninit::uninit().assume_init()
+pub(crate) unsafe fn undefined<T: Undefined>() -> T {
+    <T as Undefined>::undefined()
+}
+
+trait Undefined: Sized + Copy {
+    fn undefined() -> Self;
+}
+
+#[cfg(_XM_SSE_INTRINSICS_)]
+impl Undefined for XMVECTOR {
+    fn undefined() -> Self {
+        unsafe { arch::_mm_undefined_ps() }
+    }
+}
+
+#[cfg(not(_XM_SSE_INTRINSICS_))]
+impl Undefined for XMVECTOR {
+    fn undefined() -> Self {
+        unsafe { mem::zeroed() }
+    }
+}
+
+impl<T, const N: usize> Undefined for [T; N] where T: Undefined {
+    fn undefined() -> Self {
+        [T::undefined(); N]
+    }
+}
+
+impl Undefined for XMMATRIX {
+    fn undefined() -> Self {
+        unsafe {
+            XMMATRIX {
+                r: undefined()
+            }
+        }
+    }
+}
+
+impl Undefined for u32 {
+    fn undefined() -> Self {
+        0
+    }
+}
+
+impl Undefined for f32 {
+    fn undefined() -> Self {
+        0.0
+    }
+}
+
+impl<T: Undefined> Undefined for Align16<T> {
+    fn undefined() -> Self {
+        Align16(T::undefined())
+    }
+}
+
+impl Undefined for XMVECTORF32 {
+    fn undefined() -> Self {
+        XMVECTORF32 {
+            v: XMVECTOR::undefined()
+        }
+    }
+}
+
+impl Undefined for XMVECTORU32 {
+    fn undefined() -> Self {
+        XMVECTORU32 {
+            v: XMVECTOR::undefined()
+        }
+    }
+}
+
+impl Undefined for XMFLOAT3 {
+    fn undefined() -> Self {
+        XMFLOAT3 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        }
+    }
+}
+
+impl Undefined for XMFLOAT4X4 {
+    fn undefined() -> Self {
+        XMFLOAT4X4 {
+            m: Undefined::undefined(),
+        }
+    }
 }
 
 #[inline(always)]
@@ -2719,7 +2805,7 @@ mod private {
 pub fn XMVectorSetBinaryConstant(C0: u32, C1: u32, C2: u32, C3: u32) -> XMVECTOR {
     #[cfg(_XM_NO_INTRINSICS_)]
     unsafe {
-        let mut vResult: XMVECTORU32 = mem::MaybeUninit::uninit().assume_init();
+        let mut vResult: XMVECTORU32 = crate::undefined();
         vResult.u[0] = (0 - (C0 & 1)) & 0x3F800000;
         vResult.u[1] = (0 - (C1 & 1)) & 0x3F800000;
         vResult.u[2] = (0 - (C2 & 1)) & 0x3F800000;

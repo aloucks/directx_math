@@ -3,7 +3,7 @@ fn main() {
 
     let mut intrinics  = false;
 
-    let target_features = std::env::var("CARGO_CFG_TARGET_FEATURE").unwrap();
+    let target_features = std::env::var("CARGO_CFG_TARGET_FEATURE").expect("CARGO_CFG_TARGET_FEATURE was not defined");
     let target_features = target_features.split(',').collect::<Vec<_>>();
     // eprintln!("available target features: {:?}", target_features);
 
