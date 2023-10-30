@@ -3258,8 +3258,238 @@ pub fn XMMatrixPerspectiveFovRH(
     }
 }
 
-// TODO: XMMatrixPerspectiveOffCenterLH
-// TODO: XMMatrixPerspectiveOffCenterRH
+/// Builds a custom version of a left-handed perspective projection matrix.
+/// 
+/// ## Parameters
+/// 
+/// `ViewLeft` The x-coordinate of the left side of the clipping frustum at the near clipping plane.
+/// 
+/// `ViewRight` The x-coordinate of the right side of the clipping frustum at the near clipping plane.
+/// 
+/// `ViewBottom` The y-coordinate of the bottom side of the clipping frustum at the near clipping plane.
+/// 
+/// `ViewTop` The y-coordinate of the top side of the clipping frustum at the near clipping plane.
+/// 
+/// `NearZ` Distance to the near clipping plane. Must be greater than zero.
+/// 
+/// `FarZ` Distance to the far clipping plane. Must be greater than zero.
+/// 
+/// ## Return Values
+/// 
+/// Returns the custom perspective projection matrix.
+/// 
+/// ## Remarks
+/// 
+/// For typical usage, NearZ is less than FarZ. However, if you flip these values so FarZ is less than NearZ, 
+/// the result is an inverted z buffer (also known as a "reverse z buffer") which can provide increased floating-point precision.
+///
+/// NearZ and FarZ cannot be the same value and must be greater than 0.
+/// 
+/// ## Reference
+/// 
+/// <https://learn.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-xmmatrixperspectiveoffcenterlh>
+#[inline]
+pub fn XMMatrixPerspectiveOffCenterLH(
+    ViewLeft: f32,
+    ViewRight: f32,
+    ViewBottom: f32,
+    ViewTop: f32,
+    NearZ: f32,
+    FarZ: f32,
+) -> XMMATRIX {
+    debug_assert!(NearZ > 0.0 && FarZ > 0.0);
+    debug_assert!(!XMScalarNearEqual(ViewRight, ViewLeft, 0.00001));
+    debug_assert!(!XMScalarNearEqual(ViewTop, ViewBottom, 0.00001));
+    debug_assert!(!XMScalarNearEqual(FarZ, NearZ, 0.00001));
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let TwoNearZ = NearZ + NearZ;
+        let ReciprocalWidth = 1.0 / (ViewRight - ViewLeft);
+        let ReciprocalHeight = 1.0 / (ViewTop - ViewBottom);
+        let fRange = FarZ / (FarZ - NearZ);
+
+        let mut M: XMMATRIX = crate::undefined();
+        M.m[0][0] = TwoNearZ * ReciprocalWidth;
+        M.m[0][1] = 0.0;
+        M.m[0][2] = 0.0;
+        M.m[0][3] = 0.0;
+
+        M.m[1][0] = 0.0;
+        M.m[1][1] = TwoNearZ * ReciprocalHeight;
+        M.m[1][2] = 0.0;
+        M.m[1][3] = 0.0;
+        
+        M.m[2][0] = -(ViewLeft + ViewRight) * ReciprocalWidth;
+        M.m[2][1] = -(ViewTop + ViewBottom) * ReciprocalHeight;
+        M.m[2][2] = fRange;
+        M.m[2][3] = 1.0;
+
+        M.m[3][0] = 0.0;
+        M.m[3][1] = 0.0;
+        M.m[3][2] = -fRange * NearZ;
+        M.m[3][3] = 0.0;
+        return M;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut M: XMMATRIX = crate::undefined();
+        let TwoNearZ = NearZ + NearZ;
+        let ReciprocalWidth = 1.0 / (ViewRight - ViewLeft);
+        let ReciprocalHeight = 1.0 / (ViewTop - ViewBottom);
+        let fRange = FarZ / (FarZ - NearZ);
+        // Note: This is recorded on the stack
+        let rMem: XMVECTORF32 = XMVECTORF32 { f: [
+            TwoNearZ * ReciprocalWidth,
+            TwoNearZ * ReciprocalHeight,
+            -fRange * NearZ,
+            0.0,
+        ]};
+        // Copy from memory to SSE register
+        let mut vValues: XMVECTOR = rMem.v;
+        let mut vTemp: XMVECTOR = _mm_setzero_ps();
+        // Copy x only
+        vTemp = _mm_move_ss(vTemp, vValues);
+        // TwoNearZ * ReciprocalWidth,0,0,0
+        M.r[0] = vTemp;
+        // 0,TwoNearZ * ReciprocalHeight,0,0
+        vTemp = vValues;
+        vTemp = _mm_and_ps(vTemp, *g_XMMaskY);
+        M.r[1] = vTemp;
+        // 0,0,fRange,1.0f
+        M.r[2] = XMVectorSet(-(ViewLeft + ViewRight) * ReciprocalWidth, 
+            -(ViewTop + ViewBottom) * ReciprocalHeight, 
+            fRange, 
+            1.0);
+        // 0,0,-fRange * NearZ,0.0f
+        vValues = _mm_and_ps(vValues, *g_XMMaskZ);
+        M.r[3] = vValues;
+        return M;
+    }
+}
+
+
+/// Builds a custom version of a right-handed perspective projection matrix.
+/// 
+/// ## Parameters
+/// 
+/// `ViewLeft` The x-coordinate of the left side of the clipping frustum at the near clipping plane.
+/// 
+/// `ViewRight` The x-coordinate of the right side of the clipping frustum at the near clipping plane.
+/// 
+/// `ViewBottom` The y-coordinate of the bottom side of the clipping frustum at the near clipping plane.
+/// 
+/// `ViewTop` The y-coordinate of the top side of the clipping frustum at the near clipping plane.
+/// 
+/// `NearZ` Distance to the near clipping plane. Must be greater than zero.
+/// 
+/// `FarZ` Distance to the far clipping plane. Must be greater than zero.
+/// 
+/// ## Return value
+/// 
+/// Returns the custom perspective projection matrix.
+/// 
+/// ## Remarks
+/// 
+/// For typical usage, NearZ is less than FarZ. However, if you flip these values so FarZ is less than NearZ,
+/// the result is an inverted z buffer (also known as a "reverse z buffer") which can provide increased floating-point precision.
+///
+/// NearZ and FarZ cannot be the same value and must be greater than 0.
+/// 
+/// ## Reference
+/// 
+/// <https://learn.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-xmmatrixperspectiveoffcenterrh>
+#[inline]
+pub fn XMMatrixPerspectiveOffCenterRH(
+    ViewLeft: f32,
+    ViewRight: f32,
+    ViewBottom: f32,
+    ViewTop: f32,
+    NearZ: f32,
+    FarZ: f32,
+) -> XMMATRIX {
+    debug_assert!(NearZ > 0.0 && FarZ > 0.0);
+    debug_assert!(!XMScalarNearEqual(ViewRight, ViewLeft, 0.00001));
+    debug_assert!(!XMScalarNearEqual(ViewTop, ViewBottom, 0.00001));
+    debug_assert!(!XMScalarNearEqual(FarZ, NearZ, 0.00001));
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let TwoNearZ = NearZ + NearZ;
+        let ReciprocalWidth = 1.0 / (ViewRight - ViewLeft);
+        let ReciprocalHeight = 1.0 / (ViewTop - ViewBottom);
+        let fRange = FarZ / (NearZ - FarZ);
+
+        let mut M: XMMATRIX = crate::undefined();
+        M.m[0][0] = TwoNearZ * ReciprocalWidth;
+        M.m[0][1] = 0.0;
+        M.m[0][2] = 0.0;
+        M.m[0][3] = 0.0;
+
+        M.m[1][0] = 0.0;
+        M.m[1][1] = TwoNearZ * ReciprocalHeight;
+        M.m[1][2] = 0.0;
+        M.m[1][3] = 0.0;
+
+        M.m[2][0] = (ViewLeft + ViewRight) * ReciprocalWidth;
+        M.m[2][1] = (ViewTop + ViewBottom) * ReciprocalHeight;
+        M.m[2][2] = fRange;
+        M.m[2][3] = -1.0;
+
+        M.m[3][0] = 0.0;
+        M.m[3][1] = 0.0;
+        M.m[3][2] = fRange * NearZ;
+        M.m[3][3] = 0.0;
+        return M;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut M: XMMATRIX = crate::undefined();
+        let TwoNearZ = NearZ + NearZ;
+        let ReciprocalWidth = 1.0 / (ViewRight - ViewLeft);
+        let ReciprocalHeight = 1.0 / (ViewTop - ViewBottom);
+        let fRange = FarZ / (NearZ - FarZ);
+        // Note: This is recorded on the stack
+        let rMem: XMVECTORF32 = XMVECTORF32 { f: [
+            TwoNearZ * ReciprocalWidth,
+            TwoNearZ * ReciprocalHeight,
+            fRange * NearZ,
+            0.0,
+        ]};
+        // Copy from memory to SSE register
+        let mut vValues: XMVECTOR = rMem.v;
+        let mut vTemp: XMVECTOR = _mm_setzero_ps();
+        // Copy x only
+        vTemp = _mm_move_ss(vTemp, vValues);
+        // TwoNearZ*ReciprocalWidth,0,0,0
+        M.r[0] = vTemp;
+        // 0,TwoNearZ*ReciprocalHeight,0,0
+        vTemp = vValues;
+        vTemp = _mm_and_ps(vTemp, *g_XMMaskY);
+        M.r[1] = vTemp;
+        // 0,0,fRange,1.0f
+        M.r[2] = XMVectorSet((ViewLeft + ViewRight) * ReciprocalWidth,
+            (ViewTop + ViewBottom) * ReciprocalHeight,
+            fRange,
+            -1.0);
+        // 0,0,-fRange * NearZ,0.0f
+        vValues = _mm_and_ps(vValues, *g_XMMaskZ);
+        M.r[3] = vValues;
+        return M;
+    }
+}
 
 /// Builds an orthogonal projection matrix for a left-handed coordinate system.
 ///

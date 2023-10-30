@@ -649,8 +649,8 @@ mod doc {
         pub use crate::matrix::XMMatrixPerspectiveFovLH;
         pub use crate::matrix::XMMatrixPerspectiveFovRH;
         pub use crate::matrix::XMMatrixPerspectiveLH;
-        // TODO: pub use crate::matrix::XMMatrixPerspectiveOffCenterLH;
-        // TODO: pub use crate::matrix::XMMatrixPerspectiveOffCenterRH;
+        pub use crate::matrix::XMMatrixPerspectiveOffCenterLH;
+        pub use crate::matrix::XMMatrixPerspectiveOffCenterRH;
         pub use crate::matrix::XMMatrixPerspectiveRH;
         pub use crate::matrix::XMMatrixReflect;
         pub use crate::matrix::XMMatrixRotationAxis;
