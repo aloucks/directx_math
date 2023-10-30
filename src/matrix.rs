@@ -3258,9 +3258,6 @@ pub fn XMMatrixPerspectiveFovRH(
     }
 }
 
-// TODO: XMMatrixPerspectiveOffCenterLH
-// TODO: XMMatrixPerspectiveOffCenterRH
-
 /// Builds an orthogonal projection matrix for a left-handed coordinate system.
 ///
 /// ## Parameters
@@ -3553,7 +3550,7 @@ pub fn XMMatrixPerspectiveOffCenterLH(
         let rMem: XMVECTORF32 = XMVECTORF32 { f: [
             TwoNearZ * ReciprocalWidth,
             TwoNearZ * ReciprocalHeight,
-            -fRange,
+            -fRange * NearZ,
             0.0,
         ]};
         // Copy from memory to SSE register
