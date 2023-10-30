@@ -3258,208 +3258,6 @@ pub fn XMMatrixPerspectiveFovRH(
     }
 }
 
-/// Builds an orthogonal projection matrix for a left-handed coordinate system.
-///
-/// ## Parameters
-///
-/// `ViewWidth` Width of the frustum at the near clipping plane.
-///
-/// `ViewHeight` Height of the frustum at the near clipping plane.
-///
-/// `NearZ` Distance to the near clipping plane.
-///
-/// `FarZ` Distance to the far clipping plane.
-///
-/// ## Return value
-///
-/// Returns the orthogonal projection matrix.
-///
-/// ## Remarks
-///
-/// All the parameters of XMMatrixOrthographicLH are distances in camera space.
-///
-/// ## Reference
-///
-/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixOrthographicLH>
-#[inline]
-pub fn XMMatrixOrthographicLH(
-    ViewWidth: f32,
-    ViewHeight: f32,
-    NearZ: f32,
-    FarZ: f32
-) -> XMMATRIX
-{
-    debug_assert!(!XMScalarNearEqual(ViewWidth, 0.0, 0.00001));
-    debug_assert!(!XMScalarNearEqual(ViewHeight, 0.0, 0.00001));
-    debug_assert!(!XMScalarNearEqual(FarZ, NearZ, 0.00001));
-
-    #[cfg(_XM_NO_INTRINSICS_)]
-    unsafe {
-        let fRange: f32 = 1.0 / (FarZ - NearZ);
-        let mut M: XMMATRIX = crate::undefined();
-        M.m[0][0] = 2.0 / ViewWidth;
-        M.m[0][1] = 0.0;
-        M.m[0][2] = 0.0;
-        M.m[0][3] = 0.0;
-
-        M.m[1][0] = 0.0;
-        M.m[1][1] = 2.0 / ViewHeight;
-        M.m[1][2] = 0.0;
-        M.m[1][3] = 0.0;
-
-        M.m[2][0] = 0.0;
-        M.m[2][1] = 0.0;
-        M.m[2][2] = fRange;
-        M.m[2][3] = 0.0;
-
-        M.m[3][0] = 0.0;
-        M.m[3][1] = 0.0;
-        M.m[3][2] = -fRange * NearZ;
-        M.m[3][3] = 1.0;
-        return M;
-    }
-
-    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
-    {
-        unimplemented!()
-    }
-
-    #[cfg(_XM_SSE_INTRINSICS_)]
-    unsafe {
-        let mut M: XMMATRIX = crate::undefined();
-        let fRange: f32 = 1.0 / (FarZ - NearZ);
-        // Note: This is recorded on the stack
-        let rMem: XMVECTORF32 = XMVECTORF32 { f: [
-            2.0 / ViewWidth,
-            2.0 / ViewHeight,
-            fRange,
-            -fRange * NearZ
-        ]};
-        // Copy from memory to SSE register
-        let mut vValues: XMVECTOR = rMem.v;
-        let mut vTemp: XMVECTOR = _mm_setzero_ps();
-        // Copy x only
-        vTemp = _mm_move_ss(vTemp, vValues);
-        // 2.0f / ViewWidth,0,0,0
-        M.r[0] = vTemp;
-        // 0,2.0f / ViewHeight,0,0
-        vTemp = vValues;
-        vTemp = _mm_and_ps(vTemp, *g_XMMaskY);
-        M.r[1] = vTemp;
-        // x=fRange,y=-fRange * NearZ,0,1.0f
-        vTemp = _mm_setzero_ps();
-        vValues = _mm_shuffle_ps(vValues, *g_XMIdentityR3, _MM_SHUFFLE(3, 2, 3, 2));
-        // 0,0,fRange,0.0f
-        vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(2, 0, 0, 0));
-        M.r[2] = vTemp;
-        // 0,0,-fRange * NearZ,1.0f
-        vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(3, 1, 0, 0));
-        M.r[3] = vTemp;
-        return M;
-    }
-}
-
-/// Builds an orthogonal projection matrix for a right-handed coordinate system.
-///
-/// ## Parameters
-///
-/// `ViewWidth` Width of the frustum at the near clipping plane.
-///
-/// `ViewHeight` Height of the frustum at the near clipping plane.
-///
-/// `NearZ` Distance to the near clipping plane.
-///
-/// `FarZ` Distance to the far clipping plane.
-///
-/// ## Return value
-///
-/// Returns the orthogonal projection matrix.
-///
-/// ## Remarks
-///
-/// All the parameters of XMMatrixOrthographicRH are distances in camera space.
-///
-/// ## Reference
-///
-/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixOrthographicRH>
-#[inline]
-pub fn XMMatrixOrthographicRH(
-    ViewWidth: f32,
-    ViewHeight: f32,
-    NearZ: f32,
-    FarZ: f32
-) -> XMMATRIX
-{
-    debug_assert!(!XMScalarNearEqual(ViewWidth, 0.0, 0.00001));
-    debug_assert!(!XMScalarNearEqual(ViewHeight, 0.0, 0.00001));
-    debug_assert!(!XMScalarNearEqual(FarZ, NearZ, 0.00001));
-
-    #[cfg(_XM_NO_INTRINSICS_)]
-    unsafe {
-        let fRange: f32 = 1.0 / (NearZ - FarZ);
-        let mut M: XMMATRIX = crate::undefined();
-        M.m[0][0] = 2.0 / ViewWidth;
-        M.m[0][1] = 0.0;
-        M.m[0][2] = 0.0;
-        M.m[0][3] = 0.0;
-
-        M.m[1][0] = 0.0;
-        M.m[1][1] = 2.0 / ViewHeight;
-        M.m[1][2] = 0.0;
-        M.m[1][3] = 0.0;
-
-        M.m[2][0] = 0.0;
-        M.m[2][1] = 0.0;
-        M.m[2][2] = fRange;
-        M.m[2][3] = 0.0;
-
-        M.m[3][0] = 0.0;
-        M.m[3][1] = 0.0;
-        M.m[3][2] = fRange * NearZ;
-        M.m[3][3] = 1.0;
-        return M;
-    }
-
-    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
-    {
-        unimplemented!()
-    }
-
-    #[cfg(_XM_SSE_INTRINSICS_)]
-    unsafe {
-        let mut M: XMMATRIX = crate::undefined();
-        let fRange: f32 = 1.0 / (NearZ - FarZ);
-        // Note: This is recorded on the stack
-        let rMem: XMVECTORF32 = XMVECTORF32 { f: [
-            2.0 / ViewWidth,
-            2.0 / ViewHeight,
-            fRange,
-            fRange * NearZ
-        ]};
-        // Copy from memory to SSE register
-        let mut vValues: XMVECTOR = rMem.v;
-        let mut vTemp: XMVECTOR = _mm_setzero_ps();
-        // Copy x only
-        vTemp = _mm_move_ss(vTemp, vValues);
-        // 2.0f / ViewWidth,0,0,0
-        M.r[0] = vTemp;
-        // 0,2.0f / ViewHeight,0,0
-        vTemp = vValues;
-        vTemp = _mm_and_ps(vTemp, *g_XMMaskY);
-        M.r[1] = vTemp;
-        // x=fRange,y=fRange * NearZ,0,1.0f
-        vTemp = _mm_setzero_ps();
-        vValues = _mm_shuffle_ps(vValues, *g_XMIdentityR3, _MM_SHUFFLE(3, 2, 3, 2));
-        // 0,0,fRange,0.0f
-        vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(2, 0, 0, 0));
-        M.r[2] = vTemp;
-        // 0,0,fRange * NearZ,1.0f
-        vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(3, 1, 0, 0));
-        M.r[3] = vTemp;
-        return M;
-    }
-}
-
 /// Builds a custom version of a left-handed perspective projection matrix.
 /// 
 /// ## Parameters
@@ -3692,6 +3490,211 @@ pub fn XMMatrixPerspectiveOffCenterRH(
         return M;
     }
 }
+
+/// Builds an orthogonal projection matrix for a left-handed coordinate system.
+///
+/// ## Parameters
+///
+/// `ViewWidth` Width of the frustum at the near clipping plane.
+///
+/// `ViewHeight` Height of the frustum at the near clipping plane.
+///
+/// `NearZ` Distance to the near clipping plane.
+///
+/// `FarZ` Distance to the far clipping plane.
+///
+/// ## Return value
+///
+/// Returns the orthogonal projection matrix.
+///
+/// ## Remarks
+///
+/// All the parameters of XMMatrixOrthographicLH are distances in camera space.
+///
+/// ## Reference
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixOrthographicLH>
+#[inline]
+pub fn XMMatrixOrthographicLH(
+    ViewWidth: f32,
+    ViewHeight: f32,
+    NearZ: f32,
+    FarZ: f32
+) -> XMMATRIX
+{
+    debug_assert!(!XMScalarNearEqual(ViewWidth, 0.0, 0.00001));
+    debug_assert!(!XMScalarNearEqual(ViewHeight, 0.0, 0.00001));
+    debug_assert!(!XMScalarNearEqual(FarZ, NearZ, 0.00001));
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let fRange: f32 = 1.0 / (FarZ - NearZ);
+        let mut M: XMMATRIX = crate::undefined();
+        M.m[0][0] = 2.0 / ViewWidth;
+        M.m[0][1] = 0.0;
+        M.m[0][2] = 0.0;
+        M.m[0][3] = 0.0;
+
+        M.m[1][0] = 0.0;
+        M.m[1][1] = 2.0 / ViewHeight;
+        M.m[1][2] = 0.0;
+        M.m[1][3] = 0.0;
+
+        M.m[2][0] = 0.0;
+        M.m[2][1] = 0.0;
+        M.m[2][2] = fRange;
+        M.m[2][3] = 0.0;
+
+        M.m[3][0] = 0.0;
+        M.m[3][1] = 0.0;
+        M.m[3][2] = -fRange * NearZ;
+        M.m[3][3] = 1.0;
+        return M;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut M: XMMATRIX = crate::undefined();
+        let fRange: f32 = 1.0 / (FarZ - NearZ);
+        // Note: This is recorded on the stack
+        let rMem: XMVECTORF32 = XMVECTORF32 { f: [
+            2.0 / ViewWidth,
+            2.0 / ViewHeight,
+            fRange,
+            -fRange * NearZ
+        ]};
+        // Copy from memory to SSE register
+        let mut vValues: XMVECTOR = rMem.v;
+        let mut vTemp: XMVECTOR = _mm_setzero_ps();
+        // Copy x only
+        vTemp = _mm_move_ss(vTemp, vValues);
+        // 2.0f / ViewWidth,0,0,0
+        M.r[0] = vTemp;
+        // 0,2.0f / ViewHeight,0,0
+        vTemp = vValues;
+        vTemp = _mm_and_ps(vTemp, *g_XMMaskY);
+        M.r[1] = vTemp;
+        // x=fRange,y=-fRange * NearZ,0,1.0f
+        vTemp = _mm_setzero_ps();
+        vValues = _mm_shuffle_ps(vValues, *g_XMIdentityR3, _MM_SHUFFLE(3, 2, 3, 2));
+        // 0,0,fRange,0.0f
+        vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(2, 0, 0, 0));
+        M.r[2] = vTemp;
+        // 0,0,-fRange * NearZ,1.0f
+        vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(3, 1, 0, 0));
+        M.r[3] = vTemp;
+        return M;
+    }
+}
+
+/// Builds an orthogonal projection matrix for a right-handed coordinate system.
+///
+/// ## Parameters
+///
+/// `ViewWidth` Width of the frustum at the near clipping plane.
+///
+/// `ViewHeight` Height of the frustum at the near clipping plane.
+///
+/// `NearZ` Distance to the near clipping plane.
+///
+/// `FarZ` Distance to the far clipping plane.
+///
+/// ## Return value
+///
+/// Returns the orthogonal projection matrix.
+///
+/// ## Remarks
+///
+/// All the parameters of XMMatrixOrthographicRH are distances in camera space.
+///
+/// ## Reference
+///
+/// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMMatrixOrthographicRH>
+#[inline]
+pub fn XMMatrixOrthographicRH(
+    ViewWidth: f32,
+    ViewHeight: f32,
+    NearZ: f32,
+    FarZ: f32
+) -> XMMATRIX
+{
+    debug_assert!(!XMScalarNearEqual(ViewWidth, 0.0, 0.00001));
+    debug_assert!(!XMScalarNearEqual(ViewHeight, 0.0, 0.00001));
+    debug_assert!(!XMScalarNearEqual(FarZ, NearZ, 0.00001));
+
+    #[cfg(_XM_NO_INTRINSICS_)]
+    unsafe {
+        let fRange: f32 = 1.0 / (NearZ - FarZ);
+        let mut M: XMMATRIX = crate::undefined();
+        M.m[0][0] = 2.0 / ViewWidth;
+        M.m[0][1] = 0.0;
+        M.m[0][2] = 0.0;
+        M.m[0][3] = 0.0;
+
+        M.m[1][0] = 0.0;
+        M.m[1][1] = 2.0 / ViewHeight;
+        M.m[1][2] = 0.0;
+        M.m[1][3] = 0.0;
+
+        M.m[2][0] = 0.0;
+        M.m[2][1] = 0.0;
+        M.m[2][2] = fRange;
+        M.m[2][3] = 0.0;
+
+        M.m[3][0] = 0.0;
+        M.m[3][1] = 0.0;
+        M.m[3][2] = fRange * NearZ;
+        M.m[3][3] = 1.0;
+        return M;
+    }
+
+    #[cfg(_XM_ARM_NEON_INTRINSICS_)]
+    {
+        unimplemented!()
+    }
+
+    #[cfg(_XM_SSE_INTRINSICS_)]
+    unsafe {
+        let mut M: XMMATRIX = crate::undefined();
+        let fRange: f32 = 1.0 / (NearZ - FarZ);
+        // Note: This is recorded on the stack
+        let rMem: XMVECTORF32 = XMVECTORF32 { f: [
+            2.0 / ViewWidth,
+            2.0 / ViewHeight,
+            fRange,
+            fRange * NearZ
+        ]};
+        // Copy from memory to SSE register
+        let mut vValues: XMVECTOR = rMem.v;
+        let mut vTemp: XMVECTOR = _mm_setzero_ps();
+        // Copy x only
+        vTemp = _mm_move_ss(vTemp, vValues);
+        // 2.0f / ViewWidth,0,0,0
+        M.r[0] = vTemp;
+        // 0,2.0f / ViewHeight,0,0
+        vTemp = vValues;
+        vTemp = _mm_and_ps(vTemp, *g_XMMaskY);
+        M.r[1] = vTemp;
+        // x=fRange,y=fRange * NearZ,0,1.0f
+        vTemp = _mm_setzero_ps();
+        vValues = _mm_shuffle_ps(vValues, *g_XMIdentityR3, _MM_SHUFFLE(3, 2, 3, 2));
+        // 0,0,fRange,0.0f
+        vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(2, 0, 0, 0));
+        M.r[2] = vTemp;
+        // 0,0,fRange * NearZ,1.0f
+        vTemp = _mm_shuffle_ps(vTemp, vValues, _MM_SHUFFLE(3, 1, 0, 0));
+        M.r[3] = vTemp;
+        return M;
+    }
+}
+
+// TODO: XMMatrixOrthographicOffCenterLH
+// TODO: XMMatrixOrthographicOffCenterRH
 
 impl std::ops::Deref for XMMatrix {
     type Target = XMMATRIX;
