@@ -106,7 +106,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Load/Store/Accessors
 - Plane
 
-[Unreleased]: https://github.com/aloucks/directx_math/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/aloucks/directx_math/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/aloucks/directx_math/releases/tag/v0.2.3
 [0.2.2]: https://github.com/aloucks/directx_math/releases/tag/v0.2.2
 [0.2.1]: https://github.com/aloucks/directx_math/releases/tag/v0.2.1
 [0.2.0]: https://github.com/aloucks/directx_math/releases/tag/v0.2.0
