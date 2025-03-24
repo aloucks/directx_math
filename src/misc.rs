@@ -1687,7 +1687,7 @@ pub fn XMPlaneEqual(
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMPlaneNearEqual>
 ///
-/// [`XMVector4NearEqual`]: crate::vector::XMVector4NearEqual
+/// [`XMVector4NearEqual`]: crate::XMVector4NearEqual
 #[inline]
 pub fn XMPlaneNearEqual(
     P1: FXMVECTOR,

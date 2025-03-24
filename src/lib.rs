@@ -124,8 +124,8 @@
 
 #![cfg_attr(nightly_specialization, feature(min_specialization))]
 #![cfg_attr(nightly_specialization, feature(specialization))]
-#![cfg_attr(_XM_ARM_NEON_INTRINSICS_, feature(stdsimd))]
-#![cfg_attr(_XM_F16C_INTRINSICS_, feature(stdsimd))]
+// #![cfg_attr(_XM_ARM_NEON_INTRINSICS_, feature(stdsimd))]
+// #![cfg_attr(_XM_F16C_INTRINSICS_, feature(stdsimd))]
 
 #[allow(unused_imports)]
 use std::mem;
@@ -559,19 +559,21 @@ macro_rules! XM_PREFETCH {
     }
 }
 
-mod vector;
+#[path="vector.rs"]
+mod vector_internal;
 mod convert;
 mod globals;
 mod misc;
-mod matrix;
+#[path="matrix.rs"]
+mod matrix_internal;
 pub mod collision;
 mod packed_vector;
 
-pub use vector::*;
+pub use vector_internal::*;
 pub use convert::*;
 use globals::*;
 pub use misc::*;
-pub use matrix::*;
+pub use matrix_internal::*;
 pub use packed_vector::*;
 
 mod doc {
@@ -627,49 +629,49 @@ mod doc {
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-matrix>
     pub mod matrix {
-        pub use crate::matrix::XMMatrixAffineTransformation;
-        pub use crate::matrix::XMMatrixAffineTransformation2D;
-        pub use crate::matrix::XMMatrixDecompose;
-        pub use crate::matrix::XMMatrixDeterminant;
-        pub use crate::matrix::XMMatrixIdentity;
-        pub use crate::matrix::XMMatrixInverse;
-        pub use crate::matrix::XMMatrixIsIdentity;
-        pub use crate::matrix::XMMatrixIsInfinite;
-        pub use crate::matrix::XMMatrixIsNaN;
-        pub use crate::matrix::XMMatrixLookAtLH;
-        pub use crate::matrix::XMMatrixLookAtRH;
-        pub use crate::matrix::XMMatrixLookToLH;
-        pub use crate::matrix::XMMatrixLookToRH;
-        pub use crate::matrix::XMMatrixMultiply;
-        pub use crate::matrix::XMMatrixMultiplyTranspose;
-        pub use crate::matrix::XMMatrixOrthographicLH;
-        // TODO: pub use crate::matrix::XMMatrixOrthographicOffCenterLH;
-        // TODO: pub use crate::matrix::XMMatrixOrthographicOffCenterRH;
-        pub use crate::matrix::XMMatrixOrthographicRH;
-        pub use crate::matrix::XMMatrixPerspectiveFovLH;
-        pub use crate::matrix::XMMatrixPerspectiveFovRH;
-        pub use crate::matrix::XMMatrixPerspectiveLH;
-        pub use crate::matrix::XMMatrixPerspectiveOffCenterLH;
-        pub use crate::matrix::XMMatrixPerspectiveOffCenterRH;
-        pub use crate::matrix::XMMatrixPerspectiveRH;
-        pub use crate::matrix::XMMatrixReflect;
-        pub use crate::matrix::XMMatrixRotationAxis;
-        pub use crate::matrix::XMMatrixRotationNormal;
-        pub use crate::matrix::XMMatrixRotationQuaternion;
-        pub use crate::matrix::XMMatrixRotationRollPitchYaw;
-        pub use crate::matrix::XMMatrixRotationRollPitchYawFromVector;
-        pub use crate::matrix::XMMatrixRotationX;
-        pub use crate::matrix::XMMatrixRotationY;
-        pub use crate::matrix::XMMatrixRotationZ;
-        pub use crate::matrix::XMMatrixScaling;
-        pub use crate::matrix::XMMatrixScalingFromVector;
-        pub use crate::matrix::XMMatrixSet;
-        pub use crate::matrix::XMMatrixShadow;
-        pub use crate::matrix::XMMatrixTransformation;
-        pub use crate::matrix::XMMatrixTransformation2D;
-        pub use crate::matrix::XMMatrixTranslation;
-        pub use crate::matrix::XMMatrixTranslationFromVector;
-        pub use crate::matrix::XMMatrixTranspose;
+        pub use crate::matrix_internal::XMMatrixAffineTransformation;
+        pub use crate::matrix_internal::XMMatrixAffineTransformation2D;
+        pub use crate::matrix_internal::XMMatrixDecompose;
+        pub use crate::matrix_internal::XMMatrixDeterminant;
+        pub use crate::matrix_internal::XMMatrixIdentity;
+        pub use crate::matrix_internal::XMMatrixInverse;
+        pub use crate::matrix_internal::XMMatrixIsIdentity;
+        pub use crate::matrix_internal::XMMatrixIsInfinite;
+        pub use crate::matrix_internal::XMMatrixIsNaN;
+        pub use crate::matrix_internal::XMMatrixLookAtLH;
+        pub use crate::matrix_internal::XMMatrixLookAtRH;
+        pub use crate::matrix_internal::XMMatrixLookToLH;
+        pub use crate::matrix_internal::XMMatrixLookToRH;
+        pub use crate::matrix_internal::XMMatrixMultiply;
+        pub use crate::matrix_internal::XMMatrixMultiplyTranspose;
+        pub use crate::matrix_internal::XMMatrixOrthographicLH;
+        // TODO: pub use crate::matrix_internal::XMMatrixOrthographicOffCenterLH;
+        // TODO: pub use crate::matrix_internal::XMMatrixOrthographicOffCenterRH;
+        pub use crate::matrix_internal::XMMatrixOrthographicRH;
+        pub use crate::matrix_internal::XMMatrixPerspectiveFovLH;
+        pub use crate::matrix_internal::XMMatrixPerspectiveFovRH;
+        pub use crate::matrix_internal::XMMatrixPerspectiveLH;
+        pub use crate::matrix_internal::XMMatrixPerspectiveOffCenterLH;
+        pub use crate::matrix_internal::XMMatrixPerspectiveOffCenterRH;
+        pub use crate::matrix_internal::XMMatrixPerspectiveRH;
+        pub use crate::matrix_internal::XMMatrixReflect;
+        pub use crate::matrix_internal::XMMatrixRotationAxis;
+        pub use crate::matrix_internal::XMMatrixRotationNormal;
+        pub use crate::matrix_internal::XMMatrixRotationQuaternion;
+        pub use crate::matrix_internal::XMMatrixRotationRollPitchYaw;
+        pub use crate::matrix_internal::XMMatrixRotationRollPitchYawFromVector;
+        pub use crate::matrix_internal::XMMatrixRotationX;
+        pub use crate::matrix_internal::XMMatrixRotationY;
+        pub use crate::matrix_internal::XMMatrixRotationZ;
+        pub use crate::matrix_internal::XMMatrixScaling;
+        pub use crate::matrix_internal::XMMatrixScalingFromVector;
+        pub use crate::matrix_internal::XMMatrixSet;
+        pub use crate::matrix_internal::XMMatrixShadow;
+        pub use crate::matrix_internal::XMMatrixTransformation;
+        pub use crate::matrix_internal::XMMatrixTransformation2D;
+        pub use crate::matrix_internal::XMMatrixTranslation;
+        pub use crate::matrix_internal::XMMatrixTranslationFromVector;
+        pub use crate::matrix_internal::XMMatrixTranspose;
 
     }
 
@@ -760,50 +762,50 @@ mod doc {
         ///
         /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector-arithmetic>
         pub mod arithmetic {
-            pub use crate::vector::XMVectorAbs;
-            pub use crate::vector::XMVectorAdd;
-            pub use crate::vector::XMVectorAddAngles;
-            pub use crate::vector::XMVectorCeiling;
-            pub use crate::vector::XMVectorClamp;
-            pub use crate::vector::XMVectorDivide;
-            pub use crate::vector::XMVectorFloor;
-            pub use crate::vector::XMVectorIsInfinite;
-            pub use crate::vector::XMVectorIsNaN;
-            pub use crate::vector::XMVectorMax;
-            pub use crate::vector::XMVectorMin;
-            pub use crate::vector::XMVectorMod;
-            pub use crate::vector::XMVectorModAngles;
-            pub use crate::vector::XMVectorMultiply;
-            pub use crate::vector::XMVectorMultiplyAdd;
-            pub use crate::vector::XMVectorNegate;
-            pub use crate::vector::XMVectorNegativeMultiplySubtract;
-            pub use crate::vector::XMVectorPow;
-            pub use crate::vector::XMVectorReciprocal;
-            pub use crate::vector::XMVectorReciprocalEst;
-            pub use crate::vector::XMVectorReciprocalSqrt;
-            pub use crate::vector::XMVectorReciprocalSqrtEst;
-            pub use crate::vector::XMVectorRound;
-            pub use crate::vector::XMVectorSaturate;
-            pub use crate::vector::XMVectorScale;
-            pub use crate::vector::XMVectorSqrt;
-            pub use crate::vector::XMVectorSqrtEst;
-            pub use crate::vector::XMVectorSubtract;
-            pub use crate::vector::XMVectorSubtractAngles;
-            pub use crate::vector::XMVectorSum;
-            pub use crate::vector::XMVectorTruncate;
+            pub use crate::vector_internal::XMVectorAbs;
+            pub use crate::vector_internal::XMVectorAdd;
+            pub use crate::vector_internal::XMVectorAddAngles;
+            pub use crate::vector_internal::XMVectorCeiling;
+            pub use crate::vector_internal::XMVectorClamp;
+            pub use crate::vector_internal::XMVectorDivide;
+            pub use crate::vector_internal::XMVectorFloor;
+            pub use crate::vector_internal::XMVectorIsInfinite;
+            pub use crate::vector_internal::XMVectorIsNaN;
+            pub use crate::vector_internal::XMVectorMax;
+            pub use crate::vector_internal::XMVectorMin;
+            pub use crate::vector_internal::XMVectorMod;
+            pub use crate::vector_internal::XMVectorModAngles;
+            pub use crate::vector_internal::XMVectorMultiply;
+            pub use crate::vector_internal::XMVectorMultiplyAdd;
+            pub use crate::vector_internal::XMVectorNegate;
+            pub use crate::vector_internal::XMVectorNegativeMultiplySubtract;
+            pub use crate::vector_internal::XMVectorPow;
+            pub use crate::vector_internal::XMVectorReciprocal;
+            pub use crate::vector_internal::XMVectorReciprocalEst;
+            pub use crate::vector_internal::XMVectorReciprocalSqrt;
+            pub use crate::vector_internal::XMVectorReciprocalSqrtEst;
+            pub use crate::vector_internal::XMVectorRound;
+            pub use crate::vector_internal::XMVectorSaturate;
+            pub use crate::vector_internal::XMVectorScale;
+            pub use crate::vector_internal::XMVectorSqrt;
+            pub use crate::vector_internal::XMVectorSqrtEst;
+            pub use crate::vector_internal::XMVectorSubtract;
+            pub use crate::vector_internal::XMVectorSubtractAngles;
+            pub use crate::vector_internal::XMVectorSum;
+            pub use crate::vector_internal::XMVectorTruncate;
         }
 
         /// Vector bit-wise manipulation functions
         ///
         /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector-bit-wise>
         pub mod bit_wise {
-            pub use crate::vector::XMVectorAndCInt;
-            pub use crate::vector::XMVectorAndInt;
-            pub use crate::vector::XMVectorNorInt;
-            pub use crate::vector::XMVectorNotEqual;
-            pub use crate::vector::XMVectorNotEqualInt;
-            pub use crate::vector::XMVectorOrInt;
-            pub use crate::vector::XMVectorXorInt;
+            pub use crate::vector_internal::XMVectorAndCInt;
+            pub use crate::vector_internal::XMVectorAndInt;
+            pub use crate::vector_internal::XMVectorNorInt;
+            pub use crate::vector_internal::XMVectorNotEqual;
+            pub use crate::vector_internal::XMVectorNotEqualInt;
+            pub use crate::vector_internal::XMVectorOrInt;
+            pub use crate::vector_internal::XMVectorXorInt;
         }
 
         /// Vector comparison functions
@@ -812,17 +814,17 @@ mod doc {
         ///
         /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector-comparison>
         pub mod comparison {
-            pub use crate::vector::XMVectorEqual;
-            pub use crate::vector::XMVectorEqualInt;
-            pub use crate::vector::XMVectorEqualIntR;
-            pub use crate::vector::XMVectorEqualR;
-            pub use crate::vector::XMVectorGreater;
-            pub use crate::vector::XMVectorGreaterOrEqual;
-            pub use crate::vector::XMVectorGreaterOrEqualR;
-            pub use crate::vector::XMVectorGreaterR;
-            pub use crate::vector::XMVectorLess;
-            pub use crate::vector::XMVectorLessOrEqual;
-            pub use crate::vector::XMVectorNearEqual;
+            pub use crate::vector_internal::XMVectorEqual;
+            pub use crate::vector_internal::XMVectorEqualInt;
+            pub use crate::vector_internal::XMVectorEqualIntR;
+            pub use crate::vector_internal::XMVectorEqualR;
+            pub use crate::vector_internal::XMVectorGreater;
+            pub use crate::vector_internal::XMVectorGreaterOrEqual;
+            pub use crate::vector_internal::XMVectorGreaterOrEqualR;
+            pub use crate::vector_internal::XMVectorGreaterR;
+            pub use crate::vector_internal::XMVectorLess;
+            pub use crate::vector_internal::XMVectorLessOrEqual;
+            pub use crate::vector_internal::XMVectorNearEqual;
 
         }
 
@@ -830,20 +832,20 @@ mod doc {
         ///
         /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector-component-wise>
         pub mod component_wise {
-            pub use crate::vector::XMVectorInsert;
-            pub use crate::vector::XMVectorMergeXY;
-            pub use crate::vector::XMVectorMergeZW;
-            pub use crate::vector::XMVectorPermute;
-            pub use crate::vector::XMVectorRotateLeft;
-            pub use crate::vector::XMVectorRotateRight;
-            pub use crate::vector::XMVectorSelect;
-            pub use crate::vector::XMVectorSelectControl;
-            pub use crate::vector::XMVectorShiftLeft;
-            pub use crate::vector::XMVectorSplatW;
-            pub use crate::vector::XMVectorSplatX;
-            pub use crate::vector::XMVectorSplatY;
-            pub use crate::vector::XMVectorSplatZ;
-            pub use crate::vector::XMVectorSwizzle;
+            pub use crate::vector_internal::XMVectorInsert;
+            pub use crate::vector_internal::XMVectorMergeXY;
+            pub use crate::vector_internal::XMVectorMergeZW;
+            pub use crate::vector_internal::XMVectorPermute;
+            pub use crate::vector_internal::XMVectorRotateLeft;
+            pub use crate::vector_internal::XMVectorRotateRight;
+            pub use crate::vector_internal::XMVectorSelect;
+            pub use crate::vector_internal::XMVectorSelectControl;
+            pub use crate::vector_internal::XMVectorShiftLeft;
+            pub use crate::vector_internal::XMVectorSplatW;
+            pub use crate::vector_internal::XMVectorSplatX;
+            pub use crate::vector_internal::XMVectorSplatY;
+            pub use crate::vector_internal::XMVectorSplatZ;
+            pub use crate::vector_internal::XMVectorSwizzle;
 
         }
 
@@ -851,70 +853,70 @@ mod doc {
         ///
         /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector-geometric>
         pub mod geometric {
-            pub use crate::vector::XMVectorBaryCentric;
-            pub use crate::vector::XMVectorBaryCentricV;
-            pub use crate::vector::XMVectorCatmullRom;
-            pub use crate::vector::XMVectorCatmullRomV;
-            pub use crate::vector::XMVectorHermite;
-            pub use crate::vector::XMVectorHermiteV;
-            pub use crate::vector::XMVectorInBounds;
-            pub use crate::vector::XMVectorInBoundsR;
-            pub use crate::vector::XMVectorLerp;
-            pub use crate::vector::XMVectorLerpV;
+            pub use crate::vector_internal::XMVectorBaryCentric;
+            pub use crate::vector_internal::XMVectorBaryCentricV;
+            pub use crate::vector_internal::XMVectorCatmullRom;
+            pub use crate::vector_internal::XMVectorCatmullRomV;
+            pub use crate::vector_internal::XMVectorHermite;
+            pub use crate::vector_internal::XMVectorHermiteV;
+            pub use crate::vector_internal::XMVectorInBounds;
+            pub use crate::vector_internal::XMVectorInBoundsR;
+            pub use crate::vector_internal::XMVectorLerp;
+            pub use crate::vector_internal::XMVectorLerpV;
         }
 
         /// Vector initialization
         ///
         /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector-initialization>
         pub mod initialization {
-            pub use crate::vector::XMVectorFalseInt;
-            pub use crate::vector::XMVectorReplicate;
-            pub use crate::vector::XMVectorReplicateInt;
-            // TODO: pub use crate::vector::XMVectorReplicateIntPtr;
-            pub use crate::vector::XMVectorReplicatePtr;
-            pub use crate::vector::XMVectorSet;
+            pub use crate::vector_internal::XMVectorFalseInt;
+            pub use crate::vector_internal::XMVectorReplicate;
+            pub use crate::vector_internal::XMVectorReplicateInt;
+            // TODO: pub use crate::vector_internal::XMVectorReplicateIntPtr;
+            pub use crate::vector_internal::XMVectorReplicatePtr;
+            pub use crate::vector_internal::XMVectorSet;
             pub use crate::XMVectorSetBinaryConstant;
-            pub use crate::vector::XMVectorSetInt;
+            pub use crate::vector_internal::XMVectorSetInt;
             pub use crate::XMVectorSplatConstant;
             pub use crate::XMVectorSplatConstantInt;
-            pub use crate::vector::XMVectorSplatEpsilon;
-            pub use crate::vector::XMVectorSplatInfinity;
-            pub use crate::vector::XMVectorSplatOne;
-            pub use crate::vector::XMVectorSplatQNaN;
-            pub use crate::vector::XMVectorSplatSignMask;
-            pub use crate::vector::XMVectorTrueInt;
-            pub use crate::vector::XMVectorZero;
+            pub use crate::vector_internal::XMVectorSplatEpsilon;
+            pub use crate::vector_internal::XMVectorSplatInfinity;
+            pub use crate::vector_internal::XMVectorSplatOne;
+            pub use crate::vector_internal::XMVectorSplatQNaN;
+            pub use crate::vector_internal::XMVectorSplatSignMask;
+            pub use crate::vector_internal::XMVectorTrueInt;
+            pub use crate::vector_internal::XMVectorZero;
         }
 
         /// Vector based trigonometry and logarithmic functions
         ///
         /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector-transcendental>
         pub mod transendental {
-            pub use crate::vector::XMVectorACos;
-            pub use crate::vector::XMVectorACosEst;
-            pub use crate::vector::XMVectorASin;
-            pub use crate::vector::XMVectorASinEst;
-            pub use crate::vector::XMVectorATan;
-            pub use crate::vector::XMVectorATan2;
-            pub use crate::vector::XMVectorATan2Est;
-            pub use crate::vector::XMVectorATanEst;
-            pub use crate::vector::XMVectorCos;
-            pub use crate::vector::XMVectorCosEst;
-            pub use crate::vector::XMVectorCosH;
-            pub use crate::vector::XMVectorExp;
-            pub use crate::vector::XMVectorExp2;
-            // TODO: pub use crate::vector::XMVectorExpE;
-            // TODO: pub use crate::vector::XMVectorLog;
-            // TODO: pub use crate::vector::XMVectorLog2;
-            // TODO: pub use crate::vector::XMVectorLogE;
-            pub use crate::vector::XMVectorSin;
-            pub use crate::vector::XMVectorSinCos;
-            pub use crate::vector::XMVectorSinCosEst;
-            pub use crate::vector::XMVectorSinEst;
-            pub use crate::vector::XMVectorSinH;
-            pub use crate::vector::XMVectorTan;
-            pub use crate::vector::XMVectorTanEst;
-            pub use crate::vector::XMVectorTanH;
+            pub use crate::vector_internal::XMVectorACos;
+            pub use crate::vector_internal::XMVectorACosEst;
+            pub use crate::vector_internal::XMVectorASin;
+            pub use crate::vector_internal::XMVectorASinEst;
+            pub use crate::vector_internal::XMVectorATan;
+            pub use crate::vector_internal::XMVectorATan2;
+            pub use crate::vector_internal::XMVectorATan2Est;
+            pub use crate::vector_internal::XMVectorATanEst;
+            pub use crate::vector_internal::XMVectorCos;
+            pub use crate::vector_internal::XMVectorCosEst;
+            pub use crate::vector_internal::XMVectorCosH;
+            pub use crate::vector_internal::XMVectorExp;
+            pub use crate::vector_internal::XMVectorExp2;
+            // TODO: pub use crate::vector_internal::XMVectorExpE;
+            // TODO: pub use crate::vector_internal::XMVectorLog;
+            // TODO: pub use crate::vector_internal::XMVectorLog2;
+            // TODO: pub use crate::vector_internal::XMVectorLogE;
+            pub use crate::vector_internal::XMVectorSin;
+            pub use crate::vector_internal::XMVectorSinCos;
+            pub use crate::vector_internal::XMVectorSinCosEst;
+            pub use crate::vector_internal::XMVectorSinEst;
+            pub use crate::vector_internal::XMVectorSinH;
+            pub use crate::vector_internal::XMVectorTan;
+            pub use crate::vector_internal::XMVectorTanEst;
+            pub use crate::vector_internal::XMVectorTanH;
         }
     }
         /// 2D Vector functions
@@ -930,60 +932,60 @@ mod doc {
         /// [`utility`]: crate::utility
         /// [`comparison`]: ../../vector/comparison/index.html
         pub mod comparison {
-            pub use crate::vector::XMVector2Equal;
-            pub use crate::vector::XMVector2EqualInt;
-            pub use crate::vector::XMVector2EqualIntR;
-            pub use crate::vector::XMVector2EqualR;
-            pub use crate::vector::XMVector2Greater;
-            pub use crate::vector::XMVector2GreaterOrEqual;
-            pub use crate::vector::XMVector2GreaterOrEqualR;
-            pub use crate::vector::XMVector2GreaterR;
-            pub use crate::vector::XMVector2IsInfinite;
-            pub use crate::vector::XMVector2IsNaN;
-            pub use crate::vector::XMVector2Less;
-            pub use crate::vector::XMVector2LessOrEqual;
-            pub use crate::vector::XMVector2NearEqual;
-            pub use crate::vector::XMVector2NotEqual;
-            pub use crate::vector::XMVector2NotEqualInt;
+            pub use crate::vector_internal::XMVector2Equal;
+            pub use crate::vector_internal::XMVector2EqualInt;
+            pub use crate::vector_internal::XMVector2EqualIntR;
+            pub use crate::vector_internal::XMVector2EqualR;
+            pub use crate::vector_internal::XMVector2Greater;
+            pub use crate::vector_internal::XMVector2GreaterOrEqual;
+            pub use crate::vector_internal::XMVector2GreaterOrEqualR;
+            pub use crate::vector_internal::XMVector2GreaterR;
+            pub use crate::vector_internal::XMVector2IsInfinite;
+            pub use crate::vector_internal::XMVector2IsNaN;
+            pub use crate::vector_internal::XMVector2Less;
+            pub use crate::vector_internal::XMVector2LessOrEqual;
+            pub use crate::vector_internal::XMVector2NearEqual;
+            pub use crate::vector_internal::XMVector2NotEqual;
+            pub use crate::vector_internal::XMVector2NotEqualInt;
         }
 
         /// 2D Vector geometric functions
         ///
         /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector2-geometric>
         pub mod geometric {
-            pub use crate::vector::XMVector2AngleBetweenNormals;
-            pub use crate::vector::XMVector2AngleBetweenNormalsEst;
-            pub use crate::vector::XMVector2AngleBetweenVectors;
-            pub use crate::vector::XMVector2ClampLength;
-            pub use crate::vector::XMVector2ClampLengthV;
-            pub use crate::vector::XMVector2Cross;
-            pub use crate::vector::XMVector2Dot;
-            pub use crate::vector::XMVector2InBounds;
-            pub use crate::vector::XMVector2IntersectLine;
-            pub use crate::vector::XMVector2Length;
-            pub use crate::vector::XMVector2LengthEst;
-            pub use crate::vector::XMVector2LengthSq;
-            pub use crate::vector::XMVector2LinePointDistance;
-            pub use crate::vector::XMVector2Normalize;
-            pub use crate::vector::XMVector2NormalizeEst;
-            pub use crate::vector::XMVector2Orthogonal;
-            pub use crate::vector::XMVector2ReciprocalLength;
-            pub use crate::vector::XMVector2ReciprocalLengthEst;
-            pub use crate::vector::XMVector2Reflect;
-            pub use crate::vector::XMVector2Refract;
-            pub use crate::vector::XMVector2RefractV;
+            pub use crate::vector_internal::XMVector2AngleBetweenNormals;
+            pub use crate::vector_internal::XMVector2AngleBetweenNormalsEst;
+            pub use crate::vector_internal::XMVector2AngleBetweenVectors;
+            pub use crate::vector_internal::XMVector2ClampLength;
+            pub use crate::vector_internal::XMVector2ClampLengthV;
+            pub use crate::vector_internal::XMVector2Cross;
+            pub use crate::vector_internal::XMVector2Dot;
+            pub use crate::vector_internal::XMVector2InBounds;
+            pub use crate::vector_internal::XMVector2IntersectLine;
+            pub use crate::vector_internal::XMVector2Length;
+            pub use crate::vector_internal::XMVector2LengthEst;
+            pub use crate::vector_internal::XMVector2LengthSq;
+            pub use crate::vector_internal::XMVector2LinePointDistance;
+            pub use crate::vector_internal::XMVector2Normalize;
+            pub use crate::vector_internal::XMVector2NormalizeEst;
+            pub use crate::vector_internal::XMVector2Orthogonal;
+            pub use crate::vector_internal::XMVector2ReciprocalLength;
+            pub use crate::vector_internal::XMVector2ReciprocalLengthEst;
+            pub use crate::vector_internal::XMVector2Reflect;
+            pub use crate::vector_internal::XMVector2Refract;
+            pub use crate::vector_internal::XMVector2RefractV;
         }
 
         /// 2D vector transformation
         ///
         /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector2-transformation>
         pub mod transformation {
-            pub use crate::vector::XMVector2Transform;
-            pub use crate::vector::XMVector2TransformCoord;
-            // TODO: pub use crate::vector::XMVector2TransformCoordStream;
-            pub use crate::vector::XMVector2TransformNormal;
-            // TODO: pub use crate::vector::XMVector2TransformNormalStream;
-            // TODO: pub use crate::vector::XMVector2TransformStream;
+            pub use crate::vector_internal::XMVector2Transform;
+            pub use crate::vector_internal::XMVector2TransformCoord;
+            // TODO: pub use crate::vector_internal::XMVector2TransformCoordStream;
+            pub use crate::vector_internal::XMVector2TransformNormal;
+            // TODO: pub use crate::vector_internal::XMVector2TransformNormalStream;
+            // TODO: pub use crate::vector_internal::XMVector2TransformStream;
         }
     }
 
@@ -995,71 +997,71 @@ mod doc {
         ///
         /// Additional comparison functions are found in the [`utility`] and vector [`comparison`] modules.
         ///
-        /// https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector3-comparison
+        /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector3-comparison>
         ///
         /// [`utility`]: crate::utility
         /// [`comparison`]: ../../vector/comparison/index.html
         pub mod comparison {
-            pub use crate::vector::XMVector3Equal;
-            pub use crate::vector::XMVector3EqualInt;
-            pub use crate::vector::XMVector3EqualIntR;
-            pub use crate::vector::XMVector3EqualR;
-            pub use crate::vector::XMVector3Greater;
-            pub use crate::vector::XMVector3GreaterOrEqual;
-            pub use crate::vector::XMVector3GreaterOrEqualR;
-            pub use crate::vector::XMVector3GreaterR;
-            pub use crate::vector::XMVector3IsInfinite;
-            pub use crate::vector::XMVector3IsNaN;
-            pub use crate::vector::XMVector3Less;
-            pub use crate::vector::XMVector3LessOrEqual;
-            pub use crate::vector::XMVector3NearEqual;
-            pub use crate::vector::XMVector3NotEqual;
-            pub use crate::vector::XMVector3NotEqualInt;
+            pub use crate::vector_internal::XMVector3Equal;
+            pub use crate::vector_internal::XMVector3EqualInt;
+            pub use crate::vector_internal::XMVector3EqualIntR;
+            pub use crate::vector_internal::XMVector3EqualR;
+            pub use crate::vector_internal::XMVector3Greater;
+            pub use crate::vector_internal::XMVector3GreaterOrEqual;
+            pub use crate::vector_internal::XMVector3GreaterOrEqualR;
+            pub use crate::vector_internal::XMVector3GreaterR;
+            pub use crate::vector_internal::XMVector3IsInfinite;
+            pub use crate::vector_internal::XMVector3IsNaN;
+            pub use crate::vector_internal::XMVector3Less;
+            pub use crate::vector_internal::XMVector3LessOrEqual;
+            pub use crate::vector_internal::XMVector3NearEqual;
+            pub use crate::vector_internal::XMVector3NotEqual;
+            pub use crate::vector_internal::XMVector3NotEqualInt;
         }
 
         /// 3D vector geometric functions
         ///
         /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector3-geometric>
         pub mod geometric {
-            pub use crate::vector::XMVector3AngleBetweenNormals;
-            pub use crate::vector::XMVector3AngleBetweenNormalsEst;
-            pub use crate::vector::XMVector3AngleBetweenVectors;
-            pub use crate::vector::XMVector3ClampLength;
-            pub use crate::vector::XMVector3ClampLengthV;
-            pub use crate::vector::XMVector3ComponentsFromNormal;
-            pub use crate::vector::XMVector3Cross;
-            pub use crate::vector::XMVector3Dot;
-            pub use crate::vector::XMVector3InBounds;
-            pub use crate::vector::XMVector3Length;
-            pub use crate::vector::XMVector3LengthEst;
-            pub use crate::vector::XMVector3LengthSq;
-            pub use crate::vector::XMVector3LinePointDistance;
-            pub use crate::vector::XMVector3Normalize;
-            pub use crate::vector::XMVector3NormalizeEst;
-            pub use crate::vector::XMVector3Orthogonal;
-            pub use crate::vector::XMVector3ReciprocalLength;
-            pub use crate::vector::XMVector3ReciprocalLengthEst;
-            pub use crate::vector::XMVector3Reflect;
-            pub use crate::vector::XMVector3Refract;
-            pub use crate::vector::XMVector3RefractV;
+            pub use crate::vector_internal::XMVector3AngleBetweenNormals;
+            pub use crate::vector_internal::XMVector3AngleBetweenNormalsEst;
+            pub use crate::vector_internal::XMVector3AngleBetweenVectors;
+            pub use crate::vector_internal::XMVector3ClampLength;
+            pub use crate::vector_internal::XMVector3ClampLengthV;
+            pub use crate::vector_internal::XMVector3ComponentsFromNormal;
+            pub use crate::vector_internal::XMVector3Cross;
+            pub use crate::vector_internal::XMVector3Dot;
+            pub use crate::vector_internal::XMVector3InBounds;
+            pub use crate::vector_internal::XMVector3Length;
+            pub use crate::vector_internal::XMVector3LengthEst;
+            pub use crate::vector_internal::XMVector3LengthSq;
+            pub use crate::vector_internal::XMVector3LinePointDistance;
+            pub use crate::vector_internal::XMVector3Normalize;
+            pub use crate::vector_internal::XMVector3NormalizeEst;
+            pub use crate::vector_internal::XMVector3Orthogonal;
+            pub use crate::vector_internal::XMVector3ReciprocalLength;
+            pub use crate::vector_internal::XMVector3ReciprocalLengthEst;
+            pub use crate::vector_internal::XMVector3Reflect;
+            pub use crate::vector_internal::XMVector3Refract;
+            pub use crate::vector_internal::XMVector3RefractV;
         }
 
         /// 3D vector transformation
         ///
         /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector3-transformation>
         pub mod transformation {
-            pub use crate::vector::XMVector3InverseRotate;
-            pub use crate::vector::XMVector3Project;
-            // TODO: pub use crate::vector::XMVector3ProjectStream;
-            pub use crate::vector::XMVector3Rotate;
-            pub use crate::vector::XMVector3Transform;
-            pub use crate::vector::XMVector3TransformCoord;
-            // TODO: pub use crate::vector::XMVector3TransformCoordStream;
-            pub use crate::vector::XMVector3TransformNormal;
-            // TODO: pub use crate::vector::XMVector3TransformNormalStream;
-            // TODO: pub use crate::vector::XMVector3TransformStream;
-            pub use crate::vector::XMVector3Unproject;
-            // TODO: pub use crate::vector::XMVector3UnprojectStream;
+            pub use crate::vector_internal::XMVector3InverseRotate;
+            pub use crate::vector_internal::XMVector3Project;
+            // TODO: pub use crate::vector_internal::XMVector3ProjectStream;
+            pub use crate::vector_internal::XMVector3Rotate;
+            pub use crate::vector_internal::XMVector3Transform;
+            pub use crate::vector_internal::XMVector3TransformCoord;
+            // TODO: pub use crate::vector_internal::XMVector3TransformCoordStream;
+            pub use crate::vector_internal::XMVector3TransformNormal;
+            // TODO: pub use crate::vector_internal::XMVector3TransformNormalStream;
+            // TODO: pub use crate::vector_internal::XMVector3TransformStream;
+            pub use crate::vector_internal::XMVector3Unproject;
+            // TODO: pub use crate::vector_internal::XMVector3UnprojectStream;
         }
     }
 
@@ -1076,51 +1078,51 @@ mod doc {
         /// [`utility`]: crate::utility
         /// [`comparison`]: ../../vector/comparison/index.html
         pub mod comparison {
-            pub use crate::vector::XMVector4Equal;
-            pub use crate::vector::XMVector4EqualInt;
-            pub use crate::vector::XMVector4EqualIntR;
-            pub use crate::vector::XMVector4EqualR;
-            pub use crate::vector::XMVector4Greater;
-            pub use crate::vector::XMVector4GreaterOrEqual;
-            pub use crate::vector::XMVector4GreaterOrEqualR;
-            pub use crate::vector::XMVector4GreaterR;
-            pub use crate::vector::XMVector4IsInfinite;
-            pub use crate::vector::XMVector4IsNaN;
-            pub use crate::vector::XMVector4Less;
-            pub use crate::vector::XMVector4LessOrEqual;
-            pub use crate::vector::XMVector4NearEqual;
-            pub use crate::vector::XMVector4NotEqual;
-            pub use crate::vector::XMVector4NotEqualInt;
+            pub use crate::vector_internal::XMVector4Equal;
+            pub use crate::vector_internal::XMVector4EqualInt;
+            pub use crate::vector_internal::XMVector4EqualIntR;
+            pub use crate::vector_internal::XMVector4EqualR;
+            pub use crate::vector_internal::XMVector4Greater;
+            pub use crate::vector_internal::XMVector4GreaterOrEqual;
+            pub use crate::vector_internal::XMVector4GreaterOrEqualR;
+            pub use crate::vector_internal::XMVector4GreaterR;
+            pub use crate::vector_internal::XMVector4IsInfinite;
+            pub use crate::vector_internal::XMVector4IsNaN;
+            pub use crate::vector_internal::XMVector4Less;
+            pub use crate::vector_internal::XMVector4LessOrEqual;
+            pub use crate::vector_internal::XMVector4NearEqual;
+            pub use crate::vector_internal::XMVector4NotEqual;
+            pub use crate::vector_internal::XMVector4NotEqualInt;
         }
 
         /// 4D vector geometric
         ///
         /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-vector4-geometric>
         pub mod geometric {
-            pub use crate::vector::XMVector4AngleBetweenNormals;
-            pub use crate::vector::XMVector4AngleBetweenNormalsEst;
-            pub use crate::vector::XMVector4AngleBetweenVectors;
-            pub use crate::vector::XMVector4ClampLength;
-            pub use crate::vector::XMVector4ClampLengthV;
-            pub use crate::vector::XMVector4Cross;
-            pub use crate::vector::XMVector4Dot;
-            pub use crate::vector::XMVector4InBounds;
-            pub use crate::vector::XMVector4Length;
-            pub use crate::vector::XMVector4LengthEst;
-            pub use crate::vector::XMVector4LengthSq;
-            pub use crate::vector::XMVector4Normalize;
-            pub use crate::vector::XMVector4NormalizeEst;
-            pub use crate::vector::XMVector4Orthogonal;
-            pub use crate::vector::XMVector4ReciprocalLength;
-            pub use crate::vector::XMVector4ReciprocalLengthEst;
-            pub use crate::vector::XMVector4Reflect;
-            pub use crate::vector::XMVector4Refract;
-            pub use crate::vector::XMVector4RefractV;
+            pub use crate::vector_internal::XMVector4AngleBetweenNormals;
+            pub use crate::vector_internal::XMVector4AngleBetweenNormalsEst;
+            pub use crate::vector_internal::XMVector4AngleBetweenVectors;
+            pub use crate::vector_internal::XMVector4ClampLength;
+            pub use crate::vector_internal::XMVector4ClampLengthV;
+            pub use crate::vector_internal::XMVector4Cross;
+            pub use crate::vector_internal::XMVector4Dot;
+            pub use crate::vector_internal::XMVector4InBounds;
+            pub use crate::vector_internal::XMVector4Length;
+            pub use crate::vector_internal::XMVector4LengthEst;
+            pub use crate::vector_internal::XMVector4LengthSq;
+            pub use crate::vector_internal::XMVector4Normalize;
+            pub use crate::vector_internal::XMVector4NormalizeEst;
+            pub use crate::vector_internal::XMVector4Orthogonal;
+            pub use crate::vector_internal::XMVector4ReciprocalLength;
+            pub use crate::vector_internal::XMVector4ReciprocalLengthEst;
+            pub use crate::vector_internal::XMVector4Reflect;
+            pub use crate::vector_internal::XMVector4Refract;
+            pub use crate::vector_internal::XMVector4RefractV;
         }
         /// 4D vector transformation
         pub mod transformation {
-            pub use crate::vector::XMVector4Transform;
-            // TODO: pub use crate::vector::XMVector4TransformStream;
+            pub use crate::vector_internal::XMVector4Transform;
+            // TODO: pub use crate::vector_internal::XMVector4TransformStream;
         }
     }
 
@@ -1142,46 +1144,46 @@ mod doc {
     ///
     /// <https://docs.microsoft.com/en-us/windows/win32/dxmath/ovw-xnamath-reference-functions-accessors>
     pub mod accessor {
-        pub use crate::vector::XMVectorGetByIndex;
-        // TODO: pub use crate::vector::XMVectorGetByIndexPtr;
-        pub use crate::vector::XMVectorGetIntByIndex;
-        // TODO: pub use crate::vector::XMVectorGetIntByIndexPtr;
-        pub use crate::vector::XMVectorGetIntW;
-        // TODO: pub use crate::vector::XMVectorGetIntWPtr;
-        pub use crate::vector::XMVectorGetIntX;
-        // TODO: pub use crate::vector::XMVectorGetIntXPtr;
-        pub use crate::vector::XMVectorGetIntY;
-        // TODO: pub use crate::vector::XMVectorGetIntYPtr;
-        pub use crate::vector::XMVectorGetIntZ;
-        // TODO: pub use crate::vector::XMVectorGetIntZPtr;
-        pub use crate::vector::XMVectorGetW;
-        pub use crate::vector::XMVectorGetWPtr;
-        pub use crate::vector::XMVectorGetX;
-        pub use crate::vector::XMVectorGetXPtr;
-        pub use crate::vector::XMVectorGetY;
-        pub use crate::vector::XMVectorGetYPtr;
-        pub use crate::vector::XMVectorGetZ;
-        pub use crate::vector::XMVectorGetZPtr;
-        pub use crate::vector::XMVectorSetByIndex;
-        // TODO: pub use crate::vector::XMVectorSetByIndexPtr;
-        pub use crate::vector::XMVectorSetIntByIndex;
-        // TODO: pub use crate::vector::XMVectorSetIntByIndexPtr;
-        pub use crate::vector::XMVectorSetIntW;
-        // TODO: pub use crate::vector::XMVectorSetIntWPtr;
-        pub use crate::vector::XMVectorSetIntX;
-        // TODO: pub use crate::vector::XMVectorSetIntXPtr;
-        pub use crate::vector::XMVectorSetIntY;
-        // TODO: pub use crate::vector::XMVectorSetIntYPtr;
-        pub use crate::vector::XMVectorSetIntZ;
-        // TODO: pub use crate::vector::XMVectorSetIntZPtr;
-        pub use crate::vector::XMVectorSetW;
-        // TODO: pub use crate::vector::XMVectorSetWPtr;
-        pub use crate::vector::XMVectorSetX;
-        // TODO: pub use crate::vector::XMVectorSetXPtr;
-        pub use crate::vector::XMVectorSetY;
-        // TODO: pub use crate::vector::XMVectorSetYPtr;
-        pub use crate::vector::XMVectorSetZ;
-        // TODO: pub use crate::vector::XMVectorSetZPtr;
+        pub use crate::vector_internal::XMVectorGetByIndex;
+        // TODO: pub use crate::vector_internal::XMVectorGetByIndexPtr;
+        pub use crate::vector_internal::XMVectorGetIntByIndex;
+        // TODO: pub use crate::vector_internal::XMVectorGetIntByIndexPtr;
+        pub use crate::vector_internal::XMVectorGetIntW;
+        // TODO: pub use crate::vector_internal::XMVectorGetIntWPtr;
+        pub use crate::vector_internal::XMVectorGetIntX;
+        // TODO: pub use crate::vector_internal::XMVectorGetIntXPtr;
+        pub use crate::vector_internal::XMVectorGetIntY;
+        // TODO: pub use crate::vector_internal::XMVectorGetIntYPtr;
+        pub use crate::vector_internal::XMVectorGetIntZ;
+        // TODO: pub use crate::vector_internal::XMVectorGetIntZPtr;
+        pub use crate::vector_internal::XMVectorGetW;
+        pub use crate::vector_internal::XMVectorGetWPtr;
+        pub use crate::vector_internal::XMVectorGetX;
+        pub use crate::vector_internal::XMVectorGetXPtr;
+        pub use crate::vector_internal::XMVectorGetY;
+        pub use crate::vector_internal::XMVectorGetYPtr;
+        pub use crate::vector_internal::XMVectorGetZ;
+        pub use crate::vector_internal::XMVectorGetZPtr;
+        pub use crate::vector_internal::XMVectorSetByIndex;
+        // TODO: pub use crate::vector_internal::XMVectorSetByIndexPtr;
+        pub use crate::vector_internal::XMVectorSetIntByIndex;
+        // TODO: pub use crate::vector_internal::XMVectorSetIntByIndexPtr;
+        pub use crate::vector_internal::XMVectorSetIntW;
+        // TODO: pub use crate::vector_internal::XMVectorSetIntWPtr;
+        pub use crate::vector_internal::XMVectorSetIntX;
+        // TODO: pub use crate::vector_internal::XMVectorSetIntXPtr;
+        pub use crate::vector_internal::XMVectorSetIntY;
+        // TODO: pub use crate::vector_internal::XMVectorSetIntYPtr;
+        pub use crate::vector_internal::XMVectorSetIntZ;
+        // TODO: pub use crate::vector_internal::XMVectorSetIntZPtr;
+        pub use crate::vector_internal::XMVectorSetW;
+        // TODO: pub use crate::vector_internal::XMVectorSetWPtr;
+        pub use crate::vector_internal::XMVectorSetX;
+        // TODO: pub use crate::vector_internal::XMVectorSetXPtr;
+        pub use crate::vector_internal::XMVectorSetY;
+        // TODO: pub use crate::vector_internal::XMVectorSetYPtr;
+        pub use crate::vector_internal::XMVectorSetZ;
+        // TODO: pub use crate::vector_internal::XMVectorSetZPtr;
     }
 
     /// Vector and Matrix load functions

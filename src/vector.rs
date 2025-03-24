@@ -1,3 +1,4 @@
+#[allow(unused)] // TODO: cargo +nightly build --target aarch64-pc-windows-msvc -Zbuild-std --no-default-features
 use std::mem;
 
 use crate::*;
@@ -8896,7 +8897,7 @@ pub fn XMVector2IntersectLine(
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2Transform>
 ///
-/// [`XMVector2Transform`]: crate::vector::XMVector2Transform
+/// [`XMVector2Transform`]: XMVector2Transform
 #[inline]
 pub fn XMVector2Transform(
     V: FXMVECTOR,
@@ -8954,7 +8955,7 @@ pub fn XMVector2Transform(
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector2TransformCoord>
 ///
-/// [`XMVector2TransformCoord`]: crate::vector::XMVector2TransformCoord
+/// [`XMVector2TransformCoord`]: XMVector2TransformCoord
 #[inline]
 pub fn XMVector2TransformCoord(
     V: FXMVECTOR,
@@ -8988,7 +8989,7 @@ pub fn XMVector2TransformCoord(
 ///
 /// ## Remarks
 ///
-/// XMVector2TransformNormal uses row `0` and `1` of the input transformation matrix for
+/// [`XMVector2TransformNormal`] uses row `0` and `1` of the input transformation matrix for
 /// rotation and scaling. Rows `2` and `3` are ignored.
 ///
 /// ## Reference
@@ -10878,7 +10879,7 @@ pub fn XMVector3InverseRotate(
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3Transform>
 ///
-/// [`XMVector3Transform`]: crate::vector::XMVector3Transform
+/// [`XMVector3Transform`]: XMVector3Transform
 #[inline]
 pub fn XMVector3Transform(
     V: FXMVECTOR,
@@ -10982,7 +10983,7 @@ pub fn XMVector3TransformCoord(
 ///
 /// <https://docs.microsoft.com/en-us/windows/win32/api/directxmath/nf-directxmath-XMVector3TransformNormal>
 ///
-/// [`XMVector3TransformNormal`]: crate::vector::XMVector3TransformNormal
+/// [`XMVector3TransformNormal`]: XMVector3TransformNormal
 #[inline]
 pub fn XMVector3TransformNormal(
     V: FXMVECTOR,

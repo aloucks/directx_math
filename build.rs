@@ -7,6 +7,19 @@ fn main() {
     let target_features = target_features.split(',').collect::<Vec<_>>();
     // eprintln!("available target features: {:?}", target_features);
 
+    println!("cargo::rustc-check-cfg=cfg(_XM_SSE_INTRINSICS_)");
+    println!("cargo::rustc-check-cfg=cfg(_XM_SSE3_INTRINSICS_)");
+    println!("cargo::rustc-check-cfg=cfg(_XM_SSE4_INTRINSICS_)");
+    println!("cargo::rustc-check-cfg=cfg(_XM_AVX_INTRINSICS_)");
+    println!("cargo::rustc-check-cfg=cfg(_XM_F16C_INTRINSICS_)");
+    println!("cargo::rustc-check-cfg=cfg(_XM_FMA3_INTRINSICS_)");
+    println!("cargo::rustc-check-cfg=cfg(_XM_AVX2_INTRINSICS_)");
+    println!("cargo::rustc-check-cfg=cfg(_XM_ARM_NEON_INTRINSICS_)");
+    println!("cargo::rustc-check-cfg=cfg(_XM_NO_INTRINSICS_)");
+    println!("cargo::rustc-check-cfg=cfg(_XM_FAVOR_INTEL_)");
+
+    println!("cargo::rustc-check-cfg=cfg(nightly_specialization)");
+
     if target_features.contains(&"sse2") && !cfg!(feature="no_intrinsics") {
         println!("cargo:rustc-cfg=_XM_SSE_INTRINSICS_");
         intrinics = true;
